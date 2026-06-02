@@ -1,10 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 import os
-
-# تعديل مسار المجلد ليقرأ ملفات الـ HTML من المجلد الرئيسي مباشرة
 app = Flask(__name__, template_folder='.')
-
-# قاعدة البيانات: كل قسم أو رئيس قسم له قائمة مواعيد مستقلة
 data = {
     "1": {
         "name": "شؤون المتدربين",
@@ -45,7 +41,6 @@ def booking(dept_id):
         selected_sub = request.form.get('sub_dept')
         time = request.form.get('time')
         
-        # حجز الموعد وحذفه من المواعيد المتاحة
         if selected_sub and "sub_sections" in department:
             if time in department["sub_sections"][selected_sub]:
                 department["sub_sections"][selected_sub].remove(time)
@@ -72,7 +67,6 @@ def clear_data():
     bookings.clear()
     return redirect(url_for('admin_panel'))
 
-# إصلاح السطر 73 ليتوافق مع بورت خادم Render ديناميكياً
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
