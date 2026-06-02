@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 
-app = Flask(__name__, template_
+app = Flask(__name__, template_)
 
 # قاعدة البيانات: كل قسم أو رئيس قسم له قائمة مواعيد مستقلة
 data = {
