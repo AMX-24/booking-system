@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for
+import os
 
-app = Flask(__name__, template_)
+# تعديل مسار المجلد ليقرأ ملفات الـ HTML من المجلد الرئيسي مباشرة
+app = Flask(__name__, template_folder='.')
 
 # قاعدة البيانات: كل قسم أو رئيس قسم له قائمة مواعيد مستقلة
 data = {
@@ -29,37 +31,37 @@ bookings = []
 def index():
     return render_template('index.html', departments=data)
 
-@app.route('/select_time/<dept_id>')
-def select_time(dept_id):
-    dept = data.get(dept_id)
-    if dept:
-        return render_template('select_time.html', dept_id=dept_id, dept=dept)
-    return redirect(url_for('index'))
-
-@app.route('/reserve/<dept_id>', methods=['POST'])
-def reserve(dept_id):
-    name = request.form.get('student_name')
-    acad_id = request.form.get('academic_id')
-    time = request.form.get('selected_time')
-    manager_name = request.form.get('manager_name')
+@app.route('/booking/<dept_id>', methods=['GET', 'POST'])
+def booking(dept_id):
+    department = data.get(dept_id)
+    if not department:
+        return redirect(url_for('index'))
     
-    if dept_id in data:
-        target_dept = data[dept_id]
-        section_display = manager_name if manager_name else target_dept['name']
-
-        # حذف الوقت المختار لكي لا يظهر لمتدرب آخر
-        if manager_name and "sub_sections" in target_dept:
-            if time in target_dept["sub_sections"][manager_name]:
-                target_dept["sub_sections"][manager_name].remove(time)
-        elif "slots" in target_dept:
-            if time in target_dept["slots"]:
-                target_dept["slots"].remove(time)
-
+    sub_dept = request.args.get('sub_dept')
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        acad_id = request.form.get('acad_id')
+        selected_sub = request.form.get('sub_dept')
+        time = request.form.get('time')
+        
+        # حجز الموعد وحذفه من المواعيد المتاحة
+        if selected_sub and "sub_sections" in department:
+            if time in department["sub_sections"][selected_sub]:
+                department["sub_sections"][selected_sub].remove(time)
+        elif time in department.get("slots", []):
+            department["slots"].remove(time)
+            
         bookings.append({
-            "name": name, "id": acad_id, "section": section_display, "time": time
+            "name": name, 
+            "id": acad_id, 
+            "section": department["name"], 
+            "sub_section": selected_sub, 
+            "time": time
         })
-        return render_template('success.html', name=name, time=time, section=section_display)
-    return redirect(url_for('index'))
+        return render_template('success.html')
+        
+    return render_template('booking.html', dept_id=dept_id, department=department, sub_dept=sub_dept)
 
 @app.route('/admin')
 def admin_panel():
@@ -70,7 +72,7 @@ def clear_data():
     bookings.clear()
     return redirect(url_for('admin_panel'))
 
+# إصلاح السطر 73 ليتوافق مع بورت خادم Render ديناميكياً
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0' , port=port)
+    app.run(host='0.0.0.0', port=port)
