@@ -5,25 +5,51 @@
     <title>تأكيد الحجز</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .form-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 380px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 12px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        button { width: 100%; background: #2d6a4f; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; }
-        .info { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #555; }
+        .form-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 400px; text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 12px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: #2d6a4f; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #1b4332; }
+        .info { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #555; line-height: 1.6; }
     </style>
 </head>
 <body>
-    <div class="form-card">
-        <h2>استكمال بيانات الحجز</h2>
-        <div class="info">
-            القسم: {{ department.name }} <br> الوقت: {{ department.time }}
-        </div>
-        <form action="{{ url_for('reserve', section_id=section_id) }}" method="POST">
-            <input type="text" name="student_name" placeholder="اسمك الثنائي" required>
-            <input type="text" name="academic_id" placeholder="الرقم الأكاديمي" required>
-            <button type="submit">تأكيد وإرسال الطلب</button>
-        </form>
-        <br>
-        <a href="/" style="color: #888; text-decoration: none; font-size: 14px;">إلغاء والعودة للرئيسية</a>
+
+<div class="form-card">
+    <h2>استكمال بيانات الحجز</h2>
+    
+    <div class="info">
+        الجهة: {{ department.name }}
+        {% if sub_dept %}
+            <br> القسم الفرعي: {{ sub_dept }}
+        {% endif %}
     </div>
+
+    <form action="{{ url_for('booking', dept_id=dept_id) }}" method="POST">
+        {% if sub_dept %}
+            <input type="hidden" name="sub_dept" value="{{ sub_dept }}">
+        {% endif %}
+        
+        <input type="text" name="name" placeholder="اسمك الثلاثي" required>
+        <input type="text" name="acad_id" placeholder="الرقم الأكاديمي" required>
+        
+        <select name="time" required>
+            <option value="" disabled selected>اختر الوقت المناسب</option>
+            {% if sub_dept %}
+                {% for slot in department.sub_sections[sub_dept] %}
+                    <option value="{{ slot }}">{{ slot }}</option>
+                {% endfor %}
+            {% else %}
+                {% for slot in department.slots %}
+                    <option value="{{ slot }}">{{ slot }}</option>
+                {% endfor %}
+            {% endif %}
+        </select>
+        
+        <button type="submit">تأكيد وإرسال الطلب</button>
+    </form>
+    <br>
+    <a href="/" style="color: #888; text-decoration: none; font-size: 14px;">إلغاء والعودة للرئيسية</a>
+</div>
+
 </body>
 </html>
