@@ -24,7 +24,9 @@ data = {
 }
 
 bookings = []
-
+@app.route('/logo.png')
+def get_logo():
+    return app.send_static_file('logo.png') if os.path.exists('static/logo.png') else app.send_from_directory('.', 'logo.png')
 @app.route('/')
 def index():
     return render_template('index.html', departments=data)
