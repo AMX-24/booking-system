@@ -3,7 +3,6 @@ import os
 
 app = Flask(__name__, template_folder='.')
 
-# تهيئة البيانات بشكل مستقل لضمان عدم تأثر الجهات الأخرى عند الحجز
 def get_fresh_data():
     return {
         "1": {
@@ -48,12 +47,11 @@ def booking(dept_id):
         name = request.form.get('name')
         acad_id = request.form.get('acad_id')
         selected_sub = request.form.get('sub_dept')
-        time = request.form.get('time') # استقبال الوقت من المربع المحدد
+        time = request.form.get('time') 
         
         if not time:
             return "برجاء اختيار وقت للموعد", 400
 
-        # حذف الوقت من الجهة المحددة فقط دون التأثير على البقية
         if selected_sub and "sub_sections" in department:
             if time in department["sub_sections"].get(selected_sub, []):
                 department["sub_sections"][selected_sub].remove(time)
@@ -79,7 +77,7 @@ def admin_panel():
 def clear_data():
     global data, bookings
     bookings.clear()
-    data = get_fresh_data() # إعادة تصفير الأوقات واسترجاع المحذوف
+    data = get_fresh_data() 
     return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
