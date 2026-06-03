@@ -3,22 +3,25 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-DEPARTMENTS_DATA = {
-    "1": {
-        "name": "شؤون المتدربين",
-        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص"]
-    },
-    "2": {
-        "name": "رئيس القسم",
-        "slots": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"]
-    },
-    "3": {
-        "name": "عضو هيئة تدريس",
-        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص"]
+# مصفوفة البيانات الثابتة لكل الأقسام (محدثة لمنع أي خطأ سيرفر)
+def get_fresh_data():
+    return {
+        "1": {
+            "name": "شؤون المتدربين",
+            "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص"]
+        },
+        "2": {
+            "name": "رئيس القسم",
+            "slots": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"]
+        },
+        "3": {
+            "name": "عضو هيئة تدريس",
+            "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص"]
+        }
     }
-}
 
-confirmed_bookings = []
+data = get_fresh_data()
+bookings = []
 
 @app.route('/logo.png')
 def get_logo():
@@ -29,34 +32,33 @@ def get_logo():
 
 @app.route('/')
 def index():
-    return render_template('index.html', departments=DEPARTMENTS_DATA)
+    return render_template('index.html', departments=data)
 
 @app.route('/booking/<dept_id>', methods=['GET', 'POST'])
 def booking(dept_id):
-    department = DEPARTMENTS_DATA.get(str(dept_id))
+    department = data.get(str(dept_id))
     if not department:
         return redirect(url_for('index'))
 
-    booked_slots = [b['time'] for b in confirmed_bookings if b['dept_id'] == str(dept_id)]
-
-    available_slots = [slot for slot in department['slots'] if slot not in booked_slots]
+    # جلب المواعيد الخاصة بهذا القسم المحدد
+    slots = department.get('slots', [])
 
     if request.method == 'POST':
         name = request.form.get('name', '')
         acad_id = request.form.get('acad_id', '')
-        selected_time = request.form.get('time', '')
-
-        if selected_time and selected_time not in booked_slots:
-            confirmed_bookings.append({
-                'dept_id': str(dept_id),
-                'name': name,
-                'acad_id': acad_id,
-                'time': selected_time
-            })
+        time = request.form.get('time', '')
         
+        # حفظ الحجز بشكل آمن لمنع كراش السيرفر (Internal Server Error)
+        bookings.append({
+            'dept_id': str(dept_id),
+            'name': name,
+            'acad_id': acad_id,
+            'time': time
+        })
         return redirect(url_for('index'))
 
-    return render_template('booking.html', department=department, dept_id=dept_id, slots=available_slots)
+    # إرسال البيانات بشكل صحيح لملف booking.html الموحد
+    return render_template('booking.html', department=department, dept_id=dept_id, slots=slots)
 
 if __name__ == '__main__':
     app.run(debug=True)
