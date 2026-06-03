@@ -3,30 +3,35 @@ import os
 
 app = Flask(__name__, template_folder='.')
 
-data = {
-    "1": {
-        "name": "شؤون المتدربين",
-        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص"]
-    },
-    "2": {
-        "name": "رئيس القسم",
-        "sub_sections": {
-            "رئيس قسم الحاسب": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
-            "رئيس قسم الاتصالات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
-            "رئيس قسم الإلكترونيات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
-            "رئيس قسم المواد العامة": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"]
+# تهيئة البيانات بشكل مستقل لضمان عدم تأثر الجهات الأخرى عند الحجز
+def get_fresh_data():
+    return {
+        "1": {
+            "name": "شؤون المتدربين",
+            "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص"]
+        },
+        "2": {
+            "name": "رئيس القسم",
+            "sub_sections": {
+                "رئيس قسم الحاسب": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
+                "رئيس قسم الاتصالات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
+                "رئيس قسم الإلكترونيات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
+                "رئيس قسم المواد العامة": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"]
+            }
+        },
+        "3": {
+            "name": "عضو هيئة تدريس",
+            "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص"]
         }
-    },
-    "3": {
-        "name": "عضو هيئة تدريس",
-        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص"]
     }
-}
 
+data = get_fresh_data()
 bookings = []
+
 @app.route('/logo.png')
 def get_logo():
     return app.send_static_file('logo.png') if os.path.exists('static/logo.png') else app.send_from_directory('.', 'logo.png')
+
 @app.route('/')
 def index():
     return render_template('index.html', departments=data)
@@ -43,12 +48,16 @@ def booking(dept_id):
         name = request.form.get('name')
         acad_id = request.form.get('acad_id')
         selected_sub = request.form.get('sub_dept')
-        time = request.form.get('time')
+        time = request.form.get('time') # استقبال الوقت من المربع المحدد
         
+        if not time:
+            return "برجاء اختيار وقت للموعد", 400
+
+        # حذف الوقت من الجهة المحددة فقط دون التأثير على البقية
         if selected_sub and "sub_sections" in department:
-            if time in department["sub_sections"][selected_sub]:
+            if time in department["sub_sections"].get(selected_sub, []):
                 department["sub_sections"][selected_sub].remove(time)
-        elif time in department.get("slots", []):
+        elif "slots" in department and time in department.get("slots", []):
             department["slots"].remove(time)
             
         bookings.append({
@@ -68,7 +77,9 @@ def admin_panel():
 
 @app.route('/clear')
 def clear_data():
+    global data, bookings
     bookings.clear()
+    data = get_fresh_data() # إعادة تصفير الأوقات واسترجاع المحذوف
     return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
