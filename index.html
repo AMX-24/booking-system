@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="{{ url_for('static', filename='logo.png') }}" width="160" style="margin-bottom: 20px;">
+        <img src="logo.png" width="160" style="margin-bottom: 20px;">
         <h1>نظام الاستعلام عن المواعيد</h1>
         {% for id, dept in departments.items() %}
             <a href="{{ url_for('booking', dept_id=id) }}" class="dept-btn">{{ dept.name }}</a>
