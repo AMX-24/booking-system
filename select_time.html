@@ -2,74 +2,119 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>اختيار موعد الحجز</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حجز موعد: {{ department.name }}</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; padding: 30px; margin: 0; }
-        .container { background: white; max-width: 700px; margin: auto; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .form-group { text-align: right; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 15px; }
-        .slot-card { padding: 15px; border: 2px solid #2d6a4f; border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: bold; color: #2d6a4f; background: white; }
-        .slot-card:hover { background: #e8f5e9; transform: translateY(-2px); }
-        .slot-card.selected { background: #2d6a4f; color: white; }
-        
-        button { width: 100%; background: #2d6a4f; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; margin-top: 30px; font-weight: bold; }
-        .no-slots { color: #dc2626; font-weight: bold; margin: 20px 0; }
+        body {
+            font-family: sans-serif;
+            background-color: #f4f6f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .booking-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
+        }
+        h2 { text-align: center; color: #333; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px;
+        }
+        .slots-container {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;
+        }
+        .slot-btn {
+            border: 1px solid #2e7d32; padding: 12px; border-radius: 8px; text-align: center;
+            background-color: #e8f5e9; cursor: pointer; font-size: 14px; font-weight: bold; color: #2e7d32;
+        }
+        .slot-btn:hover { background-color: #c8e6c9; }
+        .slot-btn.selected {
+            background-color: #a5d6a7 !important; border-color: #1b5e20 !important; color: #1b5e20 !important;
+        }
+        .btn-submit {
+            background-color: #1e4620; color: white; width: 100%; padding: 14px;
+            border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 25px; cursor: pointer;
+        }
+        .btn-submit:hover { background-color: #153317; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>حجز موعد: {{ dept.name }}</h2>
-        <form action="{{ url_for('reserve', dept_id=dept_id) }}" method="POST" id="bookingForm">
-            <div class="form-group"><label>اسم المتدرب:</label><input type="text" name="student_name" required></div>
-            <div class="form-group"><label>الرقم الأكاديمي:</label><input type="text" name="academic_id" required></div>
 
-            {% if dept.sub_sections %}
-            <div class="form-group">
-                <label>تحديد القسم المختص:</label>
-                <select name="manager_name" id="manager_select" required onchange="renderSlots()">
-                    <option value="" disabled selected>-- اختر رئيس القسم --</option>
-                    {% for manager in dept.sub_sections.keys() %}
-                        <option value="{{ manager }}">{{ manager }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
+<div class="booking-card">
+    <h2>حجز موعد: {{ department.name }}</h2>
 
-            <div class="form-group">
-                <label>اختر الموعد المناسب:</label>
-                <div id="slotsContainer" class="slots-grid"></div>
-                <input type="hidden" name="selected_time" id="selectedTimeInput" required>
-            </div>
-            <button type="submit">تأكيد الحجز</button>
-        </form>
-    </div>
-
-    <script>
-        const subData = {{ dept.sub_sections|tojson|safe if dept.sub_sections else 'null' }};
-        const generalSlots = {{ dept.slots|tojson|safe if dept.slots else '[]' }};
+    <form method="POST" action="/booking/{{ dept_id }}">
+        <div class="form-group">
+            <label>اسم المتدرب:</label>
+            <input type="text" name="name" class="form-control" required placeholder="أدخل اسمك الثلاثي">
+        </div>
         
-        function renderSlots() {
-            const container = document.getElementById('slotsContainer');
-            const hiddenInput = document.getElementById('selectedTimeInput');
-            container.innerHTML = ''; hiddenInput.value = '';
-            let slots = subData ? (subData[document.getElementById('manager_select').value] || []) : generalSlots;
+        <div class="form-group">
+            <label>الرقم الأكاديمي:</label>
+            <input type="text" name="acad_id" class="form-control" required placeholder="أدخل الرقم الأكاديمي">
+        </div>
 
-            if (slots.length === 0) { container.innerHTML = '<p class="no-slots">لا توجد مواعيد متاحة.</p>'; return; }
+        {% if dept_id == '2' %}
+        <div class="form-group">
+            <label>تحديد القسم المختص:</label>
+            <select name="sub_dept" class="form-control" required>
+                <option value="">-- اختر رئيس القسم --</option>
+                <option value="رئيس قسم الحاسب">رئيس قسم الحاسب</option>
+                <option value="رئيس قسم الاتصالات">رئيس قسم الاتصالات</option>
+                <option value="رئيس قسم الإلكترونيات">رئيس قسم الإلكترونيات</option>
+                <option value="رئيس قسم المواد العامة">رئيس قسم المواد العامة</option>
+            </select>
+        </div>
+        {% endif %}
 
-            slots.forEach(slot => {
-                const div = document.createElement('div');
-                div.className = 'slot-card'; div.innerText = slot;
-                div.onclick = function() {
-                    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected'));
-                    div.classList.add('selected'); hiddenInput.value = slot;
-                };
-                container.appendChild(div);
-            });
-        }
-        if (!subData) renderSlots();
-    </script>
+        <div class="form-group">
+            <label>اختر الموعد المناسب:</label>
+            <input type="hidden" name="time" id="selected-time-input" required>
+            <div class="slots-container">
+                {% if dept_id == '1' %}
+                    <div class="slot-btn" onclick="selectTime(this, '08:00 ص')">08:00 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '08:30 ص')">08:30 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '09:00 ص')">09:00 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '09:30 ص')">09:30 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '10:00 ص')">10:00 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '10:30 ص')">10:30 ص</div>
+                {% elif dept_id == '2' %}
+                    <div class="slot-btn" onclick="selectTime(this, '09:00 ص')">09:00 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '09:30 ص')">09:30 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '10:00 ص')">10:00 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '10:30 ص')">10:30 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '11:00 ص')">11:00 ص</div>
+                {% else %}
+                    <div class="slot-btn" onclick="selectTime(this, '08:00 ص')">08:00 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '08:30 ص')">08:30 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '09:00 ص')">09:00 ص</div>
+                    <div class="slot-btn" onclick="selectTime(this, '09:30 ص')">09:30 ص</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">تأكيد الحجز</button>
+    </form>
+</div>
+
+<script>
+    function selectTime(button, timeValue) {
+        // إزالة التحديد عن بقية الأزرار
+        document.querySelectorAll('.slot-btn').forEach(btn => btn.classList.remove('selected'));
+        // إضافة التحديد للزر المختار
+        button.classList.add('selected');
+        // حفظ الوقت في الحقل المخفي لإرساله للسيرفر
+        document.getElementById('selected-time-input').value = timeValue;
+    }
+</script>
+
 </body>
 </html>
