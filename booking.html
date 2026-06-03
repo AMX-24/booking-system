@@ -1,70 +1,27 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>تأكيد الحجز</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
-        .form-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 420px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
-        
-        .slots-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-        .slot-btn { background: #e8f5e9; color: #2d6a4f; border: 2px solid #2d6a4f; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: all 0.2s; text-align: center; }
-        .slot-btn:hover { background: #c8e6c9; }
+<form method="POST" action="/booking/{{ dept_id }}">
+    <div class="form-group">
+        <label>اسم المتدرب / الثلاثي:</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
     
-        .slots-container input[type="radio"] { display: none; }
-        .slots-container input[type="radio"]:checked + .slot-btn { background: #2d6a4f; color: white; border-color: #1b4332; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-
-        button.submit-btn { width: 100%; padding: 14px; background: #2d6a4f; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 15px; }
-        button.submit-btn:hover { background: #1b4332; }
-        .info { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; color: #555; font-weight: bold; }
-        .title-slots { text-align: right; font-size: 14px; color: #444; margin-top: 15px; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div class="form-card">
-    <h2>استكمال بيانات الحجز</h2>
-    
-    <div class="info">
-        الجهة: {{ department.name }}
-        {% if sub_dept %}
-            <br> القسم الفرعي: {{ sub_dept }}
-        {% endif %}
+    <div class="form-group">
+        <label>الرقم الأكاديمي:</label>
+        <input type="text" name="acad_id" class="form-control" required>
     </div>
 
-    <form action="{{ url_for('booking', dept_id=dept_id) }}" method="POST">
-        {% if sub_dept %}
-            <input type="hidden" name="sub_dept" value="{{ sub_dept }}">
-        {% endif %}
-        
-        <input type="text" name="name" placeholder="اسمك الثلاثي" required>
-        <input type="text" name="acad_id" placeholder="الرقم الأكاديمي" required>
-        
-        <div class="title-slots">اختر الوقت المناسب:</div>
-        <div class="slots-container">
-            {% if sub_dept %}
-                {% for slot in department.sub_sections[sub_dept] %}
-                    <label>
-                        <input type="radio" name="time" value="{{ slot }}" required>
-                        <div class="slot-btn">{{ slot }}</div>
-                    </label>
-                {% endfor %}
-            {% else %}
-                {% for slot in department.slots %}
-                    <label>
-                        <input type="radio" name="time" value="{{ slot }}" required>
-                        <div class="slot-btn">{{ slot }}</div>
-                    </label>
-                {% endfor %}
-            {% endif %}
+    <div class="form-group">
+        <label>اختر الوقت المناسب:</label>
+        <div class="slots-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+            {% for slot in slots %}
+                <label class="slot-option" style="border: 1px solid #2e7d32; padding: 10px; border-radius: 5px; text-align: center; background-color: #e8f5e9; cursor: pointer;">
+                    <input type="radio" name="time" value="{{ slot }}" required style="margin-right: 5px;">
+                    {{ slot }}
+                </label>
+            {% endfor %}
         </div>
-        
-        <button type="submit" class="submit-btn">تأكيد الحجز</button>
-    </form>
-    <br>
-    <a href="/" style="color: #888; text-decoration: none; font-size: 14px;">إلغاء والعودة للرئيسية</a>
-</div>
+    </div>
 
-</body>
-</html>
+    <button type="submit" style="background-color: #2e7d32; color: white; width: 100%; padding: 12px; border: none; border-radius: 5px; font-size: 16px; margin-top: 20px; cursor: pointer;">
+        تأكيد الحجز
+    </button>
+</form>
