@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-# مصفوفة البيانات الثابتة لكل الأقسام (محدثة لمنع أي خطأ سيرفر)
+# مصفوفة البيانات المتكاملة والمطابقة للنسخة المحلية
 def get_fresh_data():
     return {
         "1": {
@@ -40,25 +40,23 @@ def booking(dept_id):
     if not department:
         return redirect(url_for('index'))
 
-    # جلب المواعيد الخاصة بهذا القسم المحدد
-    slots = department.get('slots', [])
-
     if request.method == 'POST':
         name = request.form.get('name', '')
         acad_id = request.form.get('acad_id', '')
+        sub_dept = request.form.get('sub_dept', '')
         time = request.form.get('time', '')
         
-        # حفظ الحجز بشكل آمن لمنع كراش السيرفر (Internal Server Error)
         bookings.append({
             'dept_id': str(dept_id),
+            'sub_dept': sub_dept,
             'name': name,
             'acad_id': acad_id,
             'time': time
         })
         return redirect(url_for('index'))
 
-    # إرسال البيانات بشكل صحيح لملف booking.html الموحد
-    return render_template('booking.html', department=department, dept_id=dept_id, slots=slots)
+    # استدعاء ملف select_time.html ليعمل تماماً مثل النسخة المحلية المضمونة
+    return render_template('select_time.html', department=department, dept_id=dept_id)
 
 if __name__ == '__main__':
     app.run(debug=True)
