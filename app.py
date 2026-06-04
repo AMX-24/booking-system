@@ -14,14 +14,14 @@ DEPARTMENTS_DATA = {
         "slots": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"]
     },
     "3": {
-        "name": "أعضاء الهيئة التدريبية",
+        "name": "عضو هيئة تدريس",
         "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص"]
     }
 }
 
 bookings = []
 
-# صفحة الواجهة الرئيسية المدمجة (index.html بديلة)
+# صفحة الواجهة الرئيسية المدمجة (بديلة لملف index.html المفقود)
 INDEX_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -48,7 +48,7 @@ INDEX_TEMPLATE = """
 </html>
 """
 
-# صفحة استكمال البيانات المدمجة (booking.html و select_time.html بديلة)
+# صفحة استكمال البيانات الذكية المدمجة بدون ملفات خارجية تالفة
 BOOKING_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -56,7 +56,7 @@ BOOKING_TEMPLATE = """
     <meta charset="UTF-8">
     <title>استكمال بيانات الحجز</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f6f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        body { font-family: sans-serif; background-color: #f4f6f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
         .booking-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 480px; }
         h2 { text-align: center; color: #333; margin-top: 0; }
         .dept-title { background-color: #f0f0f0; padding: 10px; text-align: center; border-radius: 8px; font-weight: bold; margin-bottom: 20px; }
@@ -100,6 +100,26 @@ BOOKING_TEMPLATE = """
         </div>
         {% endif %}
 
+        {% if dept_id == '3' %}
+        <div class="form-group">
+            <label>اختر القسم المختص:</label>
+            <select id="faculty-dept" name="sub_dept" class="form-control" required onchange="updateDoctors()">
+                <option value="">-- اختر القسم --</option>
+                <option value="قسم الحاسب">قسم الحاسب</option>
+                <option value="قسم الاتصالات">قسم الاتصالات</option>
+                <option value="قسم الإلكترونيات">قسم الإلكترونيات</option>
+                <option value="قسم المواد العامة">قسم المواد العامة</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>اختر اسم الدكتور / المدرب:</label>
+            <select id="doctor-select" name="doctor_name" class="form-control" required>
+                <option value="">-- يرجى اختيار القسم أولاً --</option>
+            </select>
+        </div>
+        {% endif %}
+
         <div class="form-group">
             <label>اختر الوقت المناسب:</label>
             <div class="slots-grid">
@@ -116,6 +136,64 @@ BOOKING_TEMPLATE = """
         <a href="/" class="btn-cancel">إلغاء والعودة للرئيسية</a>
     </form>
 </div>
+
+<script>
+function updateDoctors() {
+    const deptSelect = document.getElementById('faculty-dept');
+    const docSelect = document.getElementById('doctor-select');
+    const selectedDept = deptSelect.value;
+    
+    docSelect.innerHTML = '<option value="">-- اختر اسم الدكتور --</option>';
+    
+    const doctors = {
+        "قسم الحاسب": [
+            "ابراهيم العديني", "أحمد كليبي", "احمد العمري", "أحمد رشاد", 
+            "احمد عنقاوي", "أيمن العبيدي", "بندر الثقفي", "بندر محمد العويضي", 
+            "ثامر عطيه الغامدي", "جمعان الزهراني", "جميل الخليفي", "حسن المالكي", 
+            "حسين احمد باداود", "حمد الشهابي", "حامد الشيخ", "حامد الشمراني", 
+            "خالد الغامدي", "خليل ال صمع", "سالم الزهراني", "سلطان ال مغلف", 
+            "سلمان الشهري", "صالح الغامدي", "عادل الغامدي", "عبدالرحمن المنتشري", 
+            "عبدالرحمن الحربي", "عبدالله الحازمي", "عبدالله السهيمي", "عبدالله الشهري", 
+            "عبدالله ناصر", "عبدالهادي المالكي", "عبيد الحربي", "فايز شافعي", 
+            "فهد السميري", "محمد العرياني", "محمد الشريف", "منصور الزهراني", 
+            "موسى المحمادي", "وليد الغامدي", "ياسر الحبشان"
+        ],
+        "قسم الاتصالات": [
+            "احمد البار", "امين مشدق", "إيمن صائغ", "بدر الجهني", 
+            "رضا الجهني", "سعيد ظافر", "سامي قرامي", "سعيد عبدالرحيم", 
+            "عمر الصايغ", "عيد الحربي", "عيسى السقاف", "ماجد السريحي", 
+            "ماهر نحاس", "محمد العلياني", "محمد سلامي", "منصور الحازمي", 
+            "وليد جمعة", "ياسر مياجي"
+        ],
+        "قسم الإلكترونيات": [
+            "اسماعيل فاضل", "أنس كرسوم", "أيمن كيفي", "أيمن بنجر", 
+            "جابر يماني", "جميل الجهني", "حاتم الردادي", "حاتم الزهراني", 
+            "حسن بادويل", "حسين المكرمي", "خالد حجازي", "رمزي مهدي", 
+            "سعود المطيري", "سعود الغامدي", "سعود خوتنلي", "سعيد ابو عسيس", 
+            "سلطان العتيبي", "صالح الشهري", "طارق الغامدي", "ظافر الشهري", 
+            "عبدالرحمن الغامدي", "عبدالله غرسان", "عواض الشهري", "فايز الشهري", 
+            "فهد العامودي", "فوزي جلالة", "محمد صباغ", "محمد الرفاعي", 
+            "محمد عشري", "هيثم نايته", "يزيد الغامدي"
+        ],
+        "قسم المواد العامة": [
+            "بندر العمودي", "تركي الغامدي", "تركي العتيبي", "خالد السلمي", 
+            "خالد الزهراني", "رامي حكمي", "سامر فطاني", "عبدالعزيز السلمي", 
+            "عبدالله القحطاني", "عبدالله البشري", "عبدالله الرفاعي", "علي الغامدي", 
+            "علي الشهري", "عمر رزق الله", "فهيد المطيري", "فواز الحربي", 
+            "فيصل الحارثي", "محمد ناجي", "منصور الشهراني", "هشام ابو الجدايل"
+        ]
+    };
+    
+    if (selectedDept && doctors[selectedDept]) {
+        doctors[selectedDept].forEach(function(docName) {
+            const option = document.createElement('option');
+            option.value = docName;
+            option.text = docName;
+            docSelect.appendChild(option);
+        });
+    }
+}
+</script>
 </body>
 </html>
 """
@@ -134,11 +212,13 @@ def booking(dept_id):
         name = request.form.get('name', '')
         acad_id = request.form.get('acad_id', '')
         sub_dept = request.form.get('sub_dept', '')
+        doctor_name = request.form.get('doctor_name', '')
         time = request.form.get('time', '')
         
         bookings.append({
             'dept_id': str(dept_id),
             'sub_dept': sub_dept,
+            'doctor_name': doctor_name,
             'name': name,
             'acad_id': acad_id,
             'time': time
