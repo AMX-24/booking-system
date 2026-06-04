@@ -19,7 +19,7 @@ DEPARTMENTS_DATA = {
     }
 }
 
-# مصفوفة لتخزين الحجوزات المؤكدة في الذاكرة
+# مصفوفة لتخزين الحجوزات المؤكدة في الذاكرة (ستظهر في لوحة التحكم)
 bookings = []
 
 # صفحة الواجهة الرئيسية المدمجة
@@ -35,6 +35,7 @@ INDEX_TEMPLATE = """
         h1 { color: #1e4620; }
         .btn-dept { display: block; background-color: #2e7d32; color: white; padding: 15px; margin: 15px 0; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 18px; transition: 0.2s; }
         .btn-dept:hover { background-color: #153317; }
+        .admin-link { display: inline-block; margin-top: 20px; color: #666; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -44,6 +45,8 @@ INDEX_TEMPLATE = """
         {% for id, dept in departments.items() %}
             <a href="/booking/{{ id }}" class="btn-dept">{{ dept.name }}</a>
         {% endfor %}
+        <br>
+        <a href="/admin" class="admin-link">📊 دخول لوحة التحكم (الإدارة)</a>
     </div>
 </body>
 </html>
@@ -144,7 +147,6 @@ BOOKING_TEMPLATE = """
 </div>
 
 <script>
-// مصفوفة الدكاترة الكاملة والنهائية لكل الأقسام
 const doctorsData = {
     "قسم الحاسب": [
         "ابراهيم العديني", "أحمد كليبي", "احمد العمري", "أحمد رشاد", 
@@ -239,11 +241,77 @@ function fetchAvailableSlots() {
 </html>
 """
 
+# صفحة لوحة تحكم الإدارة المدمجة الجديدة تظهر عند فتح /admin
+ADMIN_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة التحكم - إدارة الحجوزات</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f6f4; padding: 30px; }
+        .admin-container { background: white; padding: 30px; border-radius: 15px; max-width: 1000px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #1e4620; text-align: center; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background-color: #2e7d32; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f1f1; }
+        .btn-back { display: inline-block; background-color: #666; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-bottom: 20px; }
+        .no-data { text-align: center; color: #999; font-style: italic; padding: 30px; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <a href="/" class="btn-back">⬅️ العودة للرئيسية</a>
+        <h1>📊 لوحة تحكم إدارة المواعيد</h1>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم المتدرب</th>
+                    <th>الرقم الأكاديمي</th>
+                    <th>الجهة الرئيسية</th>
+                    <th>القسم المختص / الإدارة</th>
+                    <th>اسم الدكتور / المدرب</th>
+                    <th>الوقت المحجوز</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if bookings %}
+                    {% for b in bookings %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><strong>{{ b.name }}</strong></td>
+                            <td>{{ b.acad_id }}</td>
+                            <td>{{ b.main_dept_name }}</td>
+                            <td>{{ b.sub_dept if b.sub_dept else '-' }}</td>
+                            <td>{{ b.doctor_name if b.doctor_name else '-' }}</td>
+                            <td><span style="background-color: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 5px; font-weight: bold;">{{ b.time }}</span></td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="no-data">لا توجد أي حجوزات مسجلة حتى الآن.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
+
 @app.route('/')
 def index():
     return render_template_string(INDEX_TEMPLATE, departments=DEPARTMENTS_DATA)
 
-# الـ API بعد إصلاحه تماماً ليدعم تسليم المصفوفات باللغة العربية بشكل صحيح 100%
+# مسار صفحة الـ Admin الجديد ليعرض الجدول أمام المناقشين
+@app.route('/admin')
+def admin_panel():
+    return render_template_string(ADMIN_TEMPLATE, bookings=bookings)
+
 @app.route('/api/slots')
 def get_slots_api():
     dept_id = request.args.get('dept_id', '')
@@ -255,7 +323,6 @@ def get_slots_api():
         
     all_slots = department.get('slots', [])
     
-    # تصفية الحجوزات الخاصة بهذا الشخص فقط
     booked_slots = [
         b['time'] for b in bookings 
         if b['dept_id'] == str(dept_id) and (b['doctor_name'] == target or b['sub_dept'] == target)
@@ -279,6 +346,7 @@ def booking(dept_id):
         
         bookings.append({
             'dept_id': str(dept_id),
+            'main_dept_name': department['name'],
             'sub_dept': sub_dept if sub_dept else '',
             'doctor_name': doctor_name if doctor_name else '',
             'name': name,
