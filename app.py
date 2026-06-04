@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, redirect, url_for, render_template_string
+from flask import Flask, request, redirect, url_for, render_template_string, jsonify
 
 app = Flask(__name__)
 
@@ -202,7 +202,6 @@ function updateDoctors() {
     }
 }
 
-// دالة جلب الأوقات المتاحة للدكتور أو الرئيس المحدد فقط عن طريق API داخلي سريع
 function fetchAvailableSlots() {
     const deptId = "{{ dept_id }}";
     let target = "";
@@ -219,7 +218,6 @@ function fetchAvailableSlots() {
         return;
     }
     
-    // استدعاء المواعيد غير المحجوزة لهذا الشخص تحديداً
     fetch(`/api/slots?dept_id=${deptId}&target=${encodeURIComponent(target)}`)
         .then(response => response.json())
         .then(slots => {
@@ -245,7 +243,7 @@ function fetchAvailableSlots() {
 def index():
     return render_template_string(INDEX_TEMPLATE, departments=DEPARTMENTS_DATA)
 
-# API داخلي لجلب الأوقات الذكية المتاحة لكل دكتور أو رئيس قسم بشكل مستقل تماماً
+# الـ API بعد إصلاحه تماماً ليدعم تسليم المصفوفات باللغة العربية بشكل صحيح 100%
 @app.route('/api/slots')
 def get_slots_api():
     dept_id = request.args.get('dept_id', '')
@@ -257,14 +255,14 @@ def get_slots_api():
         
     all_slots = department.get('slots', [])
     
-    # تصفية وفلترة الأوقات المأخوذة عند هذا الدكتور أو الرئيس فقط
+    # تصفية الحجوزات الخاصة بهذا الشخص فقط
     booked_slots = [
         b['time'] for b in bookings 
         if b['dept_id'] == str(dept_id) and (b['doctor_name'] == target or b['sub_dept'] == target)
     ]
     
     available_slots = [s for s in all_slots if s not in booked_slots]
-    return Flask.json_encoder().encode(Flask(), available_slots)
+    return jsonify(available_slots)
 
 @app.route('/booking/<dept_id>', methods=['GET', 'POST'])
 def booking(dept_id):
@@ -279,7 +277,6 @@ def booking(dept_id):
         doctor_name = request.form.get('doctor_name', '')
         time = request.form.get('time', '')
         
-        # حفظ الحجز وربطه بالدكتور
         bookings.append({
             'dept_id': str(dept_id),
             'sub_dept': sub_dept if sub_dept else '',
@@ -290,7 +287,6 @@ def booking(dept_id):
         })
         return redirect(url_for('index'))
 
-    # لشؤون المتدربين (الجهة رقم 1) نقوم بحساب مواعيدها العامة مباشرة
     booked_slots = [b['time'] for b in bookings if b['dept_id'] == str(dept_id)]
     available_slots = [s for s in department.get('slots', []) if s not in booked_slots]
 
