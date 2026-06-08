@@ -4,41 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>طلب حجز موعد - بوابة الحجز</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- مكتبة ستايل التقويم الاحترافي Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <!-- ثيم أخضر متناسق مع التصميم للتقويم -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 
     <style>
         body {
-            background-color: #f4f6f9;
+            background-image: linear-gradient(rgba(0, 32, 91, 0.4), rgba(0, 32, 91, 0.65)), url('https://lh3.googleusercontent.com/p/AF1QipN3D-eR3j9h6yS0Y4Z9fQo1S5k9b8f3C7W_Q1YF=s1600-w1000');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
         }
-        .booking-card {
-            background: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border: none;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+        .mini-logo {
+            max-width: 90px;
+            height: auto;
         }
         .card-title {
-            color: #198754;
+            color: #00205b;
             font-weight: bold;
         }
         .slot-btn {
-            min-width: 90px;
-            font-weight: 500;
+            min-width: 95px;
+            font-weight: 600;
+            border-radius: 8px;
         }
         .slot-btn.active {
-            background-color: #198754 !important;
+            background-color: #00205b !important;
+            border-color: #00205b !important;
             color: #fff !important;
         }
-        /* تحسين مظهر حقل التاريخ ليصبح قابلاً للضغط كزر احترافي */
         .flatpickr-input-custom {
             background-color: #fff !important;
             cursor: pointer;
+        }
+        .btn-navy {
+            background-color: #00205b;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-navy:hover {
+            background-color: #00153b;
+            color: white;
         }
     </style>
 </head>
@@ -46,11 +63,13 @@
 
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card booking-card p-4">
-                <h3 class="card-title text-center mb-4">طلب حجز موعد لدى: {{ entity_name }}</h3>
+        <div class="col-md-9">
+            <div class="card glass-card p-4">
+                <div class="text-center mb-3">
+                    <img src="{{ url_for('static', filename='logo.png') }}" onerror="this.src='https://i.imgur.com/W2h0N4U.png'" alt="CTI Logo" class="mini-logo">
+                    <h4 class="card-title mt-2">طلب حجز موعد لدى: {{ entity_name }}</h4>
+                </div>
                 
-                <!-- رسائل التنبيه والخطأ -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -66,19 +85,16 @@
                     <input type="hidden" name="booking_time" id="booking_time" value="">
 
                     <div class="row g-3">
-                        <!-- اسم المتدرب -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">اسم المتدرب ثلاثي:</label>
                             <input type="text" name="trainee_name" class="form-control" placeholder="أدخل اسمك هنا" required>
                         </div>
 
-                        <!-- الرقم التدريبي -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">الرقم التدريبي:</label>
                             <input type="text" name="trainee_id" class="form-control" placeholder="مثال: 442100000" required>
                         </div>
 
-                        <!-- القسم التعليمي -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">القسم التدريبي:</label>
                             <select name="department" id="department" class="form-select" required onchange="handleDeptChange()">
@@ -89,7 +105,6 @@
                             </select>
                         </div>
 
-                        <!-- قائمة أسماء الدكاترة/المهندسين -->
                         <div class="col-md-6" id="doctor_section" style="display: none;">
                             <label class="form-label fw-bold">اختر الدكتور / المهندس:</label>
                             <select name="doctor_name" id="doctor_name" class="form-select" onchange="fetchAvailableSlots()">
@@ -97,25 +112,22 @@
                             </select>
                         </div>
 
-                        <!-- تاريخ الحجز المطور بدعم الروزنامة الانيقة -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">تاريخ الحجز:</label>
                             <input type="text" name="booking_date" id="booking_date" class="form-control flatpickr-input-custom" placeholder="اضغط لاختيار التاريخ من التقويم" required>
                         </div>
                     </div>
 
-                    <!-- منصة عرض المواعيد المتاحة -->
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6 class="fw-bold mb-3">⏱️ المواعيد المتاحة للفرز الفوري:</h6>
+                    <div class="mt-4 p-3 bg-light rounded shadow-sm">
+                        <h6 class="fw-bold mb-3" style="color: #00205b;">⏱️ المواعيد المتاحة للفرز الفوري:</h6>
                         <div id="slots_container" class="text-center py-2">
                             <p class="text-muted small m-0">الرجاء اختيار القسم وتحديد التاريخ أولاً لعرض الأوقات المتاحة.</p>
                         </div>
                     </div>
 
-                    <!-- أزرار التحكم -->
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{{ url_for('home') }}" class="btn btn-secondary px-4">رجوع للرئيسية</a>
-                        <button type="submit" class="btn btn-success px-4 fw-bold">تأكيد الحجز النهائي</button>
+                        <button type="submit" class="btn btn-navy px-4">تأكيد الحجز النهائي</button>
                     </div>
                 </form>
             </div>
@@ -123,7 +135,6 @@
     </div>
 </div>
 
-<!-- مكتبة الجافا سكربت للتقويم واللغة العربية -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
 
@@ -131,14 +142,13 @@
 const doctorsByDept = {{ doctors_by_dept | tojson }};
 const entityId = document.getElementById('entity_id').value;
 
-// تفعيل التقويم الاحترافي ومنع المشاكل اللغوية للمتصفح
 flatpickr("#booking_date", {
-    locale: "ar",                  // لغة التقويم عربية بالكامل
-    dateFormat: "Y-m-d",           // نفس الصيغة التي يتوقعها سيرفر بايثون للـ SQLite
-    minDate: "today",              // منع حجز تواريخ قديمة في الماضي
-    disableMobile: "true",         // إجبار ظهور الروزنامة الجميلة حتى على الهواتف
+    locale: "ar",
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    disableMobile: "true",
     onChange: function(selectedDates, dateStr, instance) {
-        fetchAvailableSlots();     // جلب الأوقات فوراً عند اختيار التاريخ
+        fetchAvailableSlots();
     }
 });
 
@@ -182,7 +192,7 @@ function fetchAvailableSlots() {
         return;
     }
     
-    container.innerHTML = '<div class="spinner-border text-success spinner-border-sm" role="status"></div> جاري فرز الأوقات غير المحجوزة...';
+    container.innerHTML = '<div class="spinner-border text-primary spinner-border-sm" role="status"></div> جاري فرز الأوقات غير المحجوزة...';
     
     const formData = new FormData();
     formData.append('entity_id', entityId);
@@ -200,7 +210,7 @@ function fetchAvailableSlots() {
         document.getElementById('booking_time').value = "";
     })
     .catch(err => {
-        container.innerHTML = '<p class="text-danger small m-0">حدث خطأ أثناء جلب البيانات، يرجى المحاولة لاحقاً.</p>';
+        container.innerHTML = '<p class="text-danger small m-0">حدث خطأ أثناء جلب البيانات.</p>';
     });
 }
 
