@@ -2,22 +2,79 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بوابة حجز المواعيد - الكلية التقنية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة حجز المواعيد الإلكترونية</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; padding: 50px; margin: 0; }
-        .container { background: white; max-width: 600px; margin: auto; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .dept-btn { display: block; background: #2d6a4f; color: white; padding: 18px; margin: 15px 0; border-radius: 12px; text-decoration: none; font-size: 20px; font-weight: bold; transition: 0.3s; }
-        .dept-btn:hover { background: #1b4332; transform: translateY(-3px); }
-        h1 { color: #1a3a3a; margin-bottom: 30px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+        }
+        h1 {
+            color: #1a3a2a;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            text-decoration: none;
+            display: block;
+        }
+        .btn:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <img src="logo.png" width="160" style="margin-bottom: 20px;">
-        <h1>نظام الاستعلام عن المواعيد</h1>
-        {% for id, dept in departments.items() %}
-            <a href="{{ url_for('booking', dept_id=id) }}" class="dept-btn">{{ dept.name }}</a>
-        {% endfor %}
+        <h1>بوابة حجز المواعيد الإلكترونية</h1>
+        <div class="subtitle">الرجاء اختيار الجهة المطلوبة لاستكمال الحجز:</div>
+        
+        <div class="btn-group">
+            <!-- الأزرار الرئيسية الثلاثة المتاحة للجمهور والمستخدمين -->
+            <a href="/department/trainee_affairs" class="btn">شؤون المتدربين</a>
+            <a href="/department/heads" class="btn">رئيس القسم</a>
+            <a href="/department/faculty" class="btn">عضو هيئة تدريس</a>
+        </div>
+        
+        <!-- [ملاحظة تخرج]: تم هنا حذف رابط "دخول لوحة التحكم (الإدارة)" نهائياً لضمان الخصوصية والأمان الإداري -->
     </div>
+
 </body>
 </html>
