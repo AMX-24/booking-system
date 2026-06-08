@@ -2,6 +2,8 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import sqlite3
 from datetime import datetime
+# استيراد مكتبة التشفير الآمنة لـ Werkzeug
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'cti_booking_secret_key_2026')
@@ -32,6 +34,7 @@ def init_db():
         )
     ''')
     
+    # جدول المستخدمين (الإدارة)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,10 +43,12 @@ def init_db():
         )
     ''')
     
-    try:
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', 'admin123'))
-    except sqlite3.IntegrityError:
-        pass
+    # فحص وإنشاء حساب الأدمن الافتراضي بكلمة مرور مشفرة بشكل آمن (Hash)
+    cursor.execute("SELECT * FROM users WHERE username = 'admin'")
+    if not cursor.fetchone():
+        # تشفير كلمة المرور 'admin123' لحمايتها تماماً في قاعدة البيانات
+        hashed_password = generate_password_hash('admin123')
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', hashed_password))
         
     conn.commit()
     conn.close()
@@ -61,7 +66,7 @@ DEPARTMENTS = {
     'general': 'قسم المواد العامة'
 }
 
-# المكتبة الكاملة والمقفلة لأسماء أعضاء هيئة التدريس لكل الأقسام الأربعة
+# المكتبة المعتمدة لأسماء أعضاء هيئة التدريس لكل الأقسام الأربعة
 DOCTORS_BY_DEPT = {
     'computer': [
         'إبراهيم العديني', 'أحمد كليبي', 'احمد العمري', 'أحمد رشاد', 'احمد عنقاوي',
@@ -215,7 +220,7 @@ def success():
         return redirect(url_for('home'))
     return render_template('success.html', info=info)
 
-# --- نظام لوحة تحكم الإدارة ---
+# --- نظام لوحة تحكم الإدارة الآمن بعد تشفير الباسورد ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -224,11 +229,12 @@ def admin_login():
         
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = cursor.fetchone()
         conn.close()
         
-        if user:
+        # مطابقة كلمة المرور المدخلة بالتشفير المحمي المخزن في الداتابيز
+        if user and check_password_hash(user['password'], password):
             session['admin_logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:
@@ -267,6 +273,7 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
 
+# بناء قاعدة البيانات وتطبيق التشفير تلقائياً عند أول تشغيل
 init_db()
 
 if __name__ == '__main__':
