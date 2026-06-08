@@ -2,74 +2,155 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>اختيار موعد الحجز</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديد موعد الحجز - {{ entity_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; padding: 30px; margin: 0; }
-        .container { background: white; max-width: 700px; margin: auto; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .form-group { text-align: right; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 15px; }
-        .slot-card { padding: 15px; border: 2px solid #2d6a4f; border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: bold; color: #2d6a4f; background: white; }
-        .slot-card:hover { background: #e8f5e9; transform: translateY(-2px); }
-        .slot-card.selected { background: #2d6a4f; color: white; }
-        
-        button { width: 100%; background: #2d6a4f; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; margin-top: 30px; font-weight: bold; }
-        .no-slots { color: #dc2626; font-weight: bold; margin: 20px 0; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #a3bded 0%, #f4f7f6 100%);
+            min-height: 100vh;
+            padding: 40px 10px;
+        }
+        .booking-card {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 20px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+            padding: 35px;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+        .header-title {
+            color: #2d6a4f;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .slot-btn {
+            min-width: 100px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .slot-btn.selected {
+            background-color: #2d6a4f !important;
+            color: white !important;
+            border-color: #2d6a4f !important;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>حجز موعد: {{ dept.name }}</h2>
-        <form action="{{ url_for('reserve', dept_id=dept_id) }}" method="POST" id="bookingForm">
-            <div class="form-group"><label>اسم المتدرب:</label><input type="text" name="student_name" required></div>
-            <div class="form-group"><label>الرقم الأكاديمي:</label><input type="text" name="academic_id" required></div>
 
-            {% if dept.sub_sections %}
-            <div class="form-group">
-                <label>تحديد القسم المختص:</label>
-                <select name="manager_name" id="manager_select" required onchange="renderSlots()">
-                    <option value="" disabled selected>-- اختر رئيس القسم --</option>
-                    {% for manager in dept.sub_sections.keys() %}
-                        <option value="{{ manager }}">{{ manager }}</option>
+<div class="booking-card">
+    <h3 class="header-title fw-bold text-center">طلب حجز موعد لدى: <span class="text-dark">{{ entity_name }}</span></h3>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} text-center" role="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('book') }}" method="POST" id="mainBookingForm">
+        <input type="hidden" name="entity_id" id="entity_id" value="{{ entity_id }}">
+        <input type="hidden" name="booking_time" id="selected_time" value="">
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold text-secondary">اسم المتدرب ثلاثي:</label>
+                <input type="text" name="trainee_name" class="form-control form-control-lg" required placeholder="أدخل اسمك هنا">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold text-secondary">الرقم التدريبي:</label>
+                <input type="number" name="trainee_id" class="form-control form-control-lg" required placeholder="مثال: 442100000">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <label class="form-label fw-bold text-secondary">القسم التدريبي:</label>
+                <select name="department" id="department" class="form-select form-control-lg" required onchange="fetchAvailableSlots()">
+                    <option value="" disabled selected>اختر قسمك التعليمي</option>
+                    {% for id, name in departments.items() %}
+                        <option value="{{ id }}">{{ name }}</option>
                     {% endfor %}
                 </select>
             </div>
-            {% endif %}
-
-            <div class="form-group">
-                <label>اختر الموعد المناسب:</label>
-                <div id="slotsContainer" class="slots-grid"></div>
-                <input type="hidden" name="selected_time" id="selectedTimeInput" required>
+            <div class="col-md-6 mb-4">
+                <label class="form-label fw-bold text-secondary">تاريخ الحجز:</label>
+                <input type="date" name="booking_date" id="booking_date" class="form-control form-control-lg" required onchange="fetchAvailableSlots()">
             </div>
-            <button type="submit">تأكيد الحجز</button>
-        </form>
-    </div>
+        </div>
 
-    <script>
-        const subData = {{ dept.sub_sections|tojson|safe if dept.sub_sections else 'null' }};
-        const generalSlots = {{ dept.slots|tojson|safe if dept.slots else '[]' }};
+        <div class="mb-4">
+            <label class="form-label d-block fw-bold text-dark mb-3 text-center">⏱️ المواعيد المتاحة للفرز الفوري:</label>
+            <div id="slots_container" class="border rounded p-3 text-center bg-light">
+                <p class="text-muted m-0">الرجاء اختيار القسم وتحديد التاريخ أولاً لعرض الأوقات المتاحة.</p>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+            <a href="{{ url_for('home') }}" class="btn btn-light btn-lg px-4 border">رجوع للرئيسية</a>
+            <button type="submit" class="btn btn-success btn-lg px-5 fw-bold" style="background-color: #2d6a4f;">تأكيد الحجز النهائي</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // وضع حد أدنى للتاريخ ليكون من اليوم فصاعداً لحماية النظام
+    document.getElementById('booking_date').min = new Date().toISOString().split("T")[0];
+
+    function fetchAvailableSlots() {
+        const entityId = document.getElementById('entity_id').value;
+        const dept = document.getElementById('department').value;
+        const date = document.getElementById('booking_date').value;
+        const container = document.getElementById('slots_container');
+
+        if (!dept || !date) return;
+
+        container.innerHTML = '<div class="spinner-border text-success" role="status"><span class="visually-hidden">جاري الفرز...</span></div>';
+
+        const formData = new FormData();
+        formData.append('entity_id', entityId);
+        formData.append('department', dept);
+        formData.append('booking_date', date);
+
+        fetch('/get_available_slots', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+            document.getElementById('selected_time').value = ""; // تصفير الوقت القديم
+        })
+        .catch(error => {
+            container.innerHTML = '<p class="text-danger m-0">حدث خطأ أثناء تحميل البيانات، يرجى المحاولة لاحقاً.</p>';
+        });
+    }
+
+    function selectSlot(timeValue) {
+        document.getElementById('selected_time').value = timeValue;
         
-        function renderSlots() {
-            const container = document.getElementById('slotsContainer');
-            const hiddenInput = document.getElementById('selectedTimeInput');
-            container.innerHTML = ''; hiddenInput.value = '';
-            let slots = subData ? (subData[document.getElementById('manager_select').value] || []) : generalSlots;
+        // إعطاء مظهر تفاعلي للزر المختار وتلوينه باللون الداكن
+        const buttons = document.querySelectorAll('.slot-btn');
+        buttons.forEach(btn => {
+            if (btn.innerText.trim() === timeValue) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
 
-            if (slots.length === 0) { container.innerHTML = '<p class="no-slots">لا توجد مواعيد متاحة.</p>'; return; }
-
-            slots.forEach(slot => {
-                const div = document.createElement('div');
-                div.className = 'slot-card'; div.innerText = slot;
-                div.onclick = function() {
-                    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected'));
-                    div.classList.add('selected'); hiddenInput.value = slot;
-                };
-                container.appendChild(div);
-            });
+    document.getElementById('mainBookingForm').onsubmit = function() {
+        if (!document.getElementById('selected_time').value) {
+            alert('فضلاً قم باختيار وقت محدد من المواعيد المتاحة قبل المتابعة.');
+            return false;
         }
-        if (!subData) renderSlots();
-    </script>
+        return true;
+    };
+</script>
+
 </body>
 </html>
