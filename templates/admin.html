@@ -2,36 +2,132 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة الإدارة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - إدارة المواعيد</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 40px; text-align: center; }
-        .admin-container { background: white; max-width: 900px; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #1e293b; color: white; padding: 15px; }
-        td { padding: 15px; border-bottom: 1px solid #eee; }
-        .btn-group { margin-top: 30px; display: flex; justify-content: center; gap: 15px; }
-        .btn-reset { background: #dc2626; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; font-weight: bold; }
-        .btn-print { background: #475569; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        @media print { .btn-group { display: none; } }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7f6;
+            min-height: 100vh;
+        }
+        .navbar-admin {
+            background-color: #1b4332 !important;
+        }
+        .login-container {
+            min-height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            padding: 35px;
+            max-width: 450px;
+            width: 100%;
+        }
+        .table-responsive {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <h1>كشف الطلاب المسجلين</h1>
-        <table>
-            <thead><tr><th>الاسم</th><th>الرقم الأكاديمي</th><th>القسم</th><th>الوقت</th></tr></thead>
-            <tbody>
-                {% for b in bookings %}
-                <tr><td>{{ b.name }}</td><td>{{ b.id }}</td><td>{{ b.section }}</td><td>{{ b.time }}</td></tr>
-                {% else %}
-                <tr><td colspan="4" style="padding: 30px;">لا توجد حجوزات</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div class="btn-group">
-            <button onclick="window.print()" class="btn-print">طباعة الكشف</button>
-            <a href="{{ url_for('clear_data') }}" class="btn-reset" onclick="return confirm('حذف الكل؟')">تصفير البيانات</a>
+
+{% if login_mode %}
+<div class="container login-container">
+    <div class="login-card">
+        <h3 class="fw-bold text-center text-dark mb-4">🔐 دخول الإدارة</h3>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} text-center py-2" role="alert">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('admin_login') }}" method="POST">
+            <div class="mb-3">
+                <label class="form-label fw-bold">اسم مستخدم المسؤول:</label>
+                <input type="text" name="username" class="form-control form-control-lg" required placeholder="admin">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold">كلمة المرور السريّة:</label>
+                <input type="password" name="password" class="form-control form-control-lg" required placeholder="••••••••">
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-lg fw-bold" style="background-color: #2d6a4f;">دخول لوحة التحكم</button>
+                <a href="{{ url_for('home') }}" class="btn btn-light border btn-md text-secondary">رجوع للبوابة الإلكترونية</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% else %}
+<nav class="navbar navbar-dark navbar-admin shadow-sm">
+    <div class="container">
+        <span class="navbar-brand fw-bold mb-0 h1">📊 لوحة مراقبة وتنظيم حجوزات المتدربين</span>
+        <div class="d-flex">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-light me-2 btn-sm px-3" target="_blank">رؤية الموقع للمتدربين</a>
+            <a href="{{ url_for('admin_logout') }}" class="btn btn-danger btn-sm px-3 fw-bold">تسجيل الخروج</a>
         </div>
     </div>
+</nav>
+
+<div class="container my-5">
+    <h3 class="fw-bold mb-4 text-dark text-start">📋 الحجوزات النشطة الحالية بالنظام:</h3>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} text-center" role="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="table-responsive">
+        {% if not bookings %}
+            <p class="text-muted text-center my-4">لا توجد أي حجوزات مسجلة بالنظام حتى هذه اللحظة.</p>
+        {% else %}
+            <table class="table table-hover table-striped align-middle text-start">
+                <thead class="table-dark" style="background-color: #1b4332;">
+                    <tr>
+                        <th>رقم الحجز</th>
+                        <th>اسم المتدرب</th>
+                        <th>الرقم التدريبي</th>
+                        <th>القسم التعليمي</th>
+                        <th>الجهة المستهدفة</th>
+                        <th>تاريخ المراجعة</th>
+                        <th>الوقت المحجوز</th>
+                        <th>إجراءات النظام</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in bookings %}
+                    <tr>
+                        <td class="fw-bold text-secondary">#{{ row.id }}</td>
+                        <td class="fw-bold">{{ row.trainee_name }}</td>
+                        <td><code>{{ row.trainee_id }}</code></td>
+                        <td>{{ depts[row.department] if row.department in depts else row.department }}</td>
+                        <td><span class="badge bg-secondary px-2 py-1">{{ entities[row.target_entity] if row.target_entity in entities else row.target_entity }}</span></td>
+                        <td>{{ row.booking_date }}</td>
+                        <td><span class="badge bg-success px-2 py-1" style="background-color: #2d6a4f;">{{ row.booking_time }}</span></td>
+                        <td>
+                            <a href="{{ url_for('delete_booking', booking_id=row.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل أنت متأكد تماماً من إلغاء وحذف هذا الحجز نهائياً من قاعدة البيانات؟')">إلغاء الموعد</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 </body>
 </html>
