@@ -13,8 +13,8 @@
             padding: 0;
         }
         body {
-            /* تثبيت صورة مبنى الكلية كخلفية ممتدة بالكامل على كامل الشاشة خلف الكرت */
-            background-image: linear-gradient(rgba(0, 32, 91, 0.5), rgba(0, 32, 91, 0.75)), url('https://lh3.googleusercontent.com/p/AF1QipN3D-eR3j9h6yS0Y4Z9fQo1S5k9b8f3C7W_Q1YF=s1600-w1000');
+            /* تعديل جذري: تم استخدام رابط مباشر ومفتوح لصورة المبنى لتظهر بالخلفية مجبراً */
+            background-image: linear-gradient(rgba(0, 32, 91, 0.55), rgba(0, 32, 91, 0.75)), url('https://i.imgur.com/kS9wTbh.jpeg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -25,25 +25,24 @@
             justify-content: center;
         }
         .glass-card {
-            /* ستايل زجاجي شفاف ناصع وواضح يعزل الأزرار عن الخلفية */
-            background: rgba(255, 255, 255, 0.93) !important;
+            /* كرت شفاف أنيق يعزل المحتوى */
+            background: rgba(255, 255, 255, 0.94) !important;
             border-radius: 24px !important;
             border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45) !important;
             width: 100%;
-            max-width: 620px;
+            max-width: 600px;
         }
         .main-logo {
-            /* ضبط أبعاد شعار الكلية التقنية المرفوع ليظهر بشكل متناسق وممتاز */
-            max-width: 240px;
+            /* وضع شعار الكلية التقنية الرسمي بالمنتصف وحذف الصورة القديمة */
+            max-width: 250px;
             height: auto;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             display: block;
             margin-left: auto;
             margin-right: auto;
         }
         .btn-custom {
-            /* اللون الأزرق الملكي الكحلي المتناسق مع هوية الكلية ومبناها */
             background: linear-gradient(135deg, #003399, #0056b3);
             color: white;
             border: none;
@@ -62,7 +61,7 @@
         .system-title {
             color: #00205b;
             font-weight: 800;
-            font-size: 1.9rem;
+            font-size: 1.8rem;
         }
     </style>
 </head>
@@ -71,24 +70,24 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="card glass-card p-5 text-center shadow">
         
-        <!-- شعار الكلية التقنية الرسمي والحديث بالمنتصف بدلاً من صورة المبنى المصغرة -->
-        <img src="https://www.al-madina.com/uploads/images/2025/11/05/2485738.jpeg" alt="شعار كلية الاتصالات بجدة" class="main-logo">
+        <!-- هنا تم وضع شعار الكلية التقنية الرسمي والحديث بالمنتصف بدلاً من صورة المبنى -->
+        <img src="https://i.imgur.com/gK9uUsh.png" alt="شعار الكلية التقنية" class="main-logo">
         
         <h2 class="system-title mb-1">نظام حجز المواعيد الإلكتروني</h2>
         <p class="text-muted mb-4 fw-bold" style="font-size: 1.05rem;">كلية الاتصالات بجدة</p>
         
-        <hr class="mb-4" style="border-color: #003399; opacity: 0.25;">
+        <hr class="mb-4" style="border-color: #003399; opacity: 0.2;">
         
         <p class="text-dark fw-medium mb-4" style="font-size: 1rem;">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
         
-        <!-- أزرار اختيار الجهات للمتدربين -->
+        <!-- أزرار الاختيار الكحلية للمتدربين -->
         <div class="d-grid gap-3">
             {% for id, name in entities.items() %}
                 <a href="{{ url_for('select_time', entity_id=id) }}" class="btn btn-custom shadow-sm">{{ name }}</a>
             {% endfor %}
         </div>
         
-        <!-- تم حذف وإزالة رابط لوحة التحكم تماماً من هنا لحماية الخصوصية ومنع وصول المتدربين لها -->
+        <!-- تم التأكيد على إخفاء رابط لوحة التحكم نهائياً من هنا -->
 
     </div>
 </div>
