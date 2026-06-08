@@ -13,7 +13,6 @@
             padding: 0;
         }
         body {
-            /* خلفية زرقاء ملكية رسمية ونظيفة */
             background: linear-gradient(135deg, #0f2b5c, #1a428a);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -28,14 +27,11 @@
             width: 100%;
             max-width: 580px;
         }
-        .main-logo {
-            /* تنسيق حجم الشعار الجديد بالمنتصف */
-            max-width: 200px;
-            height: auto;
-            margin-bottom: 20px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
+        .institution-title {
+            color: #707070;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
         .btn-custom {
             background: linear-gradient(135deg, #0044cc, #0066ff);
@@ -56,7 +52,7 @@
         .system-title {
             color: #00205b;
             font-weight: 800;
-            font-size: 1.75rem;
+            font-size: 1.85rem;
         }
     </style>
 </head>
@@ -65,15 +61,15 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="card glass-card p-5 text-center shadow">
         
-        <!-- الشعار الرسمي الجديد بالصورة المباشرة والمضمونة -->
-        <img src="https://i.imgur.com/gK9uUsh.png" alt="شعار المؤسسة العامة للتدريب التقني والمهني" class="main-logo">
+        <!-- تم استبدال الصورة بنص رسمي أنيق ومنظم علوي -->
+        <div class="institution-title mb-3">المؤسسة العامة للتدريب التقني والمهني</div>
         
         <h2 class="system-title mb-1">نظام حجز المواعيد الإلكتروني</h2>
         <p class="text-muted mb-4 fw-bold" style="font-size: 1rem;">كلية الاتصالات بجدة</p>
         
         <hr class="mb-4" style="border-color: #0044cc; opacity: 0.15;">
         
-        <p class="text-dark fw-medium mb-4" style="font-size: 0.95rem;">فضلاً, اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
+        <p class="text-dark fw-medium mb-4" style="font-size: 0.95rem;">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
         
         <div class="d-grid gap-3">
             {% for id, name in entities.items() %}
