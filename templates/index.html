@@ -13,7 +13,7 @@
             padding: 0;
         }
         body {
-            /* تعديل جذري: تم استخدام رابط مباشر ومفتوح لصورة المبنى لتظهر بالخلفية مجبراً */
+            /* وضع صورة مبنى الكلية كخلفية ممتدة على كامل الشاشة */
             background-image: linear-gradient(rgba(0, 32, 91, 0.55), rgba(0, 32, 91, 0.75)), url('https://i.imgur.com/kS9wTbh.jpeg');
             background-size: cover;
             background-position: center;
@@ -34,7 +34,7 @@
             max-width: 600px;
         }
         .main-logo {
-            /* وضع شعار الكلية التقنية الرسمي بالمنتصف وحذف الصورة القديمة */
+            /* ضبط أبعاد الشعار ليظهر بشكل متناسق وممتاز بالمنتصف */
             max-width: 250px;
             height: auto;
             margin-bottom: 20px;
@@ -70,8 +70,8 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="card glass-card p-5 text-center shadow">
         
-        <!-- هنا تم وضع شعار الكلية التقنية الرسمي والحديث بالمنتصف بدلاً من صورة المبنى -->
-        <img src="https://i.imgur.com/gK9uUsh.png" alt="شعار الكلية التقنية" class="main-logo">
+        <!-- استدعاء الشعار logo.png المرفوع في مشروعك والموضح في الصورة image_63.png -->
+        <img src="/logo.png" alt="شعار المؤسسة العامة للتدريب التقني والمهني" class="main-logo">
         
         <h2 class="system-title mb-1">نظام حجز المواعيد الإلكتروني</h2>
         <p class="text-muted mb-4 fw-bold" style="font-size: 1.05rem;">كلية الاتصالات بجدة</p>
@@ -86,8 +86,6 @@
                 <a href="{{ url_for('select_time', entity_id=id) }}" class="btn btn-custom shadow-sm">{{ name }}</a>
             {% endfor %}
         </div>
-        
-        <!-- تم التأكيد على إخفاء رابط لوحة التحكم نهائياً من هنا -->
 
     </div>
 </div>
