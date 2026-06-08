@@ -1,75 +1,60 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-# مفتاح تشفير عشوائي وآمن للجلسات لضمان حماية المنظومة
+# مفتاح أمان لتشفير الجلسات وحماية المنظومة
 app.secret_key = os.environ.get('SECRET_KEY', 'cti_booking_secure_key_2026')
-
-# محاكاة لقاعدة بيانات المواعيد للأقسام الأربعة في الكلية
-# (الحاسب الآلي، الاتصالات، الإلكترونيات، المواد العامة، بالإضافة لشؤون المتدربين)
-DEPARTMENTS = {
-    'computer': 'قسم تقنية الحاسب الآلي',
-    'telecom': 'قسم تقنية الاتصالات',
-    'electronics': 'قسم تقنية الإلكترونيات',
-    'general': 'قسم المواد العامة',
-    'trainee_affairs': 'إدارة شؤون المتدربين'
-}
 
 @app.route('/')
 def home():
-    # يعرض الصفحة الرئيسية النظيفة (بدون زر الإدارة السفلي)
+    # استدعاء الصفحة الرئيسية النظيفة المضاف لها الخلفية
     return render_template('index.html')
 
-@app.route('/department/<dept_id>')
-def show_department(dept_id):
-    # التحقق من وجود القسم المطلوب
-    if dept_id in DEPARTMENTS:
-        dept_name = DEPARTMENTS[dept_id]
-        return f"<h1>بوابة الحجز المخصصة لـ: {dept_name}</h1><p>سيتم عرض المواعيد المتاحة هنا ديناميكياً.</p><a href='/'>العودة للرئيسية</a>"
-    return redirect(url_for('home'))
+@app.route('/department/<dept_name>')
+def show_department(dept_name):
+    return f"<div style='text-align:center; padding-top:50px; font-family:sans-serif;'><h1>بوابة الحجز لـ: {dept_name}</h1><a href='/'>العودة للرئيسية</a></div>"
 
 # 🔒 مسار لوحة التحكم السرّي - تكتبه بيدك في المتصفح للدخول
 @app.route('/admin')
 def admin_dashboard():
-    # نظام الحماية: إذا حاول مستخدم عادي تخمين الرابط، يطرده النظام فوراً ويعيده للرئيسية
+    # إذا حاول أي مستخدم عادي الدخول، يطرده النظام تلقائياً للرئيسية
     if not session.get('is_admin'):
         return redirect(url_for('home'))
     
-    # إذا كان المسؤول مسجلاً لدخوله، تفتح له اللوحة
     return """
     <div style="direction: rtl; text-align: center; font-family: sans-serif; padding-top: 50px;">
-        <h1>🔒 لوحة التحكم الإدارية المركزية</h1>
-        <p>مرحباً بك يا مسؤول النظام. هنا يمكنك رصد الحجوزات اليومية للأقسام.</p>
-        <a href="/admin/logout" style="color: red;">تسجيل الخروج</a>
+        <h1>🔒 لوحة التحكم الإدارية</h1>
+        <p style="color: green;">مرحباً بك يا مسؤول النظام، تم الدخول بأمان.</p>
+        <a href="/admin/logout" style="color: red; text-decoration: none; font-weight: bold;">تسجيل الخروج</a>
     </div>
     """
 
-# مسار تسجيل الدخول المخصص لك (الآدمن) لتفعيل الصلاحية
+# مسار تسجيل دخول الإدارة لتفعيل الصلاحية ودخول الـ Admin
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # بيانات الدخول الافتراضية (يمكنك تغييرها لاحقاً)
-        if username == 'admin' and password == '123456':
+        # بيانات الدخول السرية الخاصة بك
+        if username == 'admin' and password == 'password123':
             session['is_admin'] = True
             return redirect(url_for('admin_dashboard'))
         else:
-            return "<p style='color:red; text-align:center;'>بيانات الدخول غير صحيحة!</p>"
+            return "<p style='color:red; text-align:center;'>بيانات الدخول خاطئة!</p>"
             
     return '''
     <div style="direction: rtl; text-align: center; font-family: sans-serif; margin-top: 100px;">
-        <h2>تسجيل دخول الإدارة</h2>
+        <h2>تسجيل دخول الإدارة السرّي</h2>
         <form method="post">
             اسم المستخدم: <input type="text" name="username" required><br><br>
             كلمة المرور: <input type="password" name="password" required><br><br>
-            <input type="submit" value="تسجيل الدخول">
+            <input type="submit" value="دخول">
         </form>
     </div>
     '''
 
-# مسار تسجيل الخروج لإلغاء صلاحية الآدمن وتأمين اللوحة مجدداً
+# تسجيل الخروج لحماية لوحة التحكم بعد انتهائك
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('is_admin', None)
