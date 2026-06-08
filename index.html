@@ -18,20 +18,21 @@
             background-color: #ffffff;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             text-align: center;
             width: 90%;
             max-width: 450px;
         }
         h1 {
-            color: #1a3a2a;
-            font-size: 24px;
-            margin-bottom: 10px;
+            color: #1e4620;
+            font-size: 26px;
+            margin-bottom: 15px;
+            font-weight: bold;
         }
         .subtitle {
-            color: #666;
+            color: #555;
             font-size: 14px;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
         .btn-group {
             display: flex;
@@ -39,21 +40,21 @@
             gap: 15px;
         }
         .btn {
-            background-color: #28a745;
+            background-color: #2e6930; /* اللون الأخضر المطابق تماماً لصورتك */
             color: white;
             border: none;
-            padding: 15px 20px;
+            padding: 16px 20px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 500;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
+            transition: background-color 0.2s ease, transform 0.1s ease;
             text-decoration: none;
             display: block;
         }
         .btn:hover {
-            background-color: #218838;
-            transform: translateY(-2px);
+            background-color: #235025;
+            transform: translateY(-1px);
         }
         .btn:active {
             transform: translateY(0);
@@ -67,14 +68,12 @@
         <div class="subtitle">الرجاء اختيار الجهة المطلوبة لاستكمال الحجز:</div>
         
         <div class="btn-group">
-            <!-- الأزرار الرئيسية الثلاثة المتاحة للجمهور والمستخدمين -->
             <a href="/department/trainee_affairs" class="btn">شؤون المتدربين</a>
-            <a href="/department/heads" class="btn">رئيس القسم</a>
-            <a href="/department/faculty" class="btn">عضو هيئة تدريس</a>
+            <a href="/department/computer" class="btn">رئيس القسم</a>
+            <a href="/department/general" class="btn">عضو هيئة تدريس</a>
         </div>
         
-        <!-- [ملاحظة تخرج]: تم هنا حذف رابط "دخول لوحة التحكم (الإدارة)" نهائياً لضمان الخصوصية والأمان الإداري -->
-    </div>
+        </div>
 
 </body>
 </html>
