@@ -4,30 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>طلب حجز موعد - بوابة الحجز</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     
+    <!-- مكتبة ستايل التقويم الاحترافي Flatpickr وثيم متناسق -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 
     <style>
         body {
-            background-image: linear-gradient(rgba(0, 32, 91, 0.4), rgba(0, 32, 91, 0.65)), url('https://lh3.googleusercontent.com/p/AF1QipN3D-eR3j9h6yS0Y4Z9fQo1S5k9b8f3C7W_Q1YF=s1600-w1000');
+            background-image: linear-gradient(rgba(0, 32, 91, 0.45), rgba(0, 32, 91, 0.7)), url('https://lh3.googleusercontent.com/p/AF1QipN3D-eR3j9h6yS0Y4Z9fQo1S5k9b8f3C7W_Q1YF=s1600-w1000');
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             background-attachment: fixed;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
         }
         .glass-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
         .mini-logo {
-            max-width: 90px;
+            max-width: 160px;
             height: auto;
         }
         .card-title {
@@ -66,8 +69,9 @@
         <div class="col-md-9">
             <div class="card glass-card p-4">
                 <div class="text-center mb-3">
-                    <img src="{{ url_for('static', filename='logo.png') }}" onerror="this.src='https://i.imgur.com/W2h0N4U.png'" alt="CTI Logo" class="mini-logo">
-                    <h4 class="card-title mt-2">طلب حجز موعد لدى: {{ entity_name }}</h4>
+                    <!-- الشعار الجديد هنا أيضاً لضمان الهوية البصرية الموحدة -->
+                    <img src="https://www.al-madina.com/uploads/images/2025/11/05/2485738.jpeg" alt="شعار كلية الاتصالات بجدة" class="mini-logo">
+                    <h4 class="card-title mt-3">طلب حجز موعد لدى: {{ entity_name }}</h4>
                 </div>
                 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -135,6 +139,7 @@
     </div>
 </div>
 
+<!-- جافا سكربت للتقويم التفاعلي والربط الديناميكي للأسماء والمواعيد -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
 
@@ -142,6 +147,7 @@
 const doctorsByDept = {{ doctors_by_dept | tojson }};
 const entityId = document.getElementById('entity_id').value;
 
+// تفعيل تقويم Flatpickr المعرب والمنظم
 flatpickr("#booking_date", {
     locale: "ar",
     dateFormat: "Y-m-d",
