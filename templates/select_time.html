@@ -12,26 +12,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
         body {
-            background-image: linear-gradient(rgba(0, 32, 91, 0.45), rgba(0, 32, 91, 0.7)), url('https://lh3.googleusercontent.com/p/AF1QipN3D-eR3j9h6yS0Y4Z9fQo1S5k9b8f3C7W_Q1YF=s1600-w1000');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+            background: linear-gradient(135deg, #0f2b5c, #1a428a);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+            padding-top: 40px;
+            padding-bottom: 40px;
         }
         .glass-card {
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            background: #ffffff !important;
+            border-radius: 24px !important;
+            border: none !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
         }
         .mini-logo {
+            /* حجم الشعار متناسق في صفحة الحجز أيضاً */
             max-width: 160px;
             height: auto;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
         .card-title {
             color: #00205b;
@@ -43,8 +48,8 @@
             border-radius: 8px;
         }
         .slot-btn.active {
-            background-color: #00205b !important;
-            border-color: #00205b !important;
+            background-color: #0044cc !important;
+            border-color: #0044cc !important;
             color: #fff !important;
         }
         .flatpickr-input-custom {
@@ -52,26 +57,27 @@
             cursor: pointer;
         }
         .btn-navy {
-            background-color: #00205b;
+            background: linear-gradient(135deg, #0044cc, #0066ff);
             color: white;
             font-weight: bold;
+            border: none;
         }
         .btn-navy:hover {
-            background-color: #00153b;
+            background: linear-gradient(135deg, #0033aa, #0055dd);
             color: white;
         }
     </style>
 </head>
 <body>
 
-<div class="container py-5">
+<div class="container">
     <div class="row justify-content-center">
         <div class="col-md-9">
-            <div class="card glass-card p-4">
-                <div class="text-center mb-3">
-                    <!-- الشعار الجديد هنا أيضاً لضمان الهوية البصرية الموحدة -->
-                    <img src="https://www.al-madina.com/uploads/images/2025/11/05/2485738.jpeg" alt="شعار كلية الاتصالات بجدة" class="mini-logo">
-                    <h4 class="card-title mt-3">طلب حجز موعد لدى: {{ entity_name }}</h4>
+            <div class="card glass-card p-5 shadow">
+                <div class="text-center mb-4">
+                    <!-- وضع نفس الشعار المضمون هنا بالمنتصف وإلغاء صورة المبنى القديمة تماماً -->
+                    <img src="https://i.imgur.com/gK9uUsh.png" alt="شعار المؤسسة العامة للتدريب التقني والمهني" class="mini-logo">
+                    <h4 class="card-title mt-4">طلب حجز موعد لدى: {{ entity_name }}</h4>
                 </div>
                 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -139,7 +145,6 @@
     </div>
 </div>
 
-<!-- جافا سكربت للتقويم التفاعلي والربط الديناميكي للأسماء والمواعيد -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
 
@@ -147,7 +152,6 @@
 const doctorsByDept = {{ doctors_by_dept | tojson }};
 const entityId = document.getElementById('entity_id').value;
 
-// تفعيل تقويم Flatpickr المعرب والمنظم
 flatpickr("#booking_date", {
     locale: "ar",
     dateFormat: "Y-m-d",
