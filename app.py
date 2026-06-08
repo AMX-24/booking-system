@@ -18,7 +18,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # إنشاء جدول الحجوزات
+    # إنشاء جدول الحجوزات إذا لم يكن موجوداً
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +32,7 @@ def init_db():
         )
     ''')
     
-    # إنشاء جدول المستخدمين (الإدارة)
+    # إنشاء جدول المستخدمين (الإدارة) لضمان عدم حدوث خطأ 500
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +41,7 @@ def init_db():
         )
     ''')
     
-    # إضافة حساب أدمن افتراضي إذا لم يكن موجوداً
+    # إضافة حساب أدمن افتراضي إذا لم يكن موجوداً مسبقاً
     try:
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', 'admin123'))
     except sqlite3.IntegrityError:
@@ -93,9 +93,9 @@ def get_available_slots():
     if not entity_id or not department or not booking_date:
         return "بيانات غير مكتملة", 400
 
-    # جلب الأوقات المحجوزة مسبقاً لهذا القسم وتلك الجهة والتاريخ بالتحديد
     conn = get_db_connection()
     cursor = conn.cursor()
+    # جلب الأوقات المحجوزة لهذا القسم وتلك الجهة والتاريخ بالتحديد لضمان فرز مستقل لكل قسم
     cursor.execute('''
         SELECT booking_time FROM bookings 
         WHERE target_entity = ? AND department = ? AND booking_date = ?
@@ -109,7 +109,6 @@ def get_available_slots():
     # تصفية الأوقات المتاحة (إخفاء المحجوز)
     free_times = [t for t in AVAILABLE_TIMES if t not in booked_times]
     
-    # بناء الأزرار ديناميكياً لإرسالها للواجهة
     if not free_times:
         return '<p class="text-danger text-center fw-bold">عذراً، جميع مواعيد هذا اليوم محجوزة بالكامل.</p>'
         
@@ -134,7 +133,7 @@ def book():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # فحص أخير للتأكد من عدم قيام شخص آخر بحجزه في نفس اللحظة
+    # فحص أخير قبل الحفظ لمنع التضارب
     cursor.execute('''
         SELECT id FROM bookings 
         WHERE target_entity = ? AND department = ? AND booking_date = ? AND booking_time = ?
@@ -145,7 +144,6 @@ def book():
         flash('عذراً، قام متدرب آخر بحجز هذا الوقت للتو! يرجى اختيار وقت آخر.', 'danger')
         return redirect(url_for('select_time', entity_id=entity_id))
         
-    # تسجيل الحجز بنجاح
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cursor.execute('''
         INSERT INTO bookings (trainee_name, trainee_id, department, target_entity, booking_date, booking_time, timestamp)
@@ -155,7 +153,6 @@ def book():
     conn.commit()
     conn.close()
     
-    # حفظ بيانات التأكيد في الجلسة لعرضها بصفحة النجاح
     session['success_info'] = {
         'name': trainee_name,
         'id': trainee_id,
@@ -227,6 +224,8 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
 
+# التعديل الأساسي هنا: استدعاء التمهيد وفحص قاعدة البيانات بشكل مباشر عند بدء التطبيق على السيرفر
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True)
