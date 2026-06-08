@@ -13,29 +13,25 @@
             padding: 0;
         }
         body {
-            /* وضع صورة مبنى الكلية كخلفية ممتدة على كامل الشاشة */
-            background-image: linear-gradient(rgba(0, 32, 91, 0.55), rgba(0, 32, 91, 0.75)), url('https://i.imgur.com/kS9wTbh.jpeg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+            /* تم إزالة صورة المبنى تماماً بناءً على طلبك واعتماد خلفية زرقاء ملكية رسمية ونظيفة */
+            background: linear-gradient(135deg, #0f2b5c, #1a428a);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .glass-card {
-            /* كرت شفاف أنيق يعزل المحتوى */
-            background: rgba(255, 255, 255, 0.94) !important;
+            /* كرت أبيض ناصع ومنظم ليكون مريحاً وممتازاً للمناقشة */
+            background: #ffffff !important;
             border-radius: 24px !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45) !important;
+            border: none !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
             width: 100%;
-            max-width: 600px;
+            max-width: 580px;
         }
         .main-logo {
-            /* ضبط أبعاد الشعار ليظهر بشكل متناسق وممتاز بالمنتصف */
-            max-width: 250px;
+            /* ضبط ظهور حجم الشعار المتواجد في مشروعك ليظهر بوضوح */
+            max-width: 220px;
             height: auto;
             margin-bottom: 20px;
             display: block;
@@ -43,25 +39,26 @@
             margin-right: auto;
         }
         .btn-custom {
-            background: linear-gradient(135deg, #003399, #0056b3);
+            /* لون الأزرار الأزرق المتناسق تماماً مع هوية الكلية والكلية التقنية */
+            background: linear-gradient(135deg, #0044cc, #0066ff);
             color: white;
             border: none;
             padding: 15px;
             font-size: 1.15rem;
             font-weight: 600;
             border-radius: 12px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         .btn-custom:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 51, 153, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 68, 204, 0.4);
             color: #fff;
-            background: linear-gradient(135deg, #002266, #004085);
+            background: linear-gradient(135deg, #0033aa, #0055dd);
         }
         .system-title {
             color: #00205b;
             font-weight: 800;
-            font-size: 1.8rem;
+            font-size: 1.75rem;
         }
     </style>
 </head>
@@ -70,17 +67,17 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="card glass-card p-5 text-center shadow">
         
-        <!-- استدعاء الشعار logo.png المرفوع في مشروعك والموضح في الصورة image_63.png -->
-        <img src="/logo.png" alt="شعار المؤسسة العامة للتدريب التقني والمهني" class="main-logo">
+        <!-- التعديل الجذري للشعار: استدعاء ملف logo.png الخاص بك من مجلد المشروع الرئيسي بشكل برمي صحيح ومضمون -->
+        <img src="{{ url_for('static', filename='../logo.png') }}" onerror="this.src='/logo.png'" alt="شعار المؤسسة العامة للتدريب التقني والمهني" class="main-logo">
         
         <h2 class="system-title mb-1">نظام حجز المواعيد الإلكتروني</h2>
-        <p class="text-muted mb-4 fw-bold" style="font-size: 1.05rem;">كلية الاتصالات بجدة</p>
+        <p class="text-muted mb-4 fw-bold" style="font-size: 1rem;">كلية الاتصالات بجدة</p>
         
-        <hr class="mb-4" style="border-color: #003399; opacity: 0.2;">
+        <hr class="mb-4" style="border-color: #0044cc; opacity: 0.15;">
         
-        <p class="text-dark fw-medium mb-4" style="font-size: 1rem;">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
+        <p class="text-dark fw-medium mb-4" style="font-size: 0.95rem;">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
         
-        <!-- أزرار الاختيار الكحلية للمتدربين -->
+        <!-- أزرار الاختيار المنسقة والواضحة للمتدربين -->
         <div class="d-grid gap-3">
             {% for id, name in entities.items() %}
                 <a href="{{ url_for('select_time', entity_id=id) }}" class="btn btn-custom shadow-sm">{{ name }}</a>
