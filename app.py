@@ -1,64 +1,74 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-# مفتاح أمان لتشفير الجلسات وحماية المنظومة
-app.secret_key = os.environ.get('SECRET_KEY', 'cti_booking_secure_key_2026')
+
+# قاعدة البيانات: كل قسم أو رئيس قسم له قائمة مواعيد مستقلة
+data = {
+    "1": {
+        "name": "شؤون المتدربين",
+        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص"]
+    },
+    "2": {
+        "name": "رئيس القسم",
+        "sub_sections": {
+            "رئيس قسم الحاسب": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
+            "رئيس قسم الاتصالات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
+            "رئيس قسم الإلكترونيات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
+            "رئيس قسم المواد العامة": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"]
+        }
+    },
+    "3": {
+        "name": "عضو هيئة تدريس",
+        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص"]
+    }
+}
+
+bookings = []
 
 @app.route('/')
-def home():
-    # استدعاء الصفحة الرئيسية النظيفة المضاف لها الخلفية
-    return render_template('index.html')
+def index():
+    return render_template('index.html', departments=data)
 
-@app.route('/department/<dept_name>')
-def show_department(dept_name):
-    return f"<div style='text-align:center; padding-top:50px; font-family:sans-serif;'><h1>بوابة الحجز لـ: {dept_name}</h1><a href='/'>العودة للرئيسية</a></div>"
+@app.route('/select_time/<dept_id>')
+def select_time(dept_id):
+    dept = data.get(dept_id)
+    if dept:
+        return render_template('select_time.html', dept_id=dept_id, dept=dept)
+    return redirect(url_for('index'))
 
-# 🔒 مسار لوحة التحكم السرّي - تكتبه بيدك في المتصفح للدخول
-@app.route('/admin')
-def admin_dashboard():
-    # إذا حاول أي مستخدم عادي الدخول، يطرده النظام تلقائياً للرئيسية
-    if not session.get('is_admin'):
-        return redirect(url_for('home'))
+@app.route('/reserve/<dept_id>', methods=['POST'])
+def reserve(dept_id):
+    name = request.form.get('student_name')
+    acad_id = request.form.get('academic_id')
+    time = request.form.get('selected_time')
+    manager_name = request.form.get('manager_name')
     
-    return """
-    <div style="direction: rtl; text-align: center; font-family: sans-serif; padding-top: 50px;">
-        <h1>🔒 لوحة التحكم الإدارية</h1>
-        <p style="color: green;">مرحباً بك يا مسؤول النظام، تم الدخول بأمان.</p>
-        <a href="/admin/logout" style="color: red; text-decoration: none; font-weight: bold;">تسجيل الخروج</a>
-    </div>
-    """
+    if dept_id in data:
+        target_dept = data[dept_id]
+        section_display = manager_name if manager_name else target_dept['name']
 
-# مسار تسجيل دخول الإدارة لتفعيل الصلاحية ودخول الـ Admin
-@app.route('/admin/login', methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        # بيانات الدخول السرية الخاصة بك
-        if username == 'admin' and password == 'password123':
-            session['is_admin'] = True
-            return redirect(url_for('admin_dashboard'))
-        else:
-            return "<p style='color:red; text-align:center;'>بيانات الدخول خاطئة!</p>"
-            
-    return '''
-    <div style="direction: rtl; text-align: center; font-family: sans-serif; margin-top: 100px;">
-        <h2>تسجيل دخول الإدارة السرّي</h2>
-        <form method="post">
-            اسم المستخدم: <input type="text" name="username" required><br><br>
-            كلمة المرور: <input type="password" name="password" required><br><br>
-            <input type="submit" value="دخول">
-        </form>
-    </div>
-    '''
+        # حذف الوقت المختار لكي لا يظهر لمتدرب آخر
+        if manager_name and "sub_sections" in target_dept:
+            if time in target_dept["sub_sections"][manager_name]:
+                target_dept["sub_sections"][manager_name].remove(time)
+        elif "slots" in target_dept:
+            if time in target_dept["slots"]:
+                target_dept["slots"].remove(time)
 
-# تسجيل الخروج لحماية لوحة التحكم بعد انتهائك
-@app.route('/admin/logout')
-def admin_logout():
-    session.pop('is_admin', None)
-    return redirect(url_for('home'))
+        bookings.append({
+            "name": name, "id": acad_id, "section": section_display, "time": time
+        })
+        return render_template('success.html', name=name, time=time, section=section_display)
+    return redirect(url_for('index'))
+
+@app.route('/admin')
+def admin_panel():
+    return render_template('admin.html', bookings=bookings)
+
+@app.route('/clear')
+def clear_data():
+    bookings.clear()
+    return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>بوابة حجز المواعيد - الكلية التقنية</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; padding: 50px; margin: 0; }
+        .container { background: white; max-width: 600px; margin: auto; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .dept-btn { display: block; background: #2d6a4f; color: white; padding: 18px; margin: 15px 0; border-radius: 12px; text-decoration: none; font-size: 20px; font-weight: bold; transition: 0.3s; }
+        .dept-btn:hover { background: #1b4332; transform: translateY(-3px); }
+        h1 { color: #1a3a3a; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" width="160" style="margin-bottom: 20px;">
+        <h1>نظام الاستعلام عن المواعيد</h1>
+        {% for id, dept in departments.items() %}
+            <a href="{{ url_for('select_time', dept_id=id) }}" class="dept-btn">{{ dept.name }}</a>
+        {% endfor %}
+    </div>
+</body>
+</html>

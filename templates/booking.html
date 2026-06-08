@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تأكيد الحجز</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .form-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 380px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 12px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { width: 100%; background: #2d6a4f; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; }
+        .info { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="form-card">
+        <h2>استكمال بيانات الحجز</h2>
+        <div class="info">
+            القسم: {{ section.name }} <br> الوقت: {{ section.time }}
+        </div>
+        <form action="{{ url_for('reserve', section_id=section_id) }}" method="POST">
+            <input type="text" name="student_name" placeholder="اسمك الثنائي" required>
+            <input type="text" name="academic_id" placeholder="الرقم الأكاديمي" required>
+            <button type="submit">تأكيد وإرسال الطلب</button>
+        </form>
+        <br>
+        <a href="/" style="color: #888; text-decoration: none; font-size: 14px;">إلغاء والعودة للرئيسية</a>
+    </div>
+</body>
+</html>
