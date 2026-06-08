@@ -4,7 +4,6 @@ import sqlite3
 from datetime import datetime
 
 app = Flask(__name__)
-# مفتاح أمان لتشفير الجلسات وحماية المنظومة
 app.secret_key = os.environ.get('SECRET_KEY', 'cti_booking_secret_key_2026')
 
 DB_NAME = 'database.db'
@@ -18,7 +17,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # إنشاء جدول الحجوزات إذا لم يكن موجوداً
+    # تعديل الجدول ليكون متوافقاً (بدون إلزامية حقل التاريخ في الفرز الفوري القديم)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,13 +25,12 @@ def init_db():
             trainee_id TEXT NOT NULL,
             department TEXT NOT NULL,
             target_entity TEXT NOT NULL,
-            booking_date TEXT NOT NULL,
+            booking_date TEXT,
             booking_time TEXT NOT NULL,
             timestamp TEXT NOT NULL
         )
     ''')
     
-    # إنشاء جدول المستخدمين (الإدارة) لضمان عدم حدوث خطأ 500
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +39,6 @@ def init_db():
         )
     ''')
     
-    # إضافة حساب أدمن افتراضي إذا لم يكن موجوداً مسبقاً
     try:
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', 'admin123'))
     except sqlite3.IntegrityError:
@@ -50,14 +47,12 @@ def init_db():
     conn.commit()
     conn.close()
 
-# المواعيد المتاحة يومياً
 AVAILABLE_TIMES = [
     "08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص",
     "10:00 ص", "10:30 ص", "11:00 ص", "11:30 ص",
     "12:00 م", "12:30 م", "01:00 م", "01:30 م"
 ]
 
-# الأقسام الأربعة المعتمدة
 DEPARTMENTS = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -65,7 +60,6 @@ DEPARTMENTS = {
     'general': 'قسم المواد العامة'
 }
 
-# الجهات المطلوب الحجز لها
 TARGET_ENTITIES = {
     'affairs': 'شؤون المتدربين',
     'chairman': 'رئيس القسم',
@@ -88,29 +82,26 @@ def select_time(entity_id):
 def get_available_slots():
     entity_id = request.form.get('entity_id')
     department = request.form.get('department')
-    booking_date = request.form.get('booking_date')
     
-    if not entity_id or not department or not booking_date:
+    if not entity_id or not department:
         return "بيانات غير مكتملة", 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    # جلب الأوقات المحجوزة لهذا القسم وتلك الجهة والتاريخ بالتحديد لضمان فرز مستقل لكل قسم
+    # الفرز يعتمد فقط على الجهة والقسم (مثل النظام القديم تماماً)
     cursor.execute('''
         SELECT booking_time FROM bookings 
-        WHERE target_entity = ? AND department = ? AND booking_date = ?
-    ''', (entity_id, department, booking_date))
+        WHERE target_entity = ? AND department = ?
+    ''', (entity_id, department))
     
     booked_rows = cursor.fetchall()
     conn.close()
     
     booked_times = [row['booking_time'] for row in booked_rows]
-    
-    # تصفية الأوقات المتاحة (إخفاء المحجوز)
     free_times = [t for t in AVAILABLE_TIMES if t not in booked_times]
     
     if not free_times:
-        return '<p class="text-danger text-center fw-bold">عذراً، جميع مواعيد هذا اليوم محجوزة بالكامل.</p>'
+        return '<p class="text-danger text-center fw-bold">عذراً، جميع المواعيد لهذا القسم محجوزة.</p>'
         
     html_buttons = ""
     for t in free_times:
@@ -123,32 +114,30 @@ def book():
     trainee_id = request.form.get('trainee_id')
     department = request.form.get('department')
     entity_id = request.form.get('entity_id')
-    booking_date = request.form.get('booking_date')
     booking_time = request.form.get('booking_time')
     
-    if not (trainee_name and trainee_id and department and entity_id and booking_date and booking_time):
-        flash('فضلاً املأ جميع الحقول المطلوبة وافرز الموعد.', 'danger')
+    if not (trainee_name and trainee_id and department and entity_id and booking_time):
+        flash('فضلاً املأ جميع الحقول المطلوبة واختر موعداً متاحاً.', 'danger')
         return redirect(url_for('select_time', entity_id=entity_id))
         
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # فحص أخير قبل الحفظ لمنع التضارب
     cursor.execute('''
         SELECT id FROM bookings 
-        WHERE target_entity = ? AND department = ? AND booking_date = ? AND booking_time = ?
-    ''', (entity_id, department, booking_date, booking_time))
+        WHERE target_entity = ? AND department = ? AND booking_time = ?
+    ''', (entity_id, department, booking_time))
     
     if cursor.fetchone():
         conn.close()
-        flash('عذراً، قام متدرب آخر بحجز هذا الوقت للتو! يرجى اختيار وقت آخر.', 'danger')
+        flash('عذراً، هذا الوقت تم حشزه للتو! يرجى اختيار وقت آخر.', 'danger')
         return redirect(url_for('select_time', entity_id=entity_id))
         
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cursor.execute('''
-        INSERT INTO bookings (trainee_name, trainee_id, department, target_entity, booking_date, booking_time, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (trainee_name, trainee_id, department, entity_id, booking_date, booking_time, timestamp))
+        INSERT INTO bookings (trainee_name, trainee_id, department, target_entity, booking_time, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (trainee_name, trainee_id, department, entity_id, booking_time, timestamp))
     
     conn.commit()
     conn.close()
@@ -158,7 +147,6 @@ def book():
         'id': trainee_id,
         'dept': DEPARTMENTS[department],
         'entity': TARGET_ENTITIES[entity_id],
-        'date': booking_date,
         'time': booking_time
     }
     
@@ -224,7 +212,6 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
 
-# التعديل الأساسي هنا: استدعاء التمهيد وفحص قاعدة البيانات بشكل مباشر عند بدء التطبيق على السيرفر
 init_db()
 
 if __name__ == '__main__':
