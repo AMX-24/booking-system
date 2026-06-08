@@ -17,7 +17,6 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # تعديل الجدول ليكون متوافقاً (بدون إلزامية حقل التاريخ في الفرز الفوري القديم)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +24,7 @@ def init_db():
             trainee_id TEXT NOT NULL,
             department TEXT NOT NULL,
             target_entity TEXT NOT NULL,
-            booking_date TEXT,
+            booking_date TEXT NOT NULL,
             booking_time TEXT NOT NULL,
             timestamp TEXT NOT NULL
         )
@@ -82,17 +81,18 @@ def select_time(entity_id):
 def get_available_slots():
     entity_id = request.form.get('entity_id')
     department = request.form.get('department')
+    booking_date = request.form.get('booking_date')
     
-    if not entity_id or not department:
+    if not entity_id or not department or not booking_date:
         return "بيانات غير مكتملة", 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    # الفرز يعتمد فقط على الجهة والقسم (مثل النظام القديم تماماً)
+    # الفرز الذكي: يبحث عن الأوقات المحجوزة لنفس الجهة والقسم والتاريخ المختار بالتحديد
     cursor.execute('''
         SELECT booking_time FROM bookings 
-        WHERE target_entity = ? AND department = ?
-    ''', (entity_id, department))
+        WHERE target_entity = ? AND department = ? AND booking_date = ?
+    ''', (entity_id, department, booking_date))
     
     booked_rows = cursor.fetchall()
     conn.close()
@@ -101,7 +101,7 @@ def get_available_slots():
     free_times = [t for t in AVAILABLE_TIMES if t not in booked_times]
     
     if not free_times:
-        return '<p class="text-danger text-center fw-bold">عذراً، جميع المواعيد لهذا القسم محجوزة.</p>'
+        return '<p class="text-danger text-center fw-bold">عذراً، جميع المواعيد لهذا اليوم محجوزة بالكامل.</p>'
         
     html_buttons = ""
     for t in free_times:
@@ -114,9 +114,10 @@ def book():
     trainee_id = request.form.get('trainee_id')
     department = request.form.get('department')
     entity_id = request.form.get('entity_id')
+    booking_date = request.form.get('booking_date')
     booking_time = request.form.get('booking_time')
     
-    if not (trainee_name and trainee_id and department and entity_id and booking_time):
+    if not (trainee_name and trainee_id and department and entity_id and booking_date and booking_time):
         flash('فضلاً املأ جميع الحقول المطلوبة واختر موعداً متاحاً.', 'danger')
         return redirect(url_for('select_time', entity_id=entity_id))
         
@@ -125,8 +126,8 @@ def book():
     
     cursor.execute('''
         SELECT id FROM bookings 
-        WHERE target_entity = ? AND department = ? AND booking_time = ?
-    ''', (entity_id, department, booking_time))
+        WHERE target_entity = ? AND department = ? AND booking_date = ? AND booking_time = ?
+    ''', (entity_id, department, booking_date, booking_time))
     
     if cursor.fetchone():
         conn.close()
@@ -135,9 +136,9 @@ def book():
         
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cursor.execute('''
-        INSERT INTO bookings (trainee_name, trainee_id, department, target_entity, booking_time, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (trainee_name, trainee_id, department, entity_id, booking_time, timestamp))
+        INSERT INTO bookings (trainee_name, trainee_id, department, target_entity, booking_date, booking_time, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (trainee_name, trainee_id, department, entity_id, booking_date, booking_time, timestamp))
     
     conn.commit()
     conn.close()
@@ -147,6 +148,7 @@ def book():
         'id': trainee_id,
         'dept': DEPARTMENTS[department],
         'entity': TARGET_ENTITIES[entity_id],
+        'date': booking_date,
         'time': booking_time
     }
     
