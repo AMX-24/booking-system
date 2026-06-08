@@ -3,166 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>طلب حجز موعد - {{ entity_name }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
-    <!-- مكتبة التقويم الاحترافي Flatpickr -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <title>طلب حجز موعد - بوابة الحجز</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
+            background-color: #f4f6f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #a3bded 0%, #f4f7f6 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
         }
         .booking-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 35px;
-            max-width: 750px;
-            width: 100%;
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: none;
+        }
+        .card-title {
+            color: #198754;
+            font-weight: bold;
         }
         .slot-btn {
-            min-width: 100px;
-            font-weight: 600;
+            min-width: 90px;
+            font-weight: 500;
         }
-        .slot-btn.selected {
+        .slot-btn.active {
             background-color: #198754 !important;
-            color: white !important;
-        }
-        /* تخصيص ألوان التقويم ليتناسب مع تصميمك */
-        .flatpickr-day.selected, .flatpickr-day.selected:hover {
-            background: #2d6a4f !important;
-            border-color: #2d6a4f !important;
-        }
-        .flatpickr-calendar {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
-            border: 1px solid #e0e0e0;
+            color: #fff !important;
         }
     </style>
 </head>
 <body>
 
-<div class="booking-card">
-    <h3 class="text-center fw-bold text-success mb-4">طلب حجز موعد لدى: {{ entity_name }}</h3>
-    <hr>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card booking-card p-4">
+                <h3 class="card-title text-center mb-4">طلب حجز موعد لدى: {{ entity_name }}</h3>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} text-center" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} text-center fw-bold">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+                <form action="{{ url_for('book') }}" method="POST" id="bookingForm">
+                    <input type="hidden" name="entity_id" id="entity_id" value="{{ entity_id }}">
+                    <input type="hidden" name="booking_time" id="booking_time" value="">
 
-    <form action="{{ url_for('book') }}" method="POST" id="bookingForm">
-        <input type="hidden" name="entity_id" id="entity_id" value="{{ entity_id }}">
-        <input type="hidden" name="booking_time" id="booking_time" required>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">اسم المتدرب ثلاثي:</label>
+                            <input type="text" name="trainee_name" class="form-control" placeholder="أدخل اسمك هنا" required>
+                        </div>
 
-        <div class="row g-3">
-            <!-- اسم المتدرب -->
-            <div class="col-md-6">
-                <label class="form-label fw-bold">اسم المتدرب ثلاثي:</label>
-                <input type="text" name="trainee_name" class="form-control" placeholder="أدخل اسمك هنا" required>
-            </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الرقم التدريبي:</label>
+                            <input type="text" name="trainee_id" class="form-control" placeholder="مثال: 442100000" required>
+                        </div>
 
-            <!-- الرقم الأكاديمي -->
-            <div class="col-md-6">
-                <label class="form-label fw-bold">الرقم الأكاديمي:</label>
-                <input type="text" name="trainee_id" class="form-control" placeholder="مثال: 442100000" required>
-            </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">القسم التدريبي:</label>
+                            <select name="department" id="department" class="form-select" required onchange="handleDeptChange()">
+                                <option value="" selected disabled>اختر قسمك التعليمي</option>
+                                {% for key, value in departments.items() %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-            <!-- القسم التعليمي -->
-            <div class="col-md-6">
-                <label class="form-label fw-bold">القسم التعليمي:</label>
-                <select name="department" id="department" class="form-select" required onchange="fetchSlots()">
-                    <option value="" selected disabled>اختر قسمك التعليمي</option>
-                    {% for id, name in departments.items() %}
-                        <option value="{{ id }}">{{ name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                        <div class="col-md-6" id="doctor_section" style="display: none;">
+                            <label class="form-label fw-bold">اختر الدكتور / المهندس:</label>
+                            <select name="doctor_name" id="doctor_name" class="form-select" onchange="fetchAvailableSlots()">
+                                <option value="" selected disabled>اختر اسم عضو هيئة التدريس</option>
+                            </select>
+                        </div>
 
-            <!-- تاريخ الحجز بالتقويم الاحترافي -->
-            <div class="col-md-6">
-                <label class="form-label fw-bold">تاريخ الحجز:</label>
-                <input type="text" name="booking_date" id="booking_date" class="form-control bg-white" placeholder="اختر تاريخ الموعد" required onchange="fetchSlots()">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تاريخ الحجز:</label>
+                            <input type="date" name="booking_date" id="booking_date" class="form-control" required onchange="fetchAvailableSlots()">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="fw-bold mb-3">⏱️ المواعيد المتاحة للفرز الفوري:</h6>
+                        <div id="slots_container" class="text-center py-2">
+                            <p class="text-muted small m-0">الرجاء اختيار القسم وتحديد التاريخ أولاً لعرض الأوقات المتاحة.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary px-4">رجوع للرئيسية</a>
+                        <button type="submit" class="btn btn-success px-4 fw-bold">تأكيد الحجز النهائي</button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <!-- المواعيد المتاحة -->
-        <div class="mt-4">
-            <label class="form-label fw-bold text-dark">⏱️ المواعيد المتاحة للفرز الفوري:</label>
-            <div id="slots_container" class="p-3 border rounded bg-light text-center">
-                <p class="text-muted m-0">الرجاء اختيار القسم وتحديد التاريخ أولاً لعرض الأوقات المتاحة.</p>
-            </div>
-        </div>
-
-        <div class="d-flex justify-content-between mt-4">
-            <button type="submit" class="btn btn-success px-4 fw-bold fs-5">تأكيد الحجز النهائي</button>
-            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4 fw-bold">رجوع للرئيسية</a>
-        </div>
-    </form>
+    </div>
 </div>
 
-<!-- مكتبات الجافا سكربت للتقويم والمزامنة -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
 <script>
-// تشغيل التقويم بشكل مدمج واحترافي باللغة العربية
-flatpickr("#booking_date", {
-    locale: "ar",
-    dateFormat: "Y-m-d",
-    minDate: "today", // منع حجز أيام سابقة
-    disable: [
-        function(date) {
-            // تعطيل أيام عطلة نهاية الأسبوع (الجمعة والسبت) إذا رغبت
-            return (date.getDay() === 5 || date.getDay() === 6);
-        }
-    ]
-});
+// جلب مكتبة الأسماء الممررة من سيرفر بايثون بالكامل
+const doctorsByDept = {{ doctors_by_dept | tojson }};
+const entityId = document.getElementById('entity_id').value;
 
-function fetchSlots() {
-    const dept = document.getElementById('department').value;
-    const date = document.getElementById('booking_date').value;
-    const entityId = document.getElementById('entity_id').value;
+function handleDeptChange() {
+    const deptSelect = document.getElementById('department');
+    const docSection = document.getElementById('doctor_section');
+    const docSelect = document.getElementById('doctor_name');
+    
+    const selectedDept = deptSelect.value;
+    
+    // إذا كان الحجز موجه لأعضاء هيئة التدريس (faculty)، نظهر حقل اختيار الأسماء
+    if (entityId === 'faculty' && selectedDept) {
+        // تفريغ القائمة القديمة
+        docSelect.innerHTML = '<option value="" selected disabled>اختر اسم عضو هيئة التدريس</option>';
+        
+        // جلب الأسماء الخاصة بالقسم المختار وضخها داخل القائمة
+        if (doctorsByDept[selectedDept]) {
+            doctorsByDept[selectedDept].forEach(function(docName) {
+                const opt = document.createElement('option');
+                opt.value = docName;
+                opt.textContent = docName;
+                docSelect.appendChild(opt);
+            });
+        }
+        
+        docSection.style.display = 'block';
+        docSelect.setAttribute('required', 'required');
+    } else {
+        // إخفاء الحقل إذا كانت الجهة رئيس القسم أو شؤون المتدربين
+        docSection.style.display = 'none';
+        docSelect.removeAttribute('required');
+    }
+    
+    // إعادة فحص المواقيت عند تغيير القسم
+    fetchAvailableSlots();
+}
+
+function fetchAvailableSlots() {
+    const department = document.getElementById('department').value;
+    const bookingDate = document.getElementById('booking_date').value;
+    const doctorName = document.getElementById('doctor_name').value;
     const container = document.getElementById('slots_container');
     
-    // يجب اختيار القسم والتاريخ معاً لبدء الفرز الفوري
-    if (!dept || !date) return;
-
-    container.innerHTML = '<span class="text-secondary fw-bold">جاري فرز الأوقات غير المحجوزة لهذا اليوم...</span>';
-
+    // إذا لم يكتمل اختيار القسم أو التاريخ، لا نرسل طلباً للسيرفر
+    if (!department || !bookingDate) {
+        return;
+    }
+    
+    // في حال كان لـ عضو هيئة تدريس ولم يتم اختيار الاسم بعد، ننتظر اختيار الاسم
+    if (entityId === 'faculty' && !doctorName) {
+        container.innerHTML = '<p class="text-warning small m-0">الرجاء اختيار اسم الدكتور/المهندس لإظهار مواعيده المتاحة.</p>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="spinner-border text-success spinner-border-sm" role="status"></div> جاري فرز الأوقات غير المحجوزة...';
+    
+    // إرسال طلب خلفي فوري (AJAX) للسيرفر لجلب الأزرار الشاغرة فقط
     const formData = new FormData();
     formData.append('entity_id', entityId);
-    formData.append('department', dept);
-    formData.append('booking_date', date);
-
-    fetch("{{ url_for('get_available_slots') }}", {
-        method: "POST",
+    formData.append('department', department);
+    formData.append('booking_date', bookingDate);
+    formData.append('doctor_name', doctorName);
+    
+    fetch('/get_available_slots', {
+        method: 'POST',
         body: formData
     })
     .then(response => response.text())
     .then(html => {
         container.innerHTML = html;
-        document.getElementById('booking_time').value = "";
+        document.getElementById('booking_time').value = ""; // تصفير الاختيار القديم
     })
     .catch(err => {
-        container.innerHTML = '<span class="text-danger">حدث خطأ أثناء جلب المواعيد.</span>';
+        container.innerHTML = '<p class="text-danger small m-0">حدث خطأ أثناء جلب البيانات، يرجى المحاولة لاحقاً.</p>';
     });
 }
 
 function selectSlot(timeValue) {
-    const buttons = document.querySelectorAll('.slot-btn');
-    buttons.forEach(btn => btn.classList.remove('selected'));
-    
-    event.target.classList.add('selected');
+    // تعيين الوقت المختار داخل الحقل المخفي لإرساله عبر الفورم
     document.getElementById('booking_time').value = timeValue;
+    
+    // تغيير شكل الزر المختار لتمييزه بصرياً للمتدرب
+    const buttons = document.querySelectorAll('.slot-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // البحث عن الزر الذي تم ضغطه وإضافة الكلاس الفعال له
+    event.target.classList.add('active');
 }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
