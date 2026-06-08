@@ -13,7 +13,7 @@
             padding: 0;
         }
         body {
-            /* تم إزالة صورة المبنى تماماً بناءً على طلبك واعتماد خلفية زرقاء ملكية رسمية ونظيفة */
+            /* خلفية زرقاء ملكية رسمية ونظيفة */
             background: linear-gradient(135deg, #0f2b5c, #1a428a);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -21,7 +21,6 @@
             justify-content: center;
         }
         .glass-card {
-            /* كرت أبيض ناصع ومنظم ليكون مريحاً وممتازاً للمناقشة */
             background: #ffffff !important;
             border-radius: 24px !important;
             border: none !important;
@@ -30,8 +29,8 @@
             max-width: 580px;
         }
         .main-logo {
-            /* ضبط ظهور حجم الشعار المتواجد في مشروعك ليظهر بوضوح */
-            max-width: 220px;
+            /* تنسيق حجم الشعار الجديد بالمنتصف */
+            max-width: 200px;
             height: auto;
             margin-bottom: 20px;
             display: block;
@@ -39,7 +38,6 @@
             margin-right: auto;
         }
         .btn-custom {
-            /* لون الأزرار الأزرق المتناسق تماماً مع هوية الكلية والكلية التقنية */
             background: linear-gradient(135deg, #0044cc, #0066ff);
             color: white;
             border: none;
@@ -67,17 +65,16 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="card glass-card p-5 text-center shadow">
         
-        <!-- التعديل الجذري للشعار: استدعاء ملف logo.png الخاص بك من مجلد المشروع الرئيسي بشكل برمي صحيح ومضمون -->
-        <img src="{{ url_for('static', filename='../logo.png') }}" onerror="this.src='/logo.png'" alt="شعار المؤسسة العامة للتدريب التقني والمهني" class="main-logo">
+        <!-- الشعار الرسمي الجديد بالصورة المباشرة والمضمونة -->
+        <img src="https://i.imgur.com/gK9uUsh.png" alt="شعار المؤسسة العامة للتدريب التقني والمهني" class="main-logo">
         
         <h2 class="system-title mb-1">نظام حجز المواعيد الإلكتروني</h2>
         <p class="text-muted mb-4 fw-bold" style="font-size: 1rem;">كلية الاتصالات بجدة</p>
         
         <hr class="mb-4" style="border-color: #0044cc; opacity: 0.15;">
         
-        <p class="text-dark fw-medium mb-4" style="font-size: 0.95rem;">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
+        <p class="text-dark fw-medium mb-4" style="font-size: 0.95rem;">فضلاً, اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
         
-        <!-- أزرار الاختيار المنسقة والواضحة للمتدربين -->
         <div class="d-grid gap-3">
             {% for id, name in entities.items() %}
                 <a href="{{ url_for('select_time', entity_id=id) }}" class="btn btn-custom shadow-sm">{{ name }}</a>
