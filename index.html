@@ -7,7 +7,8 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+            /* الخلفية التدرجية الحديثة والمريحة للعين */
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -15,24 +16,25 @@
             margin: 0;
         }
         .container {
-            background-color: #ffffff;
+            /* إضافة شفافية ناعمة للحاوية لتندمج مع تدرج الخلفية */
+            background-color: rgba(255, 255, 255, 0.96); 
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
             text-align: center;
             width: 90%;
             max-width: 450px;
         }
         h1 {
-            color: #1e4620;
-            font-size: 26px;
-            margin-bottom: 15px;
+            color: #1a3a2a;
+            font-size: 24px;
+            margin-bottom: 10px;
             font-weight: bold;
         }
         .subtitle {
             color: #555;
             font-size: 14px;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
         }
         .btn-group {
             display: flex;
@@ -40,21 +42,21 @@
             gap: 15px;
         }
         .btn {
-            background-color: #2e6930; /* اللون الأخضر المطابق تماماً لصورتك */
+            background-color: #28a745;
             color: white;
             border: none;
-            padding: 16px 20px;
+            padding: 15px 20px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.1s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
             text-decoration: none;
             display: block;
         }
         .btn:hover {
-            background-color: #235025;
-            transform: translateY(-1px);
+            background-color: #218838;
+            transform: translateY(-2px);
         }
         .btn:active {
             transform: translateY(0);
@@ -69,11 +71,10 @@
         
         <div class="btn-group">
             <a href="/department/trainee_affairs" class="btn">شؤون المتدربين</a>
-            <a href="/department/computer" class="btn">رئيس القسم</a>
-            <a href="/department/general" class="btn">عضو هيئة تدريس</a>
+            <a href="/department/heads" class="btn">رئيس القسم</a>
+            <a href="/department/faculty" class="btn">عضو هيئة تدريس</a>
         </div>
-        
-        </div>
+    </div>
 
 </body>
 </html>
