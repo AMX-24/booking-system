@@ -47,15 +47,6 @@
             box-shadow: 0 6px 15px rgba(45, 106, 79, 0.3);
             color: white;
         }
-        .admin-link {
-            font-size: 0.95rem;
-            color: #6c757d;
-            text-decoration: none;
-            margin-top: 25px;
-            display: inline-block;
-            transition: color 0.2s;
-        }
-        .admin-link:hover { color: #2d6a4f; }
     </style>
 </head>
 <body>
@@ -70,8 +61,6 @@
             <a href="{{ url_for('select_time', entity_id=id) }}" class="btn-entity">{{ name }}</a>
         {% endfor %}
     </div>
-    
-    <a href="{{ url_for('admin_login') }}" class="admin-link">📊 دخول لوحة التحكم (الإدارة)</a>
 </div>
 
 </body>
