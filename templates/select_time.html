@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>طلب حجز موعد - {{ entity_name }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <!-- مكتبة التقويم الاحترافي Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -31,6 +33,15 @@
             background-color: #198754 !important;
             color: white !important;
         }
+        /* تخصيص ألوان التقويم ليتناسب مع تصميمك */
+        .flatpickr-day.selected, .flatpickr-day.selected:hover {
+            background: #2d6a4f !important;
+            border-color: #2d6a4f !important;
+        }
+        .flatpickr-calendar {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            border: 1px solid #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -39,7 +50,6 @@
     <h3 class="text-center fw-bold text-success mb-4">طلب حجز موعد لدى: {{ entity_name }}</h3>
     <hr>
 
-    <!-- عرض رسائل الخطأ إن وجدت -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -49,7 +59,6 @@
     {% endwith %}
 
     <form action="{{ url_for('book') }}" method="POST" id="bookingForm">
-        <!-- حقول مخفية لإرسالها للسيرفر -->
         <input type="hidden" name="entity_id" id="entity_id" value="{{ entity_id }}">
         <input type="hidden" name="booking_time" id="booking_time" required>
 
@@ -66,8 +75,8 @@
                 <input type="text" name="trainee_id" class="form-control" placeholder="مثال: 442100000" required>
             </div>
 
-            <!-- القسم الأكاديمي -->
-            <div class="col-md-12">
+            <!-- القسم التعليمي -->
+            <div class="col-md-6">
                 <label class="form-label fw-bold">القسم التعليمي:</label>
                 <select name="department" id="department" class="form-select" required onchange="fetchSlots()">
                     <option value="" selected disabled>اختر قسمك التعليمي</option>
@@ -76,17 +85,22 @@
                     {% endfor %}
                 </select>
             </div>
-        </div>
 
-        <!-- قسم المواعيد المتاحة -->
-        <div class="mt-4">
-            <label class="form-label fw-bold text-dark">⏱️ المواعيد المتاحة للفرز الفوري:</label>
-            <div id="slots_container" class="p-3 border rounded bg-light text-center">
-                <p class="text-muted m-0">الرجاء اختيار القسم أولاً لعرض الأوقات المتاحة.</p>
+            <!-- تاريخ الحجز بالتقويم الاحترافي -->
+            <div class="col-md-6">
+                <label class="form-label fw-bold">تاريخ الحجز:</label>
+                <input type="text" name="booking_date" id="booking_date" class="form-control bg-white" placeholder="اختر تاريخ الموعد" required onchange="fetchSlots()">
             </div>
         </div>
 
-        <!-- أزرار التحكم -->
+        <!-- المواعيد المتاحة -->
+        <div class="mt-4">
+            <label class="form-label fw-bold text-dark">⏱️ المواعيد المتاحة للفرز الفوري:</label>
+            <div id="slots_container" class="p-3 border rounded bg-light text-center">
+                <p class="text-muted m-0">الرجاء اختيار القسم وتحديد التاريخ أولاً لعرض الأوقات المتاحة.</p>
+            </div>
+        </div>
+
         <div class="d-flex justify-content-between mt-4">
             <button type="submit" class="btn btn-success px-4 fw-bold fs-5">تأكيد الحجز النهائي</button>
             <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4 fw-bold">رجوع للرئيسية</a>
@@ -94,21 +108,38 @@
     </form>
 </div>
 
-<!-- كود الأجاكس للفرز التلقائي بمجرد اختيار القسم -->
+<!-- مكتبات الجافا سكربت للتقويم والمزامنة -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
 <script>
+// تشغيل التقويم بشكل مدمج واحترافي باللغة العربية
+flatpickr("#booking_date", {
+    locale: "ar",
+    dateFormat: "Y-m-d",
+    minDate: "today", // منع حجز أيام سابقة
+    disable: [
+        function(date) {
+            // تعطيل أيام عطلة نهاية الأسبوع (الجمعة والسبت) إذا رغبت
+            return (date.getDay() === 5 || date.getDay() === 6);
+        }
+    ]
+});
+
 function fetchSlots() {
     const dept = document.getElementById('department').value;
+    const date = document.getElementById('booking_date').value;
     const entityId = document.getElementById('entity_id').value;
     const container = document.getElementById('slots_container');
     
-    if (!dept) return;
+    // يجب اختيار القسم والتاريخ معاً لبدء الفرز الفوري
+    if (!dept || !date) return;
 
-    container.innerHTML = '<span class="text-secondary fw-bold">جاري تحديث المواعيد المتاحة...</span>';
+    container.innerHTML = '<span class="text-secondary fw-bold">جاري فرز الأوقات غير المحجوزة لهذا اليوم...</span>';
 
-    // إرسال طلب للسيرفر لجلب الأوقات المتاحة بناءً على القسم فقط
     const formData = new FormData();
     formData.append('entity_id', entityId);
     formData.append('department', dept);
+    formData.append('booking_date', date);
 
     fetch("{{ url_for('get_available_slots') }}", {
         method: "POST",
@@ -117,7 +148,7 @@ function fetchSlots() {
     .then(response => response.text())
     .then(html => {
         container.innerHTML = html;
-        document.getElementById('booking_time').value = ""; // تصفير الوقت المختار سابقاً
+        document.getElementById('booking_time').value = "";
     })
     .catch(err => {
         container.innerHTML = '<span class="text-danger">حدث خطأ أثناء جلب المواعيد.</span>';
@@ -125,12 +156,10 @@ function fetchSlots() {
 }
 
 function selectSlot(timeValue) {
-    // تحديد الزر المختار وتغيير لونه
     const buttons = document.querySelectorAll('.slot-btn');
     buttons.forEach(btn => btn.classList.remove('selected'));
     
     event.target.classList.add('selected');
-    // حفظ الوقت في الحقل المخفي قبل الإرسال
     document.getElementById('booking_time').value = timeValue;
 }
 </script>
