@@ -1,74 +1,232 @@
-from flask import Flask, render_template, request, redirect, url_for
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
+# مفتاح أمان لتشفير الجلسات وحماية المنظومة
+app.secret_key = os.environ.get('SECRET_KEY', 'cti_booking_secret_key_2026')
 
-# قاعدة البيانات: كل قسم أو رئيس قسم له قائمة مواعيد مستقلة
-data = {
-    "1": {
-        "name": "شؤون المتدربين",
-        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص"]
-    },
-    "2": {
-        "name": "رئيس القسم",
-        "sub_sections": {
-            "رئيس قسم الحاسب": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
-            "رئيس قسم الاتصالات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
-            "رئيس قسم الإلكترونيات": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"],
-            "رئيس قسم المواد العامة": ["09:00 ص", "09:30 ص", "10:00 ص", "10:30 ص", "11:00 ص"]
-        }
-    },
-    "3": {
-        "name": "عضو هيئة تدريس",
-        "slots": ["08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص"]
-    }
+DB_NAME = 'database.db'
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # إنشاء جدول الحجوزات
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS bookings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trainee_name TEXT NOT NULL,
+            trainee_id TEXT NOT NULL,
+            department TEXT NOT NULL,
+            target_entity TEXT NOT NULL,
+            booking_date TEXT NOT NULL,
+            booking_time TEXT NOT NULL,
+            timestamp TEXT NOT NULL
+        )
+    ''')
+    
+    # إنشاء جدول المستخدمين (الإدارة)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    ''')
+    
+    # إضافة حساب أدمن افتراضي إذا لم يكن موجوداً
+    try:
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', 'admin123'))
+    except sqlite3.IntegrityError:
+        pass
+        
+    conn.commit()
+    conn.close()
+
+# المواعيد المتاحة يومياً
+AVAILABLE_TIMES = [
+    "08:00 ص", "08:30 ص", "09:00 ص", "09:30 ص",
+    "10:00 ص", "10:30 ص", "11:00 ص", "11:30 ص",
+    "12:00 م", "12:30 م", "01:00 م", "01:30 م"
+]
+
+# الأقسام الأربعة المعتمدة
+DEPARTMENTS = {
+    'computer': 'قسم الحاسب الآلي',
+    'communications': 'قسم الاتصالات',
+    'electronics': 'قسم الإلكترونيات',
+    'general': 'قسم المواد العامة'
 }
 
-bookings = []
+# الجهات المطلوب الحجز لها
+TARGET_ENTITIES = {
+    'affairs': 'شؤون المتدربين',
+    'chairman': 'رئيس القسم',
+    'faculty': 'عضو هيئة تدريس'
+}
 
 @app.route('/')
-def index():
-    return render_template('index.html', departments=data)
+def home():
+    return render_template('index.html', entities=TARGET_ENTITIES)
 
-@app.route('/select_time/<dept_id>')
-def select_time(dept_id):
-    dept = data.get(dept_id)
-    if dept:
-        return render_template('select_time.html', dept_id=dept_id, dept=dept)
-    return redirect(url_for('index'))
-
-@app.route('/reserve/<dept_id>', methods=['POST'])
-def reserve(dept_id):
-    name = request.form.get('student_name')
-    acad_id = request.form.get('academic_id')
-    time = request.form.get('selected_time')
-    manager_name = request.form.get('manager_name')
+@app.route('/select_time/<entity_id>')
+def select_time(entity_id):
+    if entity_id not in TARGET_ENTITIES:
+        return redirect(url_for('home'))
     
-    if dept_id in data:
-        target_dept = data[dept_id]
-        section_display = manager_name if manager_name else target_dept['name']
+    entity_name = TARGET_ENTITIES[entity_id]
+    return render_template('select_time.html', entity_id=entity_id, entity_name=entity_name, departments=DEPARTMENTS)
 
-        # حذف الوقت المختار لكي لا يظهر لمتدرب آخر
-        if manager_name and "sub_sections" in target_dept:
-            if time in target_dept["sub_sections"][manager_name]:
-                target_dept["sub_sections"][manager_name].remove(time)
-        elif "slots" in target_dept:
-            if time in target_dept["slots"]:
-                target_dept["slots"].remove(time)
+@app.route('/get_available_slots', methods=['POST'])
+def get_available_slots():
+    entity_id = request.form.get('entity_id')
+    department = request.form.get('department')
+    booking_date = request.form.get('booking_date')
+    
+    if not entity_id or not department or not booking_date:
+        return "بيانات غير مكتملة", 400
 
-        bookings.append({
-            "name": name, "id": acad_id, "section": section_display, "time": time
-        })
-        return render_template('success.html', name=name, time=time, section=section_display)
-    return redirect(url_for('index'))
+    # جلب الأوقات المحجوزة مسبقاً لهذا القسم وتلك الجهة والتاريخ بالتحديد
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT booking_time FROM bookings 
+        WHERE target_entity = ? AND department = ? AND booking_date = ?
+    ''', (entity_id, department, booking_date))
+    
+    booked_rows = cursor.fetchall()
+    conn.close()
+    
+    booked_times = [row['booking_time'] for row in booked_rows]
+    
+    # تصفية الأوقات المتاحة (إخفاء المحجوز)
+    free_times = [t for t in AVAILABLE_TIMES if t not in booked_times]
+    
+    # بناء الأزرار ديناميكياً لإرسالها للواجهة
+    if not free_times:
+        return '<p class="text-danger text-center fw-bold">عذراً، جميع مواعيد هذا اليوم محجوزة بالكامل.</p>'
+        
+    html_buttons = ""
+    for t in free_times:
+        html_buttons += f'<button type="button" class="btn btn-outline-success slot-btn m-1" onclick="selectSlot(\'{t}\')">{t}</button>'
+    return html_buttons
 
-@app.route('/admin')
-def admin_panel():
-    return render_template('admin.html', bookings=bookings)
+@app.route('/book', methods=['POST'])
+def book():
+    trainee_name = request.form.get('trainee_name')
+    trainee_id = request.form.get('trainee_id')
+    department = request.form.get('department')
+    entity_id = request.form.get('entity_id')
+    booking_date = request.form.get('booking_date')
+    booking_time = request.form.get('booking_time')
+    
+    if not (trainee_name and trainee_id and department and entity_id and booking_date and booking_time):
+        flash('فضلاً املأ جميع الحقول المطلوبة وافرز الموعد.', 'danger')
+        return redirect(url_for('select_time', entity_id=entity_id))
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # فحص أخير للتأكد من عدم قيام شخص آخر بحجزه في نفس اللحظة
+    cursor.execute('''
+        SELECT id FROM bookings 
+        WHERE target_entity = ? AND department = ? AND booking_date = ? AND booking_time = ?
+    ''', (entity_id, department, booking_date, booking_time))
+    
+    if cursor.fetchone():
+        conn.close()
+        flash('عذراً، قام متدرب آخر بحجز هذا الوقت للتو! يرجى اختيار وقت آخر.', 'danger')
+        return redirect(url_for('select_time', entity_id=entity_id))
+        
+    # تسجيل الحجز بنجاح
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute('''
+        INSERT INTO bookings (trainee_name, trainee_id, department, target_entity, booking_date, booking_time, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (trainee_name, trainee_id, department, entity_id, booking_date, booking_time, timestamp))
+    
+    conn.commit()
+    conn.close()
+    
+    # حفظ بيانات التأكيد في الجلسة لعرضها بصفحة النجاح
+    session['success_info'] = {
+        'name': trainee_name,
+        'id': trainee_id,
+        'dept': DEPARTMENTS[department],
+        'entity': TARGET_ENTITIES[entity_id],
+        'date': booking_date,
+        'time': booking_time
+    }
+    
+    return redirect(url_for('success'))
 
-@app.route('/clear')
-def clear_data():
-    bookings.clear()
-    return redirect(url_for('admin_panel'))
+@app.route('/success')
+def success():
+    info = session.get('success_info')
+    if not info:
+        return redirect(url_for('home'))
+    return render_template('success.html', info=info)
+
+# --- نظام لوحة تحكم الإدارة ---
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
+        user = cursor.fetchone()
+        conn.close()
+        
+        if user:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('اسم المستخدم أو كلمة المرور غير صحيحة.', 'danger')
+            
+    return render_template('admin.html', login_mode=True)
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM bookings ORDER BY id DESC")
+    all_bookings = cursor.fetchall()
+    conn.close()
+    
+    return render_template('admin.html', login_mode=False, bookings=all_bookings, depts=DEPARTMENTS, entities=TARGET_ENTITIES)
+
+@app.route('/admin/delete/<int:booking_id>')
+def delete_booking(booking_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM bookings WHERE id = ?", (booking_id,))
+    conn.commit()
+    conn.close()
+    flash('تم إلغاء الحجز بنجاح.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True)
