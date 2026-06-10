@@ -14,12 +14,13 @@ departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
     'electronics': 'قسم الإلكترونيات',
-    'general': 'قسم المواد العامة'
+    'general': 'قسم المواد العامة',
+    'affairs': 'شؤون المتدربين' # أضفنا هذا ليتعرف عليه النظام
 }
 
-# قائمة الأوقات المتاحة التي يتوقعها الـ HTML
 available_slots = ['08:00', '09:00', '10:00', '11:00', '12:00', '01:00', '02:00', '03:00']
 
+# تعريف نموذج البيانات
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -59,17 +60,24 @@ def admin_dashboard():
 
 @app.route('/update_schedule', methods=['POST'])
 def update_schedule():
-    flash('تم حفظ التعديلات بنجاح', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/add_department', methods=['POST'])
 def add_department():
-    flash('تمت إضافة القسم بنجاح', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/logout')
 def logout():
     session.clear()
+    return redirect(url_for('home'))
+
+# هذا المسار هو الذي كان يسبب الـ 404
+@app.route('/select_time/<entity_id>')
+def select_time(entity_id):
+    return render_template('select_time.html', entity_id=entity_id, departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
+
+@app.route('/book', methods=['POST'])
+def book():
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
