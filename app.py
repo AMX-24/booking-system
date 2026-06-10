@@ -3,12 +3,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# حسابات الأدمن لتسجيل الدخول الآمن
-ADMIN_USERS = {
-    "admin_cti": "cti_password_2026",
-    "affairs_user": "affairs_pass",
-    "comp_head": "comp_pass"
-}
+# التعديل الجديد: حساب أدمن موحد وصلاحية واحدة للنظام كامل
+ADMIN_USERNAME = "admin_cti"
+ADMIN_PASSWORD = "cti_password_2026"
 
 # الأقسام الرسمية الأربعة للكلية
 departments = {
@@ -70,7 +67,7 @@ schedule_db = {
     'م. فواز الحربي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. فيصل الحارثي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. محمد ناجي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
+    'm. منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
 
     # --- دكاترة ومهندسي قسم الحاسب الآلي (40 اسم) ---
@@ -159,7 +156,7 @@ schedule_db = {
     'م. عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['10:00 AM', '01:00 PM']},
     'م. فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. fهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
+    'م. فهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
@@ -177,10 +174,13 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
-        if username in ADMIN_USERS and ADMIN_USERS[username] == password:
+        
+        # التحقق من الحساب الموحد الجديد للنظام
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
             session['admin_user'] = username
             return redirect(url_for('admin_dashboard'))
+        
         flash('اسم المستخدم أو كلمة المرور غير صحيحة!', 'danger')
     return render_template('login.html')
 
@@ -197,7 +197,8 @@ def admin_dashboard():
 
 @app.route('/admin/update_schedule', methods=['POST'])
 def update_schedule():
-    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('login'))
     target_name = request.form.get('target_name')
     chosen_days = request.form.getlist('days')
     slots_input = request.form.get('slots_list')
