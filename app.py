@@ -5,11 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
+# الاتصال بقاعدة البيانات
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.irsvqmtkwmrokpfhschk:Cti2026Passwor@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# تعريف الأقسام
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
