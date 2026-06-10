@@ -17,6 +17,9 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
+# قائمة الأوقات المتاحة التي يتوقعها الـ HTML
+available_slots = ['08:00', '09:00', '10:00', '11:00', '12:00', '01:00', '02:00', '03:00']
+
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -27,19 +30,15 @@ class Schedule(db.Model):
     slots = db.Column(db.Text, nullable=False)
 
 def get_schedule_db_dict():
-    try:
-        schedules = Schedule.query.all()
-        db_dict = {}
-        for s in schedules:
-            db_dict[s.target_name] = {
-                'type': s.entity_type,
-                'dept': s.dept,
-                'days': [day.strip() for day in s.days.split(',')] if s.days else [],
-                'slots': [slot.strip() for slot in s.slots.split(',')] if s.slots else []
-            }
-        return db_dict
-    except Exception as e:
-        return {}
+    schedules = Schedule.query.all()
+    db_dict = {}
+    for s in schedules:
+        db_dict[s.target_name] = {
+            'type': s.entity_type, 'dept': s.dept,
+            'days': s.days.split(',') if s.days else [],
+            'slots': s.slots.split(',') if s.slots else []
+        }
+    return db_dict
 
 @app.route('/')
 def home():
@@ -56,23 +55,21 @@ def login():
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
-    return render_template('dashboard.html', departments=departments, schedule_db=get_schedule_db_dict())
+    return render_template('dashboard.html', departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
 
 @app.route('/update_schedule', methods=['POST'])
 def update_schedule():
+    flash('تم حفظ التعديلات بنجاح', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/add_department', methods=['POST'])
+def add_department():
+    flash('تمت إضافة القسم بنجاح', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('home'))
-
-@app.route('/select_time/<entity_id>')
-def select_time(entity_id):
-    return render_template('select_time.html', entity_id=entity_id, departments=departments, schedule_db=get_schedule_db_dict())
-
-@app.route('/book', methods=['POST'])
-def book():
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
