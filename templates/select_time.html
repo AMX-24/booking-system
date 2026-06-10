@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>بوابة المواعيد - الكلية التقنية</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Flatpickr CSS (لتصميم التقويم الأنيق مثل image_2.png) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
     
@@ -31,13 +29,19 @@
             <div class="booking-card">
                 <form action="{{ url_for('book') }}" method="POST">
                     
-                    <!-- 1. اسم المتدرب -->
-                    <div class="mb-4">
+                    <!-- الملاحظة الأولى: اسم المتدرب -->
+                    <div class="mb-3">
                         <label class="form-label">اسم المتدرب الكامل:</label>
                         <input type="text" name="student_name" class="form-control" placeholder="أدخل اسمك الثلاثي" required>
                     </div>
 
-                    <!-- 2. اختيار القسم المختص -->
+                    <!-- الملاحظة الأولى: إضافة حقل الرقم الأكاديمي -->
+                    <div class="mb-4">
+                        <label class="form-label">الرقم الأكاديمي:</label>
+                        <input type="number" name="student_id" class="form-control" placeholder="أدخل رقمك الأكاديمي المكون من 9 أرقام" required>
+                    </div>
+
+                    <!-- اختيار القسم المختص -->
                     <div class="mb-4">
                         <label class="form-label">اختر القسم المختص بالمعاملة:</label>
                         <select id="deptSelect" class="form-select" onchange="filterTargets()">
@@ -48,7 +52,7 @@
                         </select>
                     </div>
 
-                    <!-- 3. اختيار المسؤول / الدكتور -->
+                    <!-- اختيار المسؤول / الدكتور -->
                     <div class="mb-4">
                         <label class="form-label">اختر المهندس / الدكتور المطلوب للمقابلة:</label>
                         <select id="targetSelect" name="target_name" class="form-select" onchange="initCalendar()" required disabled>
@@ -63,15 +67,14 @@
                         </select>
                     </div>
 
-                    <!-- 4. التقويم التفاعلي (مظهر الـ Calendar Picker) -->
+                    <!-- التقويم التفاعلي -->
                     <div class="mb-4">
                         <label class="form-label">اختر تاريخ الحجز المتاح:</label>
-                        <!-- حقل الإدخال المخفي الذي سيعمل مع التقويم -->
                         <input type="text" id="datePicker" name="booking_date" class="form-control bg-white" placeholder="اختر التاريخ من التقويم أدناه" required readonly>
                         <div id="calendarInlineContainer" class="mt-2 text-center"></div>
                     </div>
 
-                    <!-- 5. الساعات المتوفرة ديناميكياً -->
+                    <!-- الساعات المتوفرة ديناميكياً -->
                     <div class="mb-4">
                         <label class="form-label d-block text-center fw-bold text-primary">الساعات المتوفرة حالياً حسب جدول الإدارة الحالية:</label>
                         <div id="slotsSection" class="slots-container text-center text-muted small">
@@ -81,7 +84,6 @@
 
                     <input type="hidden" id="selectedSlotInput" name="booking_slot" required>
                     
-                    <!-- زر التأكيد -->
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" style="background-color: #0d3b66;">تأكيد موعد الحجز الفوري</button>
                 </form>
             </div>
@@ -89,16 +91,12 @@
     </div>
 </div>
 
-<!-- jQuery & Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Flatpickr JS (مكتبة بناء التقويم) -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
 
 <script>
 let fpInstance = null;
-
-// تحويل أسماء الأيام البرمجية إلى أرقام يفهمها التقويم لتعطيل الأيام غير المتاحة
 const dayMapping = { 'sun': 0, 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6 };
 
 function filterTargets() {
@@ -127,10 +125,8 @@ function initCalendar() {
     const allowedDaysStr = selectedOpt.data('days') || "";
     const allowedDaysArr = allowedDaysStr.split(',').map(d => dayMapping[d.trim()]);
 
-    // مسح أي تقويم قديم لإنشاء التقويم المحدث للدكتور المختار
     if(fpInstance) { fpInstance.destroy(); }
 
-    // بناء التقويم التفاعلي المضمن (Inline Calendar) مثل مظهر image_2.png تماماً
     fpInstance = flatpickr("#datePicker", {
         inline: true,
         appendTo: document.getElementById('calendarInlineContainer'),
@@ -139,7 +135,6 @@ function initCalendar() {
         minDate: "today",
         enable: [
             function(date) {
-                // تفعيل أيام العمل المحددة للدكتور فقط وتعطيل الويكند وباقي الأيام تلقائياً
                 return allowedDaysArr.includes(date.getDay());
             }
         ],
@@ -153,7 +148,6 @@ function initCalendar() {
 
 function fetchAvailableSlots(dateStr) {
     const target = $('#targetSelect').val();
-    // تحويل التاريخ ليوم نصي لإرساله للسيرفر (مثل sun, mon)
     const dateObj = new Date(dateStr);
     const daysShort = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
     const dayName = daysShort[dateObj.getDay()];
