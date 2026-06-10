@@ -5,9 +5,9 @@ app.secret_key = 'cti_booking_secure_super_key'
 
 # حساب أدمن موحد وصلاحية واحدة للنظام كامل
 ADMIN_USERNAME = "admin_cti"
-ADMIN_PASSWORD = "admin_2026"
+ADMIN_PASSWORD = "cti_password_2026"
 
-# الأقسام الرسمية الأربعة للكلية (تم تحويلها لمتغير قابل للإضافة والديناميكية)
+# الأقسام الرسمية الأربعة للكلية
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -15,7 +15,7 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
-# قاعدة البيانات الشاملة والنهائية للمشروع (شؤون متدربين + 4 رؤساء أقسام + 109 دكتور ومهندس)
+# قاعدة البيانات الشاملة للمشروع (شؤون متدربين + رؤساء أقسام + أعضاء هيئة التدريس)
 schedule_db = {
     # --- شؤون المتدربين ورؤساء الأقسام ---
     'شؤون المتدربين': {
@@ -48,7 +48,7 @@ schedule_db = {
         'slots': ['08:30 AM', '10:00 AM', '12:00 PM']
     },
 
-    # --- دكاترة قسم المواد العامة (20 اسم) ---
+    # --- دكاترة قسم المواد العامة ---
     'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -70,7 +70,7 @@ schedule_db = {
     'م. منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
 
-    # --- دكاترة ومهندسي قسم الحاسب الآلي (40 اسم) ---
+    # --- دكاترة ومهندسي قسم الحاسب الآلي ---
     'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -111,7 +111,7 @@ schedule_db = {
     'م. وليد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. ياسر الحبشان': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
 
-    # --- دكاترة ومهندسي قسم الاتصالات (18 اسم) ---
+    # --- دكاترة ومهندسي قسم الاتصالات ---
     'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'د. إيمن صائغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -131,7 +131,7 @@ schedule_db = {
     'م. وليد جمعة': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. ياسر مياجي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
 
-    # --- دكاترة ومهندسي قسم الإلكترونيات (31 اسم) ---
+    # --- دكاترة ومهندسي قسم الإلكترونيات ---
     'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'د. أيمن كيفي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
@@ -152,11 +152,12 @@ schedule_db = {
     'م. صالح الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. طارق الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. ظافر الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عبدالرحمن الغامدي': {'type': 'faculty', 'electronics', 'days': ['sun', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
+    # تم تصحيح الخطأ الإملائي هنا (إضافة الكلمة المفتاحية 'dept') ليعمل السيرفر بنجاح
+    'م. عبدالرحمن الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['10:00 AM', '01:00 PM']},
     'م. فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. فهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
+    'م. fهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
@@ -192,7 +193,6 @@ def admin_dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html', departments=departments, schedule_db=schedule_db)
 
-# الإجراء البرمجي المحدث لإضافة الأقسام ديناميكياً
 @app.route('/admin/add_department', methods=['POST'])
 def add_department():
     if not session.get('admin_logged_in'): 
@@ -204,7 +204,6 @@ def add_department():
     if dept_id and dept_name:
         if dept_id not in departments:
             departments[dept_id] = dept_name
-            # إنشاء رئيس قسم تلقائي للقسم الجديد بجدول افتراضي
             head_title = f"رئيس {dept_name}"
             schedule_db[head_title] = {
                 'type': 'head',
