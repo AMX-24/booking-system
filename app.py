@@ -7,7 +7,25 @@ app.secret_key = 'cti_booking_secure_super_key'
 ADMIN_USERNAME = "admin_cti"
 ADMIN_PASSWORD = "cti_password_2026"
 
-# الأقسام الرسمية الأربعة للكلية
+# دالة لتوليد الأوقات تلقائياً من 8:00 ص إلى 3:00 م بفارق نصف ساعة
+def generate_default_slots():
+    slots = []
+    # الفترة الصباحية من 8 إلى 11:30
+    for hour in [8, 9, 10, 11]:
+        slots.append(f"{hour:02d}:00 AM")
+        slots.append(f"{hour:02d}:30 AM")
+    # فترة الظهر من 12 إلى 3:00
+    slots.append("12:00 PM")
+    slots.append("12:30 PM")
+    for hour in [1, 2]:
+        slots.append(f"{hour:02d}:00 PM")
+        slots.append(f"{hour:02d}:30 PM")
+    slots.append("03:00 PM")
+    return slots
+
+DEFAULT_SLOTS = generate_default_slots()
+
+# الأقسام الرسمية الأساسية للكلية
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -15,160 +33,161 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
-# قاعدة البيانات الشاملة للمشروع (شؤون متدربين + رؤساء أقسام + أعضاء هيئة التدريس)
+# قاعدة البيانات الشاملة للمشروع مع ضبط الأوقات تلقائياً بين كل موعد نصف ساعة
 schedule_db = {
     # --- شؤون المتدربين ورؤساء الأقسام ---
     'شؤون المتدربين': {
         'type': 'affairs',
+        'dept': 'general', # متاح لجميع المتدربين بشكل عام
         'days': ['sun', 'mon', 'tue', 'wed', 'thu'],
-        'slots': ['08:00 AM', '09:30 AM', '11:00 AM']
+        'slots': DEFAULT_SLOTS
     },
     'رئيس قسم الحاسب الآلي': {
         'type': 'head',
         'dept': 'computer',
         'days': ['sun', 'tue'],
-        'slots': ['09:00 AM', '10:30 AM']
+        'slots': DEFAULT_SLOTS
     },
     'رئيس قسم الاتصالات': {
         'type': 'head',
         'dept': 'communications',
         'days': ['mon', 'wed'],
-        'slots': ['10:00 AM', '11:30 AM']
+        'slots': DEFAULT_SLOTS
     },
     'رئيس قسم الإلكترونيات': {
         'type': 'head',
         'dept': 'electronics',
         'days': ['sun', 'tue', 'thu'],
-        'slots': ['09:00 AM', '10:30 AM', '11:30 AM']
+        'slots': DEFAULT_SLOTS
     },
     'رئيس قسم المواد العامة': {
         'type': 'head',
         'dept': 'general',
         'days': ['mon', 'tue', 'wed'],
-        'slots': ['08:30 AM', '10:00 AM', '12:00 PM']
+        'slots': DEFAULT_SLOTS
     },
 
     # --- دكاترة قسم المواد العامة ---
-    'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
-    'م. خالد السلمي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. خالد الزهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '11:30 AM']},
-    'م. رامي حكمي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. سامر فطاني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. عبدالعزيز السلمي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'thu'], 'slots': ['08:30 AM', '11:00 AM']},
-    'م. عبدالله القحطاني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. عبدالله البشري': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عبدالله الرفاعي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. علي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. علي الشهري': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. عمر رزق الله': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. فهيد المطيري': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. فواز الحربي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. فيصل الحارثي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. محمد ناجي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
+    'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. خالد السلمي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. خالد الزهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. رامي حكمي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. سامر فطاني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالعزيز السلمي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله القحطاني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله البشري': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله الرفاعي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. علي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. علي الشهري': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. عمر رزق الله': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. فهيد المطيري': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. فواز الحربي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. فيصل الحارثي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. محمد ناجي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
 
     # --- دكاترة ومهندسي قسم الحاسب الآلي ---
-    'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
-    'م. أحمد رشاد': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. احمد عنقاوي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '11:30 AM']},
-    'م. أيمن العبيدي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. بندر الثقفي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. بندر محمد العويضي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'thu'], 'slots': ['08:30 AM', '11:00 AM']},
-    'م. ثامر عطيه الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. جمعان الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. جميل الخليفي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. حسن المالكي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. حسين احمد باداود': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. حمد الشهابي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. حامد الشيخ': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. حامد الشمراني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. خالد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. خليل ال صمع': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. سالم الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. سلطان ال مغلف': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. سلمان الشهري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
-    'م. صالح الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. عادل الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '11:30 AM']},
-    'م. عبدالرحمن المنتشري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عبدالرحمن الحربي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. عبدالله الحازمي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'thu'], 'slots': ['08:30 AM', '11:00 AM']},
-    'م. عبدالله السهيمي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. عبدالله الشهري': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عبدالله ناصر': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. عبدالهادي المالكي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. عبيد الحربي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. فايز شافعي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. فهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. محمد العرياني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. محمد الشريف': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. منصور الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. موسى المحمادي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. وليد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. ياسر الحبشان': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
+    'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. أحمد رشاد': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. احمد عنقاوي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. أيمن العبيدي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. بندر الثقفي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. بندر محمد العويضي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. ثامر عطيه الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. جمعان الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. جميل الخليفي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. حسن المالكي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. حسين احمد باداود': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. حمد الشهابي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. حامد الشيخ': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. حامد الشمراني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. خالد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. خليل ال صمع': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. سالم الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. سلطان ال مغلف': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. سلمان الشهري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. صالح الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. عادل الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالرحمن المنتشري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالرحمن الحربي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله الحازمي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله السهيمي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله الشهري': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله ناصر': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالهادي المالكي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. عبيد الحربي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. فايز شافعي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. fهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. محمد العرياني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. محمد الشريف': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. منصور الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. موسى المحمادي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. وليد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. ياسر الحبشان': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
 
     # --- دكاترة ومهندسي قسم الاتصالات ---
-    'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
-    'د. إيمن صائغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
-    'م. بدر الجهني': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. رضا الجهني': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '11:30 AM']},
-    'م. سعيد ظافر': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. سامي قرامي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. سعيد عبدالرحيم': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'thu'], 'slots': ['08:30 AM', '11:00 AM']},
-    'م. عمر الصايغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. عيد الحربي': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عيسى السقاف': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. ماجد السريحي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. ماهر نحاس': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. محمد العلياني': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. محمد سلامي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. منصور الحازمي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. وليد جمعة': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. ياسر مياجي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
+    'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'د. إيمن صائغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. بدر الجهني': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. رضا الجهني': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. سعيد ظافر': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. سامي قرامي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. سعيد عبدالرحيم': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. عمر الصايغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. عيد الحربي': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. عيسى السقاف': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. ماجد السريحي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. ماهر نحاس': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. محمد العلياني': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. محمد سلامي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. منصور الحازمي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'mon'], 'slots': DEFAULT_SLOTS},
+    'م. وليد جمعة': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. ياسر مياجي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
 
     # --- دكاترة ومهندسي قسم الإلكترونيات ---
-    'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'د. أيمن كيفي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. أيمن بنجر': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. جابر يماني': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. جميل الجهني': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:30 AM']},
-    'م. حاتم الردادي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. حاتم الزهراني': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. حسن بادويل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. حسين المكرمي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '11:30 AM']},
-    'م. خالد حجازي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. رمزي مهدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. سعود المطيري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. سعود الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. سعود خوتنلي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. سعيد ابو عسيس': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. سلطان العتيبي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:30 AM']},
-    'م. صالح الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. طارق الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. ظافر الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    # تم تصحيح الخطأ الإملائي هنا (إضافة الكلمة المفتاحية 'dept') ليعمل السيرفر بنجاح
-    'م. عبدالرحمن الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. fهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
-    'م. فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. محمد عشري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. هيثم نايته': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. يزيد الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '01:00 PM']}
+    'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'د. أيمن كيفي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. أيمن بنجر': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. جابر يماني': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. جميل الجهني': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. حاتم الردادي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. حاتم الزهراني': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. حسن بادويل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. حسين المكرمي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. خالد حجازي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. رمزي مهدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. سعود المطيري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. سعود الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. سعود خوتنلي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. سعيد ابو عسيس': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. سلطان العتيبي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. صالح الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. طارق الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. ظافر الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالرحمن الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. fهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': DEFAULT_SLOTS},
+    'م. محمد عشري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': DEFAULT_SLOTS},
+    'م. هيثم نايته': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': DEFAULT_SLOTS},
+    'م. يزيد الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': DEFAULT_SLOTS}
 }
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    # نمرر الأقسام الأساسية + أي أقسام تمت إضافتها ديناميكياً داخل النظام لكي تظهر بالرئيسية
+    return render_template('index.html', departments=departments)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -203,15 +222,17 @@ def add_department():
     
     if dept_id and dept_name:
         if dept_id not in departments:
+            # إضافة القسم في الذاكرة الحالية للعمل الفوري
             departments[dept_id] = dept_name
             head_title = f"رئيس {dept_name}"
+            # إنشاء حساب رئيس القسم الجديد بجدول المواعيد الافتراضي الفارق نصف ساعة
             schedule_db[head_title] = {
                 'type': 'head',
                 'dept': dept_id,
                 'days': ['sun', 'tue'],
-                'slots': ['09:00 AM', '11:00 AM']
+                'slots': DEFAULT_SLOTS
             }
-            flash(f'تم إضافة {dept_name} بنجاح وإنشاء حساب رئيس القسم الخاص به!', 'success')
+            flash(f'تم إضافة {dept_name} بنجاح وجدولته من 8 ص إلى 3 م!', 'success')
         else:
             flash('رمز القسم موجود مسبقاً!', 'danger')
     return redirect(url_for('admin_dashboard'))
@@ -227,13 +248,14 @@ def update_schedule():
     if target_name in schedule_db:
         schedule_db[target_name]['days'] = chosen_days
         schedule_db[target_name]['slots'] = [s.strip() for s in slots_input.split(',') if s.strip()]
-        flash(f'تم تحديث مواعيد ({target_name}) بنجاح وتغيرت فورياً!', 'success')
+        flash(f'تم تحديث مواعيد ({target_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/select_time/<entity_id>')
-def select_time(entity_id):
-    titles = {'affairs': 'شؤون المتدربين', 'head': 'رئيس القسم', 'faculty': 'أعضاء هيئة التدريس'}
-    return render_template('select_time.html', entity_id=entity_id, entity_name=titles[entity_id], departments=departments, schedule_db=schedule_db)
+# تم تعديل هذا المسار ليعمل مباشرة بناءً على القسم المختار دون الحاجة لتحديد نوع المسؤول أولاً
+@app.route('/select_time/<dept_id>')
+def select_time(dept_id):
+    dept_name = departments.get(dept_id, 'القسم المحدد')
+    return render_template('select_time.html', dept_id=dept_id, dept_name=dept_name, schedule_db=schedule_db)
 
 @app.route('/get_slots_ajax', methods=['POST'])
 def get_slots_ajax():
