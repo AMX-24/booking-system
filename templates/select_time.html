@@ -7,7 +7,6 @@
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
         .booking-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        /* تحسين شكل خانة التاريخ */
         input[type="date"] { cursor: pointer; }
     </style>
 </head>
@@ -45,6 +44,15 @@
                 </select>
             </div>
 
+            {% if entity_id == 'faculty' %}
+            <div class="mb-4" id="facultyWrapper">
+                <label class="form-label fw-bold text-dark">اختر الدكتور / المهندس:</label>
+                <select class="form-select" id="facultySelect" name="target_name" required onchange="handleFacultyChange()">
+                    <option value="" disabled selected>-- الرجاء اختيار القسم أولاً لرؤية الدكاترة --</option>
+                </select>
+            </div>
+            {% endif %}
+
             <div class="mb-4">
                 <label class="form-label fw-bold text-dark">تاريخ الحجز:</label>
                 <input type="date" id="datePicker" name="booking_date" class="form-control" required disabled onchange="handleDateChange()">
@@ -71,14 +79,49 @@
 const db = {{ schedule_db | tojson }};
 const currentType = "{{ entity_id }}";
 
-// عند تغيير القسم، نُفعل حقل التقويم
+// عند تغيير القسم
 function handleDeptChange() {
+    const dept = document.getElementById('deptSelect').value;
     const datePicker = document.getElementById('datePicker');
-    datePicker.disabled = false;
+    const facultySelect = document.getElementById('facultySelect');
+    
+    clearSlots();
+    
+    // إذا كنا بصفحة أعضاء هيئة التدريس، نقوم بفلترة الدكاترة التابعين للقسم المختار فوراً
+    if (currentType === 'faculty' && facultySelect) {
+        facultySelect.innerHTML = '<option value="" disabled selected>-- اختر الدكتور / المهندس --</option>';
+        let hasData = false;
+        
+        for (let name in db) {
+            if (db[name].type === 'faculty' && db[name].dept === dept) {
+                let opt = document.createElement('option');
+                opt.value = name;
+                opt.innerText = name;
+                facultySelect.appendChild(opt);
+                hasData = true;
+            }
+        }
+        
+        if (!hasData) {
+            facultySelect.innerHTML = '<option value="" disabled selected>-- لا يوجد دكاترة مضافين لهذا القسم حالياً --</option>';
+            datePicker.disabled = true;
+        } else {
+            facultySelect.disabled = false;
+            datePicker.disabled = true; // ينتظر اختيار الدكتور أولاً
+        }
+    } else {
+        // شؤون المتدربين أو رؤساء الأقسام يفعلون التقويم مباشرة
+        datePicker.disabled = false;
+    }
+}
+
+// دالة تفعل التقويم بعد اختيار الدكتور
+function handleFacultyChange() {
+    document.getElementById('datePicker').disabled = false;
     clearSlots();
 }
 
-// عند اختيار تاريخ من التقويم، نستخرج اليوم (أحد، إثنين..) ونرسل الطلب لسحب الأوقات
+// عند اختيار تاريخ من التقويم
 function handleDateChange() {
     const dateVal = document.getElementById('datePicker').value;
     const container = document.getElementById('slotsContainer');
@@ -86,40 +129,44 @@ function handleDateChange() {
     
     if (!dateVal || !dept) return;
 
-    // تحويل التاريخ لاسم اليوم بالإنجليزي لمطابقته مع السيرفر
     const dateObj = new Date(dateVal);
     const daysMapping = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
     const dayName = daysMapping[dateObj.getDay()];
 
-    // الويكند (الجمعة والسبت) غير متاحين بنظام الكلية
     if (dayName === 'fri' || dayName === 'sat') {
         container.innerHTML = '<span class="text-danger small fw-bold">عذراً، نهاية الأسبوع (الجمعة والسبت) ليست أيام عمل رسمية!</span>';
         return;
     }
 
-    // البحث عن المسؤول التابع للقسم والنوع تلقائياً في الخلفية
     let targetName = null;
-    for (let name in db) {
-        if (db[name].type === currentType && db[name].dept === dept) {
-            targetName = name;
-            break;
+    
+    // إذا كنا في صفحة دكاترة، نأخذ الاسم المختار مباشرة من القائمة المستدلة
+    if (currentType === 'faculty') {
+        targetName = document.getElementById('facultySelect').value;
+    } else {
+        // إذا كنا بشؤون المتدربين أو رئيس القسم، نبحث عن الاسم المطابق ديناميكياً
+        for (let name in db) {
+            if (db[name].type === currentType && db[name].dept === dept) {
+                targetName = name;
+                break;
+            }
         }
     }
     
     if (!targetName) {
-        container.innerHTML = '<span class="text-warning small fw-bold">لا يوجد مسؤول أو جدول مواعيد مضاف لهذا القسم حالياً!</span>';
+        container.innerHTML = '<span class="text-warning small fw-bold">لا يوجد جدول مواعيد مضاف لهذا الاختيار حالياً!</span>';
         return;
     }
     
     let formData = new FormData();
     formData.append('target', targetName);
-    formData.append('day_name', dayName); // إرسال اليوم المستخرج من التقويم
+    formData.append('day_name', dayName);
     
     fetch('/get_slots_ajax', { method: 'POST', body: formData })
     .then(res => res.text())
     .then(html => { 
         if(html.trim() === '') {
-            container.innerHTML = '<span class="text-warning small fw-bold">لا توجد أوقات متاحة مسجلة لهذا المسؤول في هذا اليوم!</span>';
+            container.innerHTML = '<span class="text-warning small fw-bold">هذا اليوم غير متاح بجدول مواعيد هذا المسؤول!</span>';
         } else {
             container.innerHTML = html; 
         }
