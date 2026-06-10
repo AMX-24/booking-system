@@ -5,13 +5,20 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# الاتصال بقاعدة البيانات - تأكد أن هذا الرابط هو الذي نسخته من Supabase
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Cti_Secure_Db_2026_Pass!@db.irsvqmtkwmrokpfhschk.supabase.co:6543/postgres'
+# الرابط المحدث بكلمة المرور الجديدة
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Cti2026Passwor@db.irsvqmtkwmrokpfhschk.supabase.co:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# تعريف الجدول ليطابق ما أنشأته في Supabase
+# تعريف الأقسام لحل مشكلة UndefinedError
+departments = {
+    'computer': 'قسم الحاسب الآلي',
+    'communications': 'قسم الاتصالات',
+    'electronics': 'قسم الإلكترونيات',
+    'general': 'قسم المواد العامة'
+}
+
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -24,9 +31,6 @@ class Schedule(db.Model):
 def get_schedule_db_dict():
     try:
         schedules = Schedule.query.all()
-        # Debug: طباعة عدد السجلات في الـ Logs
-        print(f"DEBUG: Successfully fetched {len(schedules)} records from DB")
-        
         db_dict = {}
         for s in schedules:
             db_dict[s.target_name] = {
@@ -42,7 +46,7 @@ def get_schedule_db_dict():
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('index.html', departments=departments)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -55,11 +59,11 @@ def login():
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
-    return render_template('dashboard.html', schedule_db=get_schedule_db_dict())
+    return render_template('dashboard.html', departments=departments, schedule_db=get_schedule_db_dict())
 
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
-    return render_template('select_time.html', schedule_db=get_schedule_db_dict())
+    return render_template('select_time.html', entity_id=entity_id, departments=departments, schedule_db=get_schedule_db_dict())
 
 @app.route('/book', methods=['POST'])
 def book():
