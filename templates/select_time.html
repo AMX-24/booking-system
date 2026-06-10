@@ -7,6 +7,8 @@
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
         .booking-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        /* تحسين شكل خانة التاريخ */
+        input[type="date"] { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -44,15 +46,9 @@
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold text-dark">اختر يوم الحجز المتاح للمقابلة:</label>
-                <select class="form-select" id="daySelect" name="day_name" required disabled onchange="updateSlots()">
-                    <option value="" disabled selected>-- اختر اليوم --</option>
-                    <option value="sun">الأحد</option>
-                    <option value="mon">الإثنين</option>
-                    <option value="tue">الثلاثاء</option>
-                    <option value="wed">الأربعاء</option>
-                    <option value="thu">الخميس</option>
-                </select>
+                <label class="form-label fw-bold text-dark">تاريخ الحجز:</label>
+                <input type="date" id="datePicker" name="booking_date" class="form-control" required disabled onchange="handleDateChange()">
+                <small class="text-muted d-block mt-1">اضغط لاختيار التاريخ من التقويم</small>
             </div>
 
             <div class="mb-4">
@@ -75,21 +71,33 @@
 const db = {{ schedule_db | tojson }};
 const currentType = "{{ entity_id }}";
 
-// دالة لمعالجة التغيير في الأقسام دون الحاجة لقائمة الأشخاص المحذوفة
+// عند تغيير القسم، نُفعل حقل التقويم
 function handleDeptChange() {
-    const daySelect = document.getElementById('daySelect');
-    daySelect.disabled = false;
+    const datePicker = document.getElementById('datePicker');
+    datePicker.disabled = false;
     clearSlots();
 }
 
-function updateSlots() {
-    const dept = document.getElementById('deptSelect').value;
-    const day = document.getElementById('daySelect').value;
+// عند اختيار تاريخ من التقويم، نستخرج اليوم (أحد، إثنين..) ونرسل الطلب لسحب الأوقات
+function handleDateChange() {
+    const dateVal = document.getElementById('datePicker').value;
     const container = document.getElementById('slotsContainer');
+    const dept = document.getElementById('deptSelect').value;
     
-    if(!dept || !day) return;
-    
-    // البحث عن المسؤول التابع للقسم والنوع المحدد تلقائياً في الخلفية
+    if (!dateVal || !dept) return;
+
+    // تحويل التاريخ لاسم اليوم بالإنجليزي لمطابقته مع السيرفر
+    const dateObj = new Date(dateVal);
+    const daysMapping = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayName = daysMapping[dateObj.getDay()];
+
+    // الويكند (الجمعة والسبت) غير متاحين بنظام الكلية
+    if (dayName === 'fri' || dayName === 'sat') {
+        container.innerHTML = '<span class="text-danger small fw-bold">عذراً، نهاية الأسبوع (الجمعة والسبت) ليست أيام عمل رسمية!</span>';
+        return;
+    }
+
+    // البحث عن المسؤول التابع للقسم والنوع تلقائياً في الخلفية
     let targetName = null;
     for (let name in db) {
         if (db[name].type === currentType && db[name].dept === dept) {
@@ -105,13 +113,13 @@ function updateSlots() {
     
     let formData = new FormData();
     formData.append('target', targetName);
-    formData.append('day_name', day);
+    formData.append('day_name', dayName); // إرسال اليوم المستخرج من التقويم
     
     fetch('/get_slots_ajax', { method: 'POST', body: formData })
     .then(res => res.text())
     .then(html => { 
         if(html.trim() === '') {
-            container.innerHTML = '<span class="text-warning small fw-bold">لا توجد أوقات متاحة مسجلة لهذا القسم اليوم.</span>';
+            container.innerHTML = '<span class="text-warning small fw-bold">لا توجد أوقات متاحة مسجلة لهذا المسؤول في هذا اليوم!</span>';
         } else {
             container.innerHTML = html; 
         }
