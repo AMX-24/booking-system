@@ -7,6 +7,8 @@
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
         .booking-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        /* تحسين شكل خانة التاريخ */
+        input[type="date"] { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -44,15 +46,9 @@
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold text-dark">اختر يوم الحجز المتاح للمقابلة:</label>
-                <select class="form-select" id="daySelect" name="day_name" required disabled onchange="updateSlots()">
-                    <option value="" disabled selected>-- اختر اليوم --</option>
-                    <option value="sun">الأحد</option>
-                    <option value="mon">الإثنين</option>
-                    <option value="tue">الثلاثاء</option>
-                    <option value="wed">الأربعاء</option>
-                    <option value="thu">الخميس</option>
-                </select>
+                <label class="form-label fw-bold text-dark">تاريخ الحجز:</label>
+                <input type="date" id="datePicker" name="booking_date" class="form-control" required disabled onchange="handleDateChange()">
+                <small class="text-muted d-block mt-1">اضغط لاختيار التاريخ من التقويم</small>
             </div>
 
             <div class="mb-4">
@@ -75,61 +71,17 @@
 const db = {{ schedule_db | tojson }};
 const currentType = "{{ entity_id }}";
 
-// دالة لمعالجة التغيير في الأقسام دون الحاجة لقائمة الأشخاص المحذوفة
+// عند تغيير القسم، نُفعل حقل التقويم
 function handleDeptChange() {
-    const daySelect = document.getElementById('daySelect');
-    daySelect.disabled = false;
+    const datePicker = document.getElementById('datePicker');
+    datePicker.disabled = false;
     clearSlots();
 }
 
-function updateSlots() {
-    const dept = document.getElementById('deptSelect').value;
-    const day = document.getElementById('daySelect').value;
+// عند اختيار تاريخ من التقويم، نستخرج اليوم (أحد، إثنين..) ونرسل الطلب لسحب الأوقات
+function handleDateChange() {
+    const dateVal = document.getElementById('datePicker').value;
     const container = document.getElementById('slotsContainer');
+    const dept = document.getElementById('deptSelect').value;
     
-    if(!dept || !day) return;
-    
-    // البحث عن المسؤول التابع للقسم والنوع المحدد تلقائياً في الخلفية
-    let targetName = null;
-    for (let name in db) {
-        if (db[name].type === currentType && db[name].dept === dept) {
-            targetName = name;
-            break;
-        }
-    }
-    
-    if (!targetName) {
-        container.innerHTML = '<span class="text-warning small fw-bold">لا يوجد مسؤول أو جدول مواعيد مضاف لهذا القسم حالياً!</span>';
-        return;
-    }
-    
-    let formData = new FormData();
-    formData.append('target', targetName);
-    formData.append('day_name', day);
-    
-    fetch('/get_slots_ajax', { method: 'POST', body: formData })
-    .then(res => res.text())
-    .then(html => { 
-        if(html.trim() === '') {
-            container.innerHTML = '<span class="text-warning small fw-bold">لا توجد أوقات متاحة مسجلة لهذا القسم اليوم.</span>';
-        } else {
-            container.innerHTML = html; 
-        }
-    })
-    .catch(() => { container.innerHTML = '<span class="text-danger">حدث خطأ أثناء تحميل الفترات!</span>'; });
-}
-
-function selectSlot(slot) {
-    document.querySelectorAll('.slot-btn').forEach(b => b.classList.replace('btn-primary', 'btn-outline-primary'));
-    event.target.classList.replace('btn-outline-primary', 'btn-primary');
-    document.getElementById('hiddenSlotInput').value = slot;
-}
-
-function clearSlots() {
-    document.getElementById('slotsContainer').innerHTML = '<span class="text-muted small">الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة.</span>';
-    document.getElementById('hiddenSlotInput').value = "";
-}
-</script>
-
-</body>
-</html>
+    if (!dateVal || !dept
