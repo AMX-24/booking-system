@@ -7,12 +7,13 @@
     <style>
         body { background-color: #f8fafc; font-family: sans-serif; }
         .top-navbar { background-color: #0b2c61; color: white; padding: 15px; }
+        .card-custom { border: none; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
-<div class="top-navbar d-flex justify-content-between align-items-center px-4 shadow-sm">
-    <h5 class="m-0 fw-bold">🛠️ لوحة التحكم العليا المطلقة (Super Admin)</h5>
+<div class="top-navbar d-flex justify-content-between align-items-center px-4">
+    <h6 class="m-0 fw-bold">🛠️ لوحة التحكم العليا المطلقة (Super Admin) - إدارة مستقلة</h6>
     <a href="/logout" class="btn btn-danger btn-sm fw-bold">تسجيل الخروج</a>
 </div>
 
@@ -20,47 +21,31 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} p-2 text-center small fw-bold shadow-sm" role="alert">{{ message }}</div>
+                <div class="alert alert-{{ category }} p-2 text-center small fw-bold" role="alert">{{ message }}</div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
-    <!-- قسم إضافة كادر جديد لقاعدة البيانات -->
-    <div class="card p-3 mb-4 border-0 shadow-sm">
-        <h6 class="fw-bold text-success border-bottom pb-2">➕ إضافة اسم دكتور أو رئيس قسم جديد للنظام</h6>
-        <form action="/admin/add_new_doctor" method="POST" class="row g-2 align-items-center">
-            <div class="col-md-5">
-                <input type="text" name="doc_name" class="form-control form-control-sm" placeholder="اسم الدكتور أو المنصب الإداري كلياً" required>
-            </div>
-            <div class="col-md-4">
-                <select name="dept_id" class="form-select form-select-sm" required>
-                    {% for id, name in departments.items() %}
-                        <option value="{{ id }}">{{ name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">إضافة وحفظ بالنظام</button>
-            </div>
-        </form>
-    </div>
+    <h5 class="fw-bold text-dark mb-4">⚙️ إدارة وتخصيص أوقات الجهات والكادر التدريسي</h5>
 
-    <!-- التحكم الفردي والمخصص لكل شخص على حِدة -->
-    <h6 class="fw-bold text-dark mb-3">📍 قائمة الكوادر الإدارية والتعليمية وتخصيص أوقاتهم الفريدة:</h6>
-    
     <div class="row">
         {% for name, info in schedule_db.items() %}
-        <div class="col-md-6 mb-3">
-            <div class="card p-3 shadow-sm border-0 position-relative">
+        <div class="col-md-6">
+            <div class="card card-custom p-3 bg-white">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                    <span class="fw-bold text-primary">👤 {{ name }}</span>
-                    <span class="badge bg-secondary small">{{ departments.get(info.dept, info.dept) }}</span>
+                    <span class="fw-bold text-primary">📍 {{ name }}</span>
+                    <span class="badge bg-dark small">
+                        {% if info.type == 'affairs' %} شؤون متدربين
+                        {% elif info.type == 'head' %} رئيس قسم
+                        {% else %} عضو هيئة تدريس
+                        {% endif %}
+                    </span>
                 </div>
-                
-                <form action="/admin/update_doctor_schedule" method="POST">
-                    <input type="hidden" name="doc_name" value="{{ name }}">
+
+                <form action="/admin/update_schedule" method="POST">
+                    <input type="hidden" name="target_name" value="{{ name }}">
                     
-                    <label class="form-label small fw-bold text-muted m-0">تحديد أيام العمل المتاحة له:</label>
+                    <label class="form-label small fw-bold text-muted m-0">أيام إتاحة الحجز:</label>
                     <div class="d-flex gap-2 my-1 flex-wrap small">
                         <label><input type="checkbox" name="days" value="sun" {% if 'sun' in info.days %}checked{% endif %}> أحد</label>
                         <label><input type="checkbox" name="days" value="mon" {% if 'mon' in info.days %}checked{% endif %}> إثنين</label>
@@ -70,17 +55,12 @@
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label small fw-bold text-muted m-0">تعديل فترات ساعاته الخاصة بالفواصل (,):</label>
+                        <label class="form-label small fw-bold text-muted m-0">الفترات الزمنية المتاحة (افصل بينها بفاصلة ,):</label>
                         <input type="text" name="slots_list" class="form-control form-control-sm mt-1" value="{{ info.slots|join(', ') }}">
                     </div>
 
-                    <div class="d-flex gap-2 mt-2">
-                        <button type="submit" class="btn btn-primary btn-sm w-70 fw-bold py-1">حفظ وتحديث الأوقات</button>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold py-1">تحديث جدول المواعيد الافتراضية</button>
                 </form>
-                        <form action="/admin/delete_doctor/{{ name }}" method="POST" class="w-30" onsubmit="return confirm('هل متأكد من مسح هذا الاسم نهائياً؟')">
-                            <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-1">حذف الكادر</button>
-                        </form>
-                    </div>
             </div>
         </div>
         {% endfor %}
