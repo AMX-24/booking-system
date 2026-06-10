@@ -13,31 +13,38 @@
 
 <div class="container my-5" style="max-width: 750px;">
     <div class="text-center mb-4">
-        <h3 class="fw-bold text-primary">نموذج حجز الموعد لـ ({{ entity_name }})</h3>
-        <p class="text-muted">يرجى تعبئة الحقول واختيار الموعد المناسب لإتمام الطلب</p>
+        <h3 class="fw-bold text-primary">بوابة المواعيد لـ: {{ entity_name }}</h3>
+        <p class="text-muted small">يرجى إدخال بياناتك واختيار الموعد المناسب لإتمام الطلب فورياً</p>
     </div>
 
     <div class="booking-box">
         <form action="{{ url_for('book') }}" method="POST">
-            <div class="mb-3">
-                <label class="form-label fw-bold">اختر القسم الأكاديمي:</label>
-                <select class="form-select" id="deptSelect" required onchange="filterEntities()">
-                    <option value="" disabled selected>-- اختر القسم --</option>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">اسم المتدرب بالكامل:</label>
+                    <input type="text" name="student_name" class="form-control" placeholder="أدخل اسمك الثلاثي" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">الرقم الأكاديمي:</label>
+                    <input type="number" name="student_id" class="form-control" placeholder="مثال: 44210000" required>
+                </div>
+            </div>
+
+            <hr class="text-muted">
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark">اختر القسم المختص بالمعاملة:</label>
+                <select class="form-select" id="deptSelect" required onchange="handleDeptChange()">
+                    <option value="" disabled selected>-- اختر القسم من هنا --</option>
                     {% for key, name in departments.items() %}
                         <option value="{{ key }}">{{ name }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">اختر الشخص المراد مقابلته:</label>
-                <select class="form-select" id="entitySelect" name="target_name" required disabled onchange="updateSlots()">
-                    <option value="" disabled selected>-- اختر المسؤول --</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-bold">اختر يوم المقابلة:</label>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark">اختر يوم الحجز المتاح للمقابلة:</label>
                 <select class="form-select" id="daySelect" name="day_name" required disabled onchange="updateSlots()">
                     <option value="" disabled selected>-- اختر اليوم --</option>
                     <option value="sun">الأحد</option>
@@ -49,73 +56,66 @@
             </div>
 
             <div class="mb-4">
-                <label class="form-label d-block fw-bold mb-2 text-center">⏱️ الفترات المتاحة في اليوم المختار:</label>
+                <label class="form-label d-block fw-bold mb-2 text-center text-primary">⏱️ الساعات المتوفرة حالياً حسب جدول الإدارة الحالية:</label>
                 <div id="slotsContainer" class="p-3 border rounded bg-light text-center min-vh-10">
-                    <span class="text-muted small">الرجاء إكمال الخيارات السابقة لعرض الفترات.</span>
+                    <span class="text-muted small">الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة.</span>
                 </div>
                 <input type="hidden" name="chosen_slot" id="hiddenSlotInput" required>
             </div>
 
-            <hr>
-
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold">اسم المتدرب بالكامل:</label>
-                    <input type="text" name="student_name" class="form-control" placeholder="اسمك الثلاثي" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold">الرقم الأكاديمي:</label>
-                    <input type="number" name="student_id" class="form-control" placeholder="مثال: 44210000" required>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between mt-4">
                 <a href="{{ url_for('home') }}" class="btn btn-secondary px-4 fw-bold">رجوع للرئيسية</a>
-                <button type="submit" class="btn btn-primary px-5 fw-bold">تأكيد حجز الموعد</button>
+                <button type="submit" class="btn btn-primary px-5 fw-bold">تأكيد موعد الحجز الفوري</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-// جافا سكربت لمعالجة وتصفية المسؤولين والأوقات بالكامل
 const db = {{ schedule_db | tojson }};
 const currentType = "{{ entity_id }}";
 
-function filterEntities() {
-    const dept = document.getElementById('deptSelect').value;
-    const entitySelect = document.getElementById('entitySelect');
-    
-    entitySelect.innerHTML = '<option value="" disabled selected>-- اختر المسؤول --</option>';
-    
-    for (let name in db) {
-        if (db[name].type === currentType && db[name].dept === dept) {
-            let opt = document.createElement('option');
-            opt.value = name;
-            opt.innerText = name;
-            entitySelect.appendChild(opt);
-        }
-    }
-    entitySelect.disabled = false;
-    document.getElementById('daySelect').disabled = false;
+// دالة لمعالجة التغيير في الأقسام دون الحاجة لقائمة الأشخاص المحذوفة
+function handleDeptChange() {
+    const daySelect = document.getElementById('daySelect');
+    daySelect.disabled = false;
     clearSlots();
 }
 
 function updateSlots() {
-    const target = document.getElementById('entitySelect').value;
+    const dept = document.getElementById('deptSelect').value;
     const day = document.getElementById('daySelect').value;
     const container = document.getElementById('slotsContainer');
     
-    if(!target || !day) return;
+    if(!dept || !day) return;
     
-    // إرسال طلب Ajax للسيرفر لجلب الأوقات ديناميكياً
+    // البحث عن المسؤول التابع للقسم والنوع المحدد تلقائياً في الخلفية
+    let targetName = null;
+    for (let name in db) {
+        if (db[name].type === currentType && db[name].dept === dept) {
+            targetName = name;
+            break;
+        }
+    }
+    
+    if (!targetName) {
+        container.innerHTML = '<span class="text-warning small fw-bold">لا يوجد مسؤول أو جدول مواعيد مضاف لهذا القسم حالياً!</span>';
+        return;
+    }
+    
     let formData = new FormData();
-    formData.append('target', target);
+    formData.append('target', targetName);
     formData.append('day_name', day);
     
     fetch('/get_slots_ajax', { method: 'POST', body: formData })
     .then(res => res.text())
-    .then(html => { container.innerHTML = html; })
+    .then(html => { 
+        if(html.trim() === '') {
+            container.innerHTML = '<span class="text-warning small fw-bold">لا توجد أوقات متاحة مسجلة لهذا القسم اليوم.</span>';
+        } else {
+            container.innerHTML = html; 
+        }
+    })
     .catch(() => { container.innerHTML = '<span class="text-danger">حدث خطأ أثناء تحميل الفترات!</span>'; });
 }
 
@@ -126,7 +126,7 @@ function selectSlot(slot) {
 }
 
 function clearSlots() {
-    document.getElementById('slotsContainer').innerHTML = '<span class="text-muted small">الرجاء إكمال الخيارات السابقة لعرض الفترات.</span>';
+    document.getElementById('slotsContainer').innerHTML = '<span class="text-muted small">الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة.</span>';
     document.getElementById('hiddenSlotInput').value = "";
 }
 </script>
