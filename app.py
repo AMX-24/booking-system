@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# بيانات الأدمن الموحدة للوصول للوحة التحكم
+# حساب أدمن موحد وصلاحية واحدة للنظام (تم تحديث الباسورد هنا)
 ADMIN_USERNAME = "admin_cti"
 ADMIN_PASSWORD = "cti_2026"
 
@@ -14,7 +14,7 @@ AVAILABLE_SLOTS = [
     '02:00 PM', '02:30 PM', '03:00 PM'
 ]
 
-# الأقسام الرسمية للكلية
+# الأقسام الرسمية للكلية (تُقرأ ديناميكياً لتظهر الأقسام الجديدة بالرئيسية)
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -22,7 +22,7 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
-# قاعدة بيانات المواعيد للمسؤولين والدكاترة (مربوطة بأقسامها)
+# قاعدة بيانات المواعيد للمسؤولين والدكاترة
 schedule_db = {
     # --- شؤون المتدربين ورؤساء الأقسام ---
     'شؤون المتدربين': {
@@ -107,11 +107,11 @@ schedule_db = {
     'م. عبدالله الحازمي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'thu'], 'slots': ['08:30 AM', '11:00 AM']},
     'م. عبدالله السهيمي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. عبدالله الشهري': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عبدالله ناصر': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
+    'م. عبدالله nاصر': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. عبدالهادي المالكي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. عبيد الحربي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. فايز شافعي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. fهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
+    'م. فهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. محمد العرياني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. محمد الشريف': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. منصور الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
@@ -164,7 +164,7 @@ schedule_db = {
     'م. عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['10:00 AM', '01:00 PM']},
     'م. فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. fهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
+    'م. فهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
@@ -175,7 +175,6 @@ schedule_db = {
 
 @app.route('/')
 def home():
-    # الواجهة الرئيسية ترسل الأقسام كما كانت أولاً بالضبط
     return render_template('index.html', departments=departments)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -198,7 +197,6 @@ def logout():
 def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('login'))
-    # تمرير البيانات والأوقات الجاهزة لصفحة الأدمن فقط لتعرض المربعات (Cards)
     return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, available_slots=AVAILABLE_SLOTS)
 
 @app.route('/admin/add_department', methods=['POST'])
@@ -213,7 +211,7 @@ def add_department():
         if dept_id not in departments:
             departments[dept_id] = dept_name
             head_title = f"رئيس {dept_name}"
-            # إنشاء الحساب الجديد للأدمن تلقائياً بأوقات جاهزة
+            # عند إنشاء قسم جديد يحصل رئيس القسم تلقائياً على أوقات جاهزة
             schedule_db[head_title] = {
                 'type': 'head',
                 'dept': dept_id,
@@ -232,7 +230,7 @@ def update_schedule():
     
     target_name = request.form.get('target_name')
     chosen_days = request.form.getlist('days')
-    chosen_slots = request.form.getlist('slots') # تستقبل مصفوفة الخيارات (Checkboxes) المحددة بـ صح
+    chosen_slots = request.form.getlist('slots')
     
     if target_name in schedule_db:
         schedule_db[target_name]['days'] = chosen_days
@@ -240,7 +238,6 @@ def update_schedule():
         flash(f'تم حفظ تعديلات المواعيد والأيام لـ ({target_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
-# مسار اختيار المسؤولين التابع للمتدربين (كما كان في تصميمك الأول بدون تعديل)
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
     titles = {'affairs': 'شؤون المتدربين', 'head': 'رئيس القسم', 'faculty': 'أعضاء هيئة التدريس'}
