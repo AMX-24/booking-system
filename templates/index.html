@@ -13,16 +13,15 @@
 </head>
 <body>
     <div class="container">
-        <!-- إذا كان لديك الشعار -->
         <img src="{{ url_for('static', filename='logo.png') }}" width="160" style="margin-bottom: 20px;">
-        
         <h1>نظام الاستعلام عن المواعيد</h1>
         
         {% for id, name in departments.items() %}
             <a href="{{ url_for('select_time', entity_id=id) }}" class="dept-btn">{{ name }}</a>
         {% endfor %}
         
-        <a href="{{ url_for('login') }}" style="color: #666; text-decoration: none;">دخول الإدارة</a>
+        <br><br>
+        <a href="{{ url_for('login') }}" style="color: #666; text-decoration: none; font-size: 14px;">دخول الإدارة</a>
     </div>
 </body>
 </html>
