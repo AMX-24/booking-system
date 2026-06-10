@@ -5,8 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# هذا هو الرابط المحدث الذي يربط مشروعك مباشرة بقاعدة بيانات سوبابيز
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Cti_Secure_Db_2026_Pass!@db.irsvqmtkwmrokpfhschk.supabase.co:5432/postgres'
+# الرابط المحدث باستخدام المنفذ 6543 لضمان اتصال مستقر مع Render
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Cti_Secure_Db_2026_Pass!@db.irsvqmtkwmrokpfhschk.supabase.co:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -37,16 +37,19 @@ class Schedule(db.Model):
     slots = db.Column(db.Text, nullable=False)
 
 def get_schedule_db_dict():
-    schedules = Schedule.query.all()
-    db_dict = {}
-    for s in schedules:
-        db_dict[s.target_name] = {
-            'type': s.entity_type,
-            'dept': s.dept,
-            'days': [day.strip() for day in s.days.split(',')] if s.days else [],
-            'slots': [slot.strip() for slot in s.slots.split(',')] if s.slots else []
-        }
-    return db_dict
+    try:
+        schedules = Schedule.query.all()
+        db_dict = {}
+        for s in schedules:
+            db_dict[s.target_name] = {
+                'type': s.entity_type,
+                'dept': s.dept,
+                'days': [day.strip() for day in s.days.split(',')] if s.days else [],
+                'slots': [slot.strip() for slot in s.slots.split(',')] if s.slots else []
+            }
+        return db_dict
+    except:
+        return {}
 
 @app.route('/')
 def home():
@@ -63,11 +66,6 @@ def login():
         flash('اسم المستخدم أو كلمة المرور غير صحيحة!', 'danger')
     return render_template('login.html')
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'):
@@ -76,9 +74,7 @@ def admin_dashboard():
 
 @app.route('/admin/update_schedule', methods=['POST'])
 def update_schedule():
-    if not session.get('admin_logged_in'): 
-        return redirect(url_for('login'))
-    
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
     target_name = request.form.get('target_name')
     chosen_days = ",".join(request.form.getlist('days'))
     chosen_slots = ",".join(request.form.getlist('slots'))
@@ -88,56 +84,42 @@ def update_schedule():
         record.days = chosen_days
         record.slots = chosen_slots
         db.session.commit()
-        flash(f'تم حفظ التعديلات لـ ({target_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
-    if entity_id == 'affairs':
-        entity_name = 'شؤون المتدربين'
-    elif entity_id == 'head':
-        entity_name = 'رئيس القسم'
-    else:
-        entity_name = 'أعضاء هيئة التدريس'
-    return render_template('select_time.html', entity_id=entity_id, entity_name=entity_name, departments=departments, schedule_db=get_schedule_db_dict())
+    entity_names = {'affairs': 'شؤون المتدربين', 'head': 'رئيس القسم', 'faculty': 'أعضاء هيئة التدريس'}
+    return render_template('select_time.html', entity_id=entity_id, entity_name=entity_names.get(entity_id, ''), departments=departments, schedule_db=get_schedule_db_dict())
 
 @app.route('/get_slots_ajax', methods=['POST'])
 def get_slots_ajax():
     target = request.form.get('target')
     day_name = request.form.get('day_name')
     schedule_db = get_schedule_db_dict()
-    if not target or target not in schedule_db:
-        return ''
+    if target not in schedule_db: return ''
     info = schedule_db[target]
-    if day_name not in info['days']:
-        return '<span class="text-danger fw-bold small">عذراً، هذا اليوم غير متاح!</span>'
-    html_output = '<div class="d-flex flex-wrap justify-content-center gap-2">'
+    if day_name not in info['days']: return '<span class="text-danger small">غير متاح</span>'
+    html = '<div class="d-flex flex-wrap gap-2">'
     for slot in info['slots']:
-        html_output += f'<button type="button" class="btn btn-outline-primary slot-btn btn-sm" onclick="selectSlot(\'{slot}\')">{slot}</button>'
-    html_output += '</div>'
-    return html_output
+        html += f'<button type="button" class="btn btn-outline-primary btn-sm" onclick="selectSlot(\'{slot}\')">{slot}</button>'
+    return html + '</div>'
 
 @app.route('/book', methods=['POST'])
 def book():
-    student_name = request.form.get('student_name')
-    student_id = request.form.get('student_id')
-    flash(f'تم تسجيل حجز الموعد للمتدرب {student_name} بنجاح!', 'success')
+    flash('تم حجز الموعد بنجاح!', 'success')
     return redirect(url_for('home'))
 
 def init_db():
     with app.app_context():
         db.create_all()
-        # إضافة بيانات أولية في حال كانت القاعدة فارغة
         if Schedule.query.count() == 0:
             initial_data = [
-                Schedule(target_name='شؤون المتدربين', entity_type='affairs', dept='general', days='sun,mon,tue,wed,thu', slots='08:00 AM,09:30 AM,11:00 AM'),
-                Schedule(target_name='رئيس قسم الحاسب الآلي', entity_type='head', dept='computer', days='sun,tue', slots='09:00 AM,10:30 AM'),
-                Schedule(target_name='رئيس قسم الاتصالات', entity_type='head', dept='communications', days='mon,wed', slots='10:00 AM,11:30 AM')
+                Schedule(target_name='شؤون المتدربين', entity_type='affairs', dept='general', days='sun,mon,tue,wed,thu', slots='08:00 AM,09:30 AM'),
+                Schedule(target_name='رئيس قسم الحاسب الآلي', entity_type='head', dept='computer', days='sun,tue', slots='09:00 AM,10:30 AM')
             ]
             db.session.bulk_save_objects(initial_data)
             db.session.commit()
 
-init_db()
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    init_db()
+    app.run()
