@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
-app.secret_key = 'cti_booking_secure_super_key'
 
-# قائمة الأسماء كاملة ومقسمة
+# القائمة الموحدة لجميع الأقسام
 staff_data = {
     'electronics': ['إسماعيل فاضل', 'أنس كرسوم', 'أيمن كيفي', 'أيمن بنجر', 'جابر يماني', 'جميل الجهني', 'حاتم الردادي', 'حاتم الزهراني', 'حسن بادويل', 'حسين المكرمي', 'خالد حجازي', 'رمزي مهدي', 'سعود المطيري', 'سعود الغامدي', 'سعود خوتنلي', 'سعيد ابو عسيس', 'سلطان العتيبي', 'صالح الشهري', 'طارق الغامدي', 'ظافر الشهري', 'عبدالرحمن الغامدي', 'عبدالله غرسان', 'عواض الشهري', 'فايز الشهري', 'فهد العامودي', 'فوزي جلالة', 'محمد صباغ', 'محمد الرفاعي', 'محمد عشري', 'هيثم نايته', 'يزيد الغامدي'],
     'communications': ['أحمد البار', 'أمين مشدق', 'أيمن صائغ', 'بدر الجهني', 'رضا الجهني', 'سعيد ظافر', 'سامي قرامي', 'سعيد عبدالرحيم', 'عمر الصايغ', 'عيد الحربي', 'عيسى السقاف', 'ماجد السريحي', 'ماهر نحاس', 'محمد العلياني', 'محمد سلامي', 'منصور الحازمي', 'وليد جمعة', 'ياسر مياجي'],
@@ -17,21 +16,12 @@ def home():
 
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
-    if entity_id == 'computer':
-        staff_list = staff_data['computer'] + staff_data['electronics'] + staff_data['communications']
-    elif entity_id == 'general':
-        staff_list = staff_data['general']
-    else:
-        staff_list = ['موظف شؤون المتدربين']
-    return render_template('select_time.html', staff_list=staff_list)
+    # نمرر الأسماء بناءً على القسم
+    return render_template('select_time.html', entity_id=entity_id, staff=staff_data.get(entity_id, []))
 
-@app.route('/book', methods=['POST'])
-def book():
-    return "تم الحجز بنجاح"
-
-@app.route('/login')
-def login():
-    return render_template('login.html')
+@app.route('/submit_booking', methods=['POST'])
+def submit_booking():
+    return "تم تسجيل طلبك بنجاح!"
 
 if __name__ == '__main__':
     app.run()
