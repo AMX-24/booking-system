@@ -1,71 +1,84 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>نظام حجز المواعيد - الكلية التقنية</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; text-align: center; }
-        .hero-section { background: linear-gradient(135deg, #0d6efd, #0a58ca); color: white; padding: 40px 20px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .option-card { background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .option-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-color: #0d6efd; }
-        .admin-link-box { margin-top: 50px; padding: 20px; border-top: 1px solid #e2e8f0; }
-    </style>
-</head>
-<body>
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_sqlalchemy import SQLAlchemy
 
-<div class="hero-section">
-    <h2 class="fw-bold">مرحباً بك في نظام حجز المقابلات والمواعيد 🏫</h2>
-    <p class="lead m-0">الكلية التقنية بجدة - بوابة المتدربين الإلكترونية</p>
-</div>
+app = Flask(__name__)
+app.secret_key = 'cti_booking_secure_super_key'
 
-<div class="container my-5">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} fw-bold mb-4">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.irsvqmtkwmrokpfhschk:Cti2026Passwor@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    <h4 class="fw-bold text-secondary mb-4">الرجاء اختيار الجهة أو المسؤول المراد مقابلته:</h4>
-    
-    <div class="row g-4 justify-content-center">
-        <!-- خيار شؤون المتدربين -->
-        <div class="col-md-4">
-            <div class="option-card" onclick="window.location.href='/select_time/affairs'">
-                <div class="fs-1 mb-2">👤</div>
-                <h5 class="fw-bold text-primary">شؤون المتدربين</h5>
-                <p class="text-muted small m-0">حجز موعد لمراجعة خدمات المتدربين والملفات</p>
-            </div>
-        </div>
+db = SQLAlchemy(app)
 
-        <!-- خيار رئيس القسم -->
-        <div class="col-md-4">
-            <div class="option-card" onclick="window.location.href='/select_time/head'">
-                <div class="fs-1 mb-2">👔</div>
-                <h5 class="fw-bold text-primary">رئيس القسم</h5>
-                <p class="text-muted small m-0">حجز موعد لمقابلة رئيس القسم الأكاديمي المختص</p>
-            </div>
-        </div>
+departments = {
+    'computer': 'قسم الحاسب الآلي',
+    'communications': 'قسم الاتصالات',
+    'electronics': 'قسم الإلكترونيات',
+    'general': 'قسم المواد العامة',
+    'affairs': 'شؤون المتدربين' # أضفنا هذا ليتعرف عليه النظام
+}
 
-        <!-- خيار أعضاء هيئة التدريس -->
-        <div class="col-md-4">
-            <div class="option-card" onclick="window.location.href='/select_time/faculty'">
-                <div class="fs-1 mb-2">👨‍🏫</div>
-                <h5 class="fw-bold text-primary">أعضاء هيئة التدريس</h5>
-                <p class="text-muted small m-0">حجز موعد مع المهندسين والدكاترة والمحاضرين</p>
-            </div>
-        </div>
-    </div>
+available_slots = ['08:00', '09:00', '10:00', '11:00', '12:00', '01:00', '02:00', '03:00']
 
-    <!-- الزر المضاف للدخول إلى صفحة الأدمن -->
-    <div class="admin-link-box">
-        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary btn-sm px-4 fw-bold shadow-sm">
-            🔐 لوحة تحكم الإدارة (الأدمن)
-        </a>
-    </div>
-</div>
+# تعريف نموذج البيانات
+class Schedule(db.Model):
+    __tablename__ = 'schedules'
+    id = db.Column(db.Integer, primary_key=True)
+    target_name = db.Column(db.String(100), nullable=False)
+    entity_type = db.Column(db.String(50), nullable=False)
+    dept = db.Column(db.String(50), nullable=False)
+    days = db.Column(db.Text, nullable=False)
+    slots = db.Column(db.Text, nullable=False)
 
-</body>
-</html>
+def get_schedule_db_dict():
+    schedules = Schedule.query.all()
+    db_dict = {}
+    for s in schedules:
+        db_dict[s.target_name] = {
+            'type': s.entity_type, 'dept': s.dept,
+            'days': s.days.split(',') if s.days else [],
+            'slots': s.slots.split(',') if s.slots else []
+        }
+    return db_dict
+
+@app.route('/')
+def home():
+    return render_template('index.html', departments=departments)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        if request.form.get('username') == "admin_cti" and request.form.get('password') == "cti_2026":
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+    return render_template('login.html')
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    return render_template('dashboard.html', departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
+
+@app.route('/update_schedule', methods=['POST'])
+def update_schedule():
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/add_department', methods=['POST'])
+def add_department():
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
+# هذا المسار هو الذي كان يسبب الـ 404
+@app.route('/select_time/<entity_id>')
+def select_time(entity_id):
+    return render_template('select_time.html', entity_id=entity_id, departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
+
+@app.route('/book', methods=['POST'])
+def book():
+    return redirect(url_for('home'))
+
+if __name__ == '__main__':
+    app.run()
