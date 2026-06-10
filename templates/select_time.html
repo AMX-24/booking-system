@@ -19,91 +19,117 @@
 
 <div class="container col-lg-6 my-4">
     <div class="booking-card shadow-sm">
-        
         <form action="/book" method="POST" onsubmit="return validateForm()">
+            <input type="hidden" id="entity_id" value="{{ entity_id }}">
+
             <div class="mb-3">
                 <label class="form-label small fw-bold">اسم المتدرب الكامل:</label>
                 <input type="text" name="trainee_name" class="form-control form-control-sm py-2" required placeholder="أدخل اسمك ثلاثي">
             </div>
 
-            <!-- قائمة الأقسام تظل ثابتة ومقروءة دائماً ولا تختفي -->
-            <div class="mb-3">
+            <!-- يظهر فقط لرئيس القسم وأعضاء هيئة التدريس -->
+            {% if entity_id == 'head' or entity_id == 'faculty' %}
+            <div class="mb-3" id="deptBlock">
                 <label class="form-label small fw-bold">اختر القسم المختص بالمعاملة:</label>
-                <select id="deptSelect" class="form-select form-select-sm py-2" required onchange="filterDoctors()">
+                <select id="deptSelect" class="form-select form-select-sm py-2" required onchange="handleDeptChange()">
                     <option value="" disabled selected>اختر قسمك الحالي</option>
                     {% for id, name in departments.items() %}
                         <option value="{{ id }}">{{ name }}</option>
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
 
-            <!-- قائمة أسماء الدكاترة المتاحة حسب القسم بشكل منسق وثابت -->
-            <div class="mb-3">
+            <!-- يظهر فقط لأعضاء هيئة التدريس -->
+            {% if entity_id == 'faculty' %}
+            <div class="mb-3" id="docBlock" style="display:none;">
                 <label class="form-label small fw-bold">اختر المهندس / الدكتور المطلوب للمقابلة:</label>
-                <select name="doctor" id="doctorSelect" class="form-select form-select-sm py-2" required onchange="fetchDoctorSlots()">
+                <select name="doctor" id="doctorSelect" class="form-select form-select-sm py-2" onchange="fetchSlots()">
                     <option value="" disabled selected>الرجاء تحديد القسم أولاً</option>
                 </select>
             </div>
+            {% endif %}
 
-            <!-- التقويم الفردي المطلوب -->
+            <!-- التقويم الثابت المعتمد في الأنظمة الفورية -->
             <div class="mb-3">
-                <label class="form-label small fw-bold">اختر تاريخ وتوقيت الحجز المتاح:</label>
-                <input type="date" name="booking_date" id="bookingDate" class="form-control form-control-sm py-2" required onchange="fetchDoctorSlots()">
+                <label class="form-label small fw-bold">اختر تاريخ الحجز المتاح:</label>
+                <input type="date" name="booking_date" id="bookingDate" class="form-control form-control-sm py-2" required onchange="fetchSlots()">
             </div>
 
-            <!-- الساعات المتاحة للدكتور المختار بحد ذاته وتتغير تلقائياً حسب جدول الأدمن -->
             <div class="mb-3">
-                <label class="form-label small fw-bold text-primary">الساعات المتوفرة حالياً لهذا الدكتور:</label>
+                <label class="form-label small fw-bold text-primary">الساعات المتوفرة حالياً حسب جدول الإدارة الحالية:</label>
                 <div id="slotsContainer" class="p-3 bg-light rounded text-center small text-muted">
-                    الرجاء اختيار الدكتور والتاريخ لعرض فتراته وساعاته المحددة.
+                    الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة.
                 </div>
             </div>
 
             <input type="hidden" name="booking_time" id="selectedTime">
             <button type="submit" class="btn btn-primary w-100 fw-bold btn-sm py-2 mt-2" style="background-color: #0b2c61;">تأكيد موعد الحجز الفوري</button>
         </form>
-
     </div>
 </div>
 
 <script>
 const scheduleData = {{ schedule_db|tojson }};
+const entityId = document.getElementById('entity_id').value;
 
-function filterDoctors() {
+function handleDeptChange() {
     const selectedDept = document.getElementById('deptSelect').value;
-    const docSelect = document.getElementById('doctorSelect');
-    docSelect.innerHTML = '<option value="" disabled selected>اختر الدكتور من هذا القسم</option>';
     
-    for (let docName in scheduleData) {
-        if (scheduleData[docName].dept === selectedDept) {
-            let opt = document.createElement('option');
-            opt.value = docName;
-            opt.innerText = docName;
-            docSelect.appendChild(opt);
+    if (entityId === 'faculty') {
+        const docSelect = document.getElementById('doctorSelect');
+        docSelect.innerHTML = '<option value="" disabled selected>اختر الدكتور من هذا القسم</option>';
+        
+        for (let name in scheduleData) {
+            if (scheduleData[name].type === 'faculty' && scheduleData[name].dept === selectedDept) {
+                let opt = document.createElement('option');
+                opt.value = name; opt.innerText = name;
+                docSelect.appendChild(opt);
+            }
         }
+        document.getElementById('docBlock').style.display = 'block';
     }
-    document.getElementById('slotsContainer').innerHTML = 'الرجاء اختيار الدكتور والتاريخ لعرض فتراته وساعاته المحددة.';
+    fetchSlots();
 }
 
-function fetchDoctorSlots() {
-    const doctor = document.getElementById('doctorSelect').value;
+function fetchSlots() {
     const dateVal = document.getElementById('bookingDate').value;
     const container = document.getElementById('slotsContainer');
+    if(!dateVal) return;
     
-    if(!doctor || !dateVal) return;
+    let targetKey = "";
     
-    // معرفة اسم اليوم المختار بالتقويم للتأكد من موافقة أيام عمل الدكتور
+    if (entityId === 'affairs') {
+        targetKey = "شؤون المتدربين";
+    } else if (entityId === 'head') {
+        const selectedDept = document.getElementById('deptSelect').value;
+        if(!selectedDept) return;
+        // البحث عن رئيس القسم المطابق للقسم المختار
+        for (let name in scheduleData) {
+            if (scheduleData[name].type === 'head' && scheduleData[name].dept === selectedDept) {
+                targetKey = name;
+                break;
+            }
+        }
+    } else if (entityId === 'faculty') {
+        const docSelect = document.getElementById('doctorSelect');
+        if(!docSelect || !docSelect.value) return;
+        targetKey = docSelect.value;
+    }
+    
+    if (!targetKey) {
+        container.innerHTML = 'الرجاء اختيار القسم أو الكادر أولاً.';
+        return;
+    }
+    
     const dayName = new Date(dateVal).toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+    container.innerHTML = 'جاري قراءة الساعات..';
     
-    container.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> جاري تحميل الساعات..';
-    
-    // إرسال البيانات فورياً لقراءة الساعات المسجلة عند الأدمن
     const formData = new FormData();
-    formData.append('doctor', doctor);
-    formData.append('date', dateVal);
+    formData.append('target', targetKey);
     formData.append('day_name', dayName);
     
-    fetch('/get_doctor_slots', { method: 'POST', body: formData })
+    fetch('/get_slots_ajax', { method: 'POST', body: formData })
     .then(res => res.text())
     .then(html => { container.innerHTML = html; });
 }
@@ -116,7 +142,7 @@ function selectSlot(time) {
 
 function validateForm() {
     if(!document.getElementById('selectedTime').value) {
-        alert('الرجاء اختيار فترة زمنية صالحة ومتاحة للحجز من المربعات الزرقاء!');
+        alert('الرجاء اختيار فترة زمنية صالحة ومتاحة للحجز!');
         return false;
     }
     return true;
