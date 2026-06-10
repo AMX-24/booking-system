@@ -2,207 +2,34 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تحديد الموعد والتفاصيل</title>
+    <title>حجز الموعد</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
-    
     <style>
-        body { background-color: #0c3473; font-family: 'Segoe UI', sans-serif; }
-        .booking-container { max-width: 900px; margin: 50px auto; }
-        .booking-box { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-        .form-label { font-weight: bold; color: #333; margin-bottom: 8px; }
-        .form-control, .form-select { border-radius: 8px; padding: 12px; border: 1px solid #ced4da; }
-        .slot-btn { border-radius: 8px; padding: 10px 20px; font-weight: bold; }
+        body { background: #f0f2f5; padding-top: 50px; }
+        .container { max-width: 500px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
-
-<div class="container booking-container">
-    <div class="booking-box">
-        <div class="text-center mb-4">
-            <small class="text-muted d-block mb-1 fw-bold">المؤسسة العامة للتدريب التقني والمهني</small>
-            <h3 class="fw-bold" style="color: #003366;">طلب حجز موعد لدى: {{ entity_name }}</h3>
-        </div>
-
+    <div class="container">
+        <h4 class="text-center mb-4">اختيار المسؤول والموعد</h4>
         <form action="{{ url_for('book') }}" method="POST">
-            
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">اسم المتدرب ثلاثي:</label>
-                    <input type="text" name="student_name" class="form-control" placeholder="أدخل اسمك الثلاثي" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">الرقم التدريبي:</label>
-                    <input type="number" name="student_id" class="form-control" placeholder="مثال: 412345678" required>
-                </div>
+            <div class="mb-3">
+                <label class="form-label">الشخص المطلوب:</label>
+                <select name="target_name" class="form-select" required>
+                    <option value="" disabled selected>اختر من القائمة...</option>
+                    {% for name in staff_list %}
+                    <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">الالتحاق بالقسم التدريبي:</label>
-                    <select class="form-select" id="deptSelect" required onchange="handleDeptChange()">
-                        <option value="" disabled selected>-- اختر القسم من هنا --</option>
-                        {% for key, name in departments.items() %}
-                            <option value="{{ key }}">{{ name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-6">
-                    {% if entity_id == 'faculty' %}
-                        <label class="form-label">اختر الدكتور / المهندس:</label>
-                        <select class="form-select" id="facultySelect" name="target_name" required disabled onchange="handleFacultyChange()">
-                            <option value="" disabled selected>-- الرجاء اختيار القسم أولاً --</option>
-                        </select>
-                    {% else %}
-                        <label class="form-label text-secondary">الجهة الموجهة:</label>
-                        <input type="text" class="form-control bg-light" value="{{ entity_name }}" readonly>
-                    {% endif %}
-                </div>
+            <div class="mb-3">
+                <label class="form-label">التاريخ والوقت:</label>
+                <input type="datetime-local" name="booking_time" class="form-control" required>
             </div>
-
-            <div class="mb-4">
-                <label class="form-label">تاريخ الحجز المطلوب:</label>
-                <input type="text" id="datePicker" name="booking_date" class="form-control bg-white" placeholder="اضغط لفتح التقويم واختيار اليوم" required disabled>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label d-block mb-2">⏱️ الساعات المتاحة للمقابلة بالفترة المحددة:</label>
-                <div id="slotsContainer" class="p-4 border rounded bg-light text-center">
-                    <span class="text-muted small">الرجاء اختيار القسم والتاريخ لعرض الأوقات المتوفرة.</span>
-                </div>
-                <input type="hidden" name="chosen_slot" id="hiddenSlotInput" required>
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-                <button type="submit" class="btn btn-primary px-5 fw-bold slot-btn">تأكيد حجز الموعد الفوري</button>
-                <a href="{{ url_for('home') }}" class="btn btn-secondary px-4 fw-bold slot-btn">رجوع للرئيسية</a>
-            </div>
+            <button type="submit" class="btn btn-primary w-100">تأكيد الحجز</button>
         </form>
+        <br>
+        <a href="{{ url_for('home') }}" class="btn btn-link w-100">العودة للرئيسية</a>
     </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
-<script>
-const db = {{ schedule_db | tojson }};
-const currentType = "{{ entity_id }}";
-let fpInstance = null;
-
-function initFlatpickr() {
-    fpInstance = flatpickr("#datePicker", {
-        locale: "ar",
-        dateFormat: "Y-m-d",
-        disable: [
-            function(date) {
-                // تعطيل الجمعة والسبت (الويكند الرسمي للكلية)
-                return (date.getDay() === 5 || date.getDay() === 6);
-            }
-        ],
-        onChange: function(selectedDates, dateStr) {
-            handleDateChange(dateStr);
-        }
-    });
-}
-
-initFlatpickr();
-
-function handleDeptChange() {
-    const dept = document.getElementById('deptSelect').value;
-    const datePicker = document.getElementById('datePicker');
-    const facultySelect = document.getElementById('facultySelect');
-    
-    clearSlots();
-    datePicker.value = "";
-    
-    if (currentType === 'faculty' && facultySelect) {
-        facultySelect.innerHTML = '<option value="" disabled selected>-- اختر الدكتور / المهندس --</option>';
-        let hasData = false;
-        
-        for (let name in db) {
-            if (db[name].type === 'faculty' && db[name].dept === dept) {
-                let opt = document.createElement('option');
-                opt.value = name;
-                opt.innerText = name;
-                facultySelect.appendChild(opt);
-                hasData = true;
-            }
-        }
-        
-        if (!hasData) {
-            facultySelect.innerHTML = '<option value="" disabled selected>-- لا يوجد دكاترة مضافين حالياً --</option>';
-            datePicker.disabled = true;
-        } else {
-            facultySelect.disabled = false;
-            datePicker.disabled = true;
-        }
-    } else {
-        datePicker.disabled = false;
-    }
-}
-
-function handleFacultyChange() {
-    document.getElementById('datePicker').disabled = false;
-    document.getElementById('datePicker').value = "";
-    clearSlots();
-}
-
-function handleDateChange(dateVal) {
-    const container = document.getElementById('slotsContainer');
-    const dept = document.getElementById('deptSelect').value;
-    
-    if (!dateVal || !dept) return;
-
-    const dateObj = new Date(dateVal);
-    const daysMapping = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-    const dayName = daysMapping[dateObj.getDay()];
-
-    let targetName = null;
-    if (currentType === 'faculty') {
-        targetName = document.getElementById('facultySelect').value;
-    } else {
-        for (let name in db) {
-            if (db[name].type === currentType && db[name].dept === dept) {
-                targetName = name;
-                break;
-            }
-        }
-    }
-    
-    if (!targetName) {
-        container.innerHTML = '<span class="text-warning small fw-bold">لا يوجد جدول مواعيد مضاف لهذا القسم!</span>';
-        return;
-    }
-    
-    let formData = new FormData();
-    formData.append('target', targetName);
-    formData.append('day_name', dayName);
-    
-    fetch('/get_slots_ajax', { method: 'POST', body: formData })
-    .then(res => res.text())
-    .then(html => { 
-        if(html.trim() === '') {
-            container.innerHTML = '<span class="text-warning small fw-bold">هذا اليوم غير متاح بجدول المسؤول الحالي!</span>';
-        } else {
-            container.innerHTML = html; 
-        }
-    })
-    .catch(() => { container.innerHTML = '<span class="text-danger">حدث خطأ أثناء تحميل الفترات!</span>'; });
-}
-
-function selectSlot(slot) {
-    document.querySelectorAll('.slot-btn').forEach(b => b.classList.replace('btn-primary', 'btn-outline-primary'));
-    event.target.classList.replace('btn-outline-primary', 'btn-primary');
-    document.getElementById('hiddenSlotInput').value = slot;
-}
-
-function clearSlots() {
-    document.getElementById('slotsContainer').innerHTML = '<span class="text-muted small">الرجاء اختيار القسم والتاريخ لعرض الأوقات المتوفرة.</span>';
-    document.getElementById('hiddenSlotInput').value = "";
-}
-</script>
-
 </body>
 </html>
