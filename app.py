@@ -34,14 +34,9 @@ def get_schedule_db_dict():
         schedules = Schedule.query.all()
         db_dict = {}
         for s in schedules:
-            db_dict[s.target_name] = {
-                'type': s.entity_type, 'dept': s.dept,
-                'days': s.days.split(',') if s.days else [],
-                'slots': s.slots.split(',') if s.slots else []
-            }
+            db_dict[s.target_name] = {'type': s.entity_type, 'dept': s.dept, 'days': s.days.split(','), 'slots': s.slots.split(',')}
         return db_dict
-    except:
-        return {}
+    except: return {}
 
 @app.route('/')
 def home():
@@ -60,6 +55,15 @@ def admin_dashboard():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
     return render_template('dashboard.html', departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
 
+@app.route('/select_time/<entity_id>')
+def select_time(entity_id):
+    return render_template('select_time.html', entity_id=entity_id, departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
 @app.route('/update_schedule', methods=['POST'])
 def update_schedule():
     return redirect(url_for('admin_dashboard'))
@@ -67,15 +71,6 @@ def update_schedule():
 @app.route('/add_department', methods=['POST'])
 def add_department():
     return redirect(url_for('admin_dashboard'))
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
-@app.route('/select_time/<entity_id>')
-def select_time(entity_id):
-    return render_template('select_time.html', entity_id=entity_id, departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
 
 @app.route('/book', methods=['POST'])
 def book():
