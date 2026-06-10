@@ -27,7 +27,7 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
-class Schedule(db.Model):
+class schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
     target_name = db.Column(db.String(100), unique=True, nullable=False)
