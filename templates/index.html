@@ -2,26 +2,93 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بوابة حجز المواعيد - الكلية التقنية</title>
+    <title>نظام حجز المواعيد الإلكتروني - الكلية التقنية</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; padding: 50px; margin: 0; }
-        .container { background: white; max-width: 600px; margin: auto; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .dept-btn { display: block; background: #2d6a4f; color: white; padding: 18px; margin: 15px 0; border-radius: 12px; text-decoration: none; font-size: 20px; font-weight: bold; transition: 0.3s; }
-        .dept-btn:hover { background: #1b4332; transform: translateY(-3px); }
-        h1 { color: #1a3a3a; margin-bottom: 30px; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6); 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px; 
+            margin: 0; 
+        }
+        .container { 
+            background: white; 
+            width: 100%;
+            max-width: 550px; 
+            padding: 40px; 
+            border-radius: 24px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+            text-align: center;
+        }
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        h1 { 
+            color: #1e293b; 
+            font-size: 28px;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+        }
+        .location {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 30px;
+        }
+        .instruction {
+            color: #475569;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .dept-btn { 
+            display: block; 
+            background: #2563eb; 
+            color: white; 
+            padding: 16px; 
+            margin: 15px 0; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-size: 18px; 
+            font-weight: bold; 
+            transition: 0.3s; 
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+        .dept-btn:hover { 
+            background: #1d4ed8; 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 12px rgba(29, 78, 216, 0.3);
+        }
+        .admin-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .admin-link:hover {
+            color: #64748b;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <img src="{{ url_for('static', filename='logo.png') }}" width="160" style="margin-bottom: 20px;">
-        <h1>نظام الاستعلام عن المواعيد</h1>
+        <div class="subtitle">المؤسسة العامة للتدريب التقني والمهني</div>
+        <h1>نظام حجز المواعيد الإلكتروني</h1>
+        <div class="location">كلية الاتصالات بجدة</div>
         
-        {% for id, name in departments.items() %}
-            <a href="{{ url_for('select_time', entity_id=id) }}" class="dept-btn">{{ name }}</a>
-        {% endfor %}
+        <div class="instruction">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</div>
         
-        <br><br>
-        <a href="{{ url_for('login') }}" style="color: #666; text-decoration: none; font-size: 14px;">دخول الإدارة</a>
+        <a href="{{ url_for('select_time', entity_id='affairs') }}" class="dept-btn">شؤون المتدربين</a>
+        <a href="{{ url_for('select_time', entity_id='general') }}" class="dept-btn">رئيس القسم</a>
+        <a href="{{ url_for('select_time', entity_id='computer') }}" class="dept-btn">أعضاء هيئة التدريس</a>
+        
+        <a href="{{ url_for('login') }}" class="admin-link">دخول الإدارة</a>
     </div>
 </body>
 </html>
