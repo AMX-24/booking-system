@@ -5,13 +5,11 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# رابط الاتصال باستخدام الـ Transaction Pooler
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.irsvqmtkwmrokpfhschk:Cti2026Passwor@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# تعريف الأقسام
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -41,7 +39,6 @@ def get_schedule_db_dict():
             }
         return db_dict
     except Exception as e:
-        print(f"DEBUG: Error: {e}")
         return {}
 
 @app.route('/')
@@ -61,10 +58,14 @@ def admin_dashboard():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
     return render_template('dashboard.html', departments=departments, schedule_db=get_schedule_db_dict())
 
+@app.route('/update_schedule', methods=['POST'])
+def update_schedule():
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/logout')
 def logout():
-    session.clear() # مسح الجلسة بالكامل لضمان الخروج الآمن
-    return redirect(url_for('home')) # إعادة التوجيه للرئيسية
+    session.clear()
+    return redirect(url_for('home'))
 
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
@@ -72,7 +73,6 @@ def select_time(entity_id):
 
 @app.route('/book', methods=['POST'])
 def book():
-    flash('تم حجز الموعد بنجاح!', 'success')
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
