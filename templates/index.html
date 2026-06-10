@@ -2,199 +2,33 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام حجز المواعيد الإلكتروني - كلية الاتصالات بجَدة</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background: linear-gradient(135deg, #1e52a4, #0b2c61);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
-        }
-        .main-container {
-            background-color: #ffffff;
-            border-radius: 24px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-            width: 100%;
-            max-width: 580px;
-            padding: 40px 30px;
-            text-align: center;
-        }
-        .institution-title {
-            color: #7f8c8d;
-            font-size: 0.95rem;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        .system-title {
-            color: #2c3e50;
-            font-weight: 700;
-            font-size: 1.85rem;
-            margin-bottom: 2px;
-        }
-        .college-title {
-            color: #7f8c8d;
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-        }
-        .instruction-text {
-            color: #34495e;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-        }
-        .btn-entity {
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 1.05rem;
-            font-weight: 600;
-            width: 100%;
-            margin-bottom: 12px;
-            transition: background-color 0.2s, transform 0.1s;
-            display: block;
-            text-decoration: none;
-        }
-        .btn-entity:hover {
-            background-color: #1d4ed8;
-            color: white;
-            transform: scale(1.01);
-        }
-        .admin-edit-link {
-            font-size: 0.8rem;
-            color: #bdc3c7;
-            text-decoration: none;
-            margin-top: 20px;
-            display: inline-block;
-        }
-        .admin-edit-link:hover {
-            color: #3498db;
-        }
-        .admin-panel {
-            background-color: #f8fafc;
-            border: 2px dashed #3b82f6;
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 25px;
-            text-align: right;
-        }
+        body { background: linear-gradient(135deg, #1e52a4, #0b2c61); min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; }
+        .main-container { background-color: #ffffff; border-radius: 24px; width: 100%; max-width: 550px; padding: 40px 30px; text-align: center; }
+        .btn-entity { background-color: #3b82f6; color: white; border: none; border-radius: 12px; padding: 14px; font-weight: 600; width: 100%; margin-bottom: 12px; display: block; text-decoration: none; }
+        .btn-entity:hover { background-color: #1d4ed8; color: white; }
+        .admin-edit-link { font-size: 0.8rem; color: #bdc3c7; text-decoration: none; margin-top: 25px; display: inline-block; }
+        .admin-edit-link:hover { color: #3498db; }
     </style>
 </head>
 <body>
-
 <div class="main-container shadow">
+    <div style="color: #7f8c8d; font-size: 0.95rem; margin-bottom: 5px;">المؤسسة العامة للتدريب التقني والمهني</div>
+    <h3 style="color: #2c3e50; font-weight: bold; margin-bottom: 2px;">نظام حجز المواعيد الإلكتروني</h3>
+    <div style="color: #7f8c8d; font-size: 0.95rem; margin-bottom: 30px;">كلية الاتصالات بجدة</div>
     
-    <!-- الهوية والتنبيهات المضافة والمطابقة للصورة -->
-    <div class="institution-title">المؤسسة العامة للتدريب التقني والمهني</div>
-    <div class="system-title">نظام حجز المواعيد الإلكتروني</div>
-    <div class="college-title">كلية الاتصالات بجدة</div>
-    
-    <hr style="border-color: #eaeded;">
+    <p style="color: #34495e; font-size: 0.9rem; margin-bottom: 20px;">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</p>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} small text-center p-2 fw-bold" role="alert">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <div class="instruction-text">فضلاً، اختر الجهة التي ترغب بجدولة الموعد معها للاستمرار:</div>
-
-    <!-- أزرار اختيار الجهات الرئيسية -->
     <div class="entities-list">
-        {% for entity_id, entity_name in entities.items() %}
-            <a href="{{ url_for('select_time', entity_id=entity_id) }}" class="btn btn-entity shadow-sm">{{ entity_name }}</a>
-        {% endfor %}
+        <a href="/select_time/affairs" class="btn btn-entity shadow-sm">شؤون المتدربين</a>
+        <a href="/select_time/head" class="btn btn-entity shadow-sm">رئيس القسم</a>
+        <a href="/select_time/faculty" class="btn btn-entity shadow-sm">أعضاء هيئة التدريس</a>
     </div>
 
-    <!-- الرابط المطلوب للأدمن (بخط صغير في أسفل الكرت) -->
-    {% if not admin_mode %}
-        <a href="/?mode=admin" class="admin-edit-link">⚙️ دخول الإدارة (تعديل الأوقات والبيانات)</a>
-    {% else %}
-        <a href="/" class="admin-edit-link text-danger fw-bold">❌ الخروج من وضع التعديل</a>
-        
-        <!-- لوحة التحكم الكاملة الفورية التي تظهر للأدمن فقط داخل نفس الصفحة -->
-        <div class="admin-panel shadow-sm">
-            <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">🛠️ لوحة التعديل والتحكم الفوري بالنظام</h6>
-            
-            <!-- 1. تعديل الأيام والأوقات -->
-            <form action="/admin/update_system_settings" method="POST" class="mb-4">
-                <label class="form-label fw-bold text-dark small">📍 تحديد الأيام المتاحة للمتدربين:</label>
-                <div class="d-flex flex-wrap gap-2 mb-2 small">
-                    <label><input type="checkbox" name="days" value="sun" {% if 'sun' in settings.available_days %}checked{% endif %}> الأحد</label>
-                    <label><input type="checkbox" name="days" value="mon" {% if 'mon' in settings.available_days %}checked{% endif %}> الإثنين</label>
-                    <label><input type="checkbox" name="days" value="tue" {% if 'tue' in settings.available_days %}checked{% endif %}> الثلاثاء</label>
-                    <label><input type="checkbox" name="days" value="wed" {% if 'wed' in settings.available_days %}checked{% endif %}> الأربعاء</label>
-                    <label><input type="checkbox" name="days" value="thu" {% if 'thu' in settings.available_days %}checked{% endif %}> الخميس</label>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-dark small">⏱️ تعديل فترات الساعات (افصل بينها بفاصلة ,):</label>
-                    <input type="text" name="slots_list" class="form-control form-control-sm" value="{{ settings.available_slots|join(', ') }}">
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">حفظ وتعديل فترات الوقت</button>
-            </form>
-
-            <!-- 2. إضافة وحذف الأقسام -->
-            <div class="mb-4 border-top pt-3">
-                <label class="form-label fw-bold text-dark small">🏢 إضافة قسم جديد للشاشة الرئيسية:</label>
-                <form action="/admin/add_dept" method="POST" class="input-group input-group-sm mb-2">
-                    <input type="text" name="dept_id" class="form-control" placeholder="رمز القسم (e.g., math)" required>
-                    <input type="text" name="dept_name" class="form-control" placeholder="اسم القسم بالعربي" required>
-                    <button class="btn btn-success" type="submit">إضافة</button>
-                </form>
-                
-                <label class="form-label fw-bold text-muted small">الأقسام الحالية (اضغط لحذف القسم كلياً):</label>
-                <div class="d-flex flex-wrap gap-1">
-                    {% for key, name in departments.items() %}
-                        <form action="/admin/delete_dept/{{ key }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn btn-outline-danger btn-sm p-1 py-0 style-small" onclick="return confirm('هل متأكد من حذف القسم ودكاترته؟')">🗑️ {{ name }}</button>
-                        </form>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- 3. إضافة وحذف الدكاترة والمهندسين بدقة -->
-            <div class="border-top pt-3">
-                <label class="form-label fw-bold text-dark small">👨‍🏫 إضافة مهندس / دكتور إلى قسم مختص:</label>
-                <form action="/admin/add_doc" method="POST" class="mb-3">
-                    <select name="dept_id" class="form-select form-select-sm mb-1" required>
-                        {% for key, name in departments.items() %}
-                            <option value="{{ key }}">{{ name }}</option>
-                        {% endfor %}
-                    </select>
-                    <div class="input-group input-group-sm">
-                        <input type="text" name="doc_name" class="form-control" placeholder="اسم المهندس / الدكتور" required>
-                        <button class="btn btn-success" type="submit">إضافة اسم</button>
-                    </div>
-                </form>
-
-                <label class="form-label fw-bold text-muted small">الدكاترة الحاليين بالأقسام (اضغط على الاسم لحذفه):</label>
-                {% for dept_id, docs in doctors_by_dept.items() %}
-                    <div class="mb-1 p-1 bg-white rounded border small">
-                        <span class="badge bg-secondary">{{ departments.get(dept_id, dept_id) }}</span>
-                        {% for doc in docs %}
-                            <form action="/admin/delete_doc" method="POST" style="display:inline;">
-                                <input type="hidden" name="dept_id" value="{{ dept_id }}">
-                                <input type="hidden" name="doc_name" value="{{ doc }}">
-                                <button type="submit" class="btn btn-link text-danger p-0 m-0 px-1 small text-decoration-none" onclick="return confirm('هل تريد حذف هذا المهندس؟')">❌ {{ doc }}</button>
-                            </form>
-                        {% endfor %}
-                    </div>
-                {% endfor %}
-            </div>
-
-        </div>
-    {% endif %}
-
+    <!-- الزر المكتوب بخط صغير أسفل الشاشة الرئيسية للتحويل لصفحة تسجيل الدخول السرية -->
+    <a href="{{ url_for('login') }}" class="admin-edit-link">تعديل النظام (الإدارة والأدمن)</a>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
