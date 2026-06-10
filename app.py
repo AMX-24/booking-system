@@ -5,7 +5,7 @@ app.secret_key = 'cti_booking_secure_super_key'
 
 # حساب أدمن موحد وصلاحية واحدة للنظام كامل
 ADMIN_USERNAME = "admin_cti"
-ADMIN_PASSWORD = "cti_password_2026"
+ADMIN_PASSWORD = "admin_2026"
 
 # الأقسام الرسمية الأربعة للكلية (تم تحويلها لمتغير قابل للإضافة والديناميكية)
 departments = {
