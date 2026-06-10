@@ -2,100 +2,113 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم المسؤول - النظام الموحد</title>
+    <title>لوحة التحكم - إدارة المواعيد والأقسام</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f1f5f9; font-family: 'Segoe UI', sans-serif; }
-        .admin-header { background-color: #1e293b; color: white; padding: 20px; border-bottom: 4px solid #3b82f6; }
-        .card-custom { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 25px; padding: 20px; }
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .admin-header { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .employee-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: transform 0.2s; }
+        .employee-card:hover { transform: translateY(-2px); }
+        .section-title { border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; font-weight: bold; margin-bottom: 15px; font-size: 0.95rem; color: #475569; }
+        .slot-checkbox-label { cursor: pointer; display: block; p: 6px; border: 1px solid #e2e8f0; border-radius: 6px; background-color: #fff; transition: all 0.2s; }
+        .slot-checkbox-label:hover { background-color: #f8fafc; border-color: #cbd5e1; }
     </style>
 </head>
 <body>
 
 <div class="admin-header d-flex justify-content-between align-items-center">
-    <h2>لوحة تحكم النظام الموحد للكلية التقنية</h2>
-    <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">تسجيل الخروج</a>
+    <div>
+        <h4 class="m-0 fw-bold">🎛️ لوحة تحكم إدارة مواعيد الكلية التقنية</h4>
+        <small class="text-muted text-light-50">تعديل فترات الدكاترة، الأيام والأقسام المضافة</small>
+    </div>
+    <div>
+        <a href="{{ url_for('home') }}" class="btn btn-sm btn-outline-light me-2 fw-bold">عرض الموقع الرئيسي</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger fw-bold">تسجيل الخروج</a>
+    </div>
 </div>
 
-<div class="container my-5">
+<div class="container my-4">
     
-    <!-- عرض رسائل النجاح أو الفشل -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} text-center fw-bold">{{ message }}</div>
+                <div class="alert alert-{{ category }} text-center small fw-bold shadow-sm">{{ message }}</div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
     <div class="row">
-        <!-- عمود إدارة وتحديث الجداول للموظفين الحاليين -->
         <div class="col-lg-8">
-            <div class="card-custom">
-                <h4 class="text-primary mb-4">تحديث الساعات وأيام الدوام (الموظفين والدكاترة)</h4>
+            <h5 class="fw-bold text-dark mb-3">🗂️ بطاقات التحكم بالمسؤولين وأعضاء هيئة التدريس:</h5>
+            
+            {% for name, info in schedule_db.items() %}
+            <div class="employee-card">
                 <form action="{{ url_for('update_schedule') }}" method="POST">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">اختر المسؤول المراد تعديل جدوله:</label>
-                        <select name="target_name" class="form-select" required>
-                            {% for name, info in schedule_db.items() %}
-                                <option value="{{ name }}">{{ name }} ({% if info.type=='affairs' %}شؤون متدربين{% elif info.type=='head' %}رئيس قسم{% else %}هيئة تدريس{% endif %})</option>
-                            {% endfor %}
-                        </select>
+                    <input type="hidden" name="target_name" value="{{ name }}">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-primary fw-bold m-0">{{ name }}</h5>
+                        <span class="badge bg-secondary p-2 small">القسم الحالي: {{ departments.get(info.dept, 'عام / شؤون') }}</span>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">اختر أيام المداومة المتاحة لحجوزات الطلاب:</label>
-                        <div class="d-flex flex-wrap gap-3 bg-light p-3 border rounded">
-                            <label><input type="checkbox" name="days" value="sun"> الأحد</label>
-                            <label><input type="checkbox" name="days" value="mon"> الإثنين</label>
-                            <label><input type="checkbox" name="days" value="tue"> الثلاثاء</label>
-                            <label><input type="checkbox" name="days" value="wed"> الأربعاء</label>
-                            <label><input type="checkbox" name="days" value="thu"> الخميس</label>
+                    <div class="section-title">📅 الأيام النشطة للحجز:</div>
+                    <div class="d-flex flex-wrap gap-3 mb-3 bg-light p-3 rounded border">
+                        <label class="small fw-bold"><input type="checkbox" name="days" value="sun" {% if 'sun' in info.days %}checked{% endif %}> الأحد</label>
+                        <label class="small fw-bold"><input type="checkbox" name="days" value="mon" {% if 'mon' in info.days %}checked{% endif %}> الإثنين</label>
+                        <label class="small fw-bold"><input type="checkbox" name="days" value="tue" {% if 'tue' in info.days %}checked{% endif %}> الثلاثاء</label>
+                        <label class="small fw-bold"><input type="checkbox" name="days" value="wed" {% if 'wed' in info.days %}checked{% endif %}> الأربعاء</label>
+                        <label class="small fw-bold"><input type="checkbox" name="days" value="thu" {% if 'thu' in info.days %}checked{% endif %}> الخميس</label>
+                    </div>
+
+                    <div class="section-title">⏰ الأوقات المتاحة للحجز (من 08:00 AM إلى 03:00 PM):</div>
+                    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-2 bg-light p-3 rounded border mb-3 text-center">
+                        {% for slot in available_slots %}
+                        <div class="col">
+                            <label class="slot-checkbox-label small">
+                                <input type="checkbox" name="slots" value="{{ slot }}" {% if slot in info.slots %}checked{% endif %}>
+                                <span class="d-block text-dark mt-1 fw-semibold" style="font-size: 11px;">{{ slot }}</span>
+                            </label>
                         </div>
+                        {% endfor %}
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">أدخل الفترات الزمنية المتاحة (افصل بينها بفاصلة):</label>
-                        <input type="text" name="slots_list" class="form-control" placeholder="مثال: 08:30 AM, 10:00 AM, 01:00 PM" required>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-sm btn-success px-4 fw-bold shadow-sm">حفظ جدول ومواعيد {{ name }}</button>
                     </div>
-
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">تحديث الجدول فورياً</button>
                 </form>
             </div>
+            {% endfor %}
         </div>
 
-        <!-- الملاحظة الثانية: عمود إضافة قسم جديد ديناميكي في الصفحة الرئيسية للآدمن -->
         <div class="col-lg-4">
-            <div class="card-custom border-start border-primary border-4">
-                <h4 class="text-success mb-4">إضافة قسم جديد للنظام</h4>
+            <div class="card p-3 border-primary mb-4 shadow-sm" style="border-width: 2px; border-radius: 12px;">
+                <h5 class="text-primary fw-bold mb-3">➕ إضافة قسم جديد للنظام</h5>
                 <form action="{{ url_for('add_department') }}" method="POST">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">رمز القسم (باللغة الإنجليزية):</label>
-                        <input type="text" name="dept_id" class="form-control" placeholder="مثال: mechanical" required>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-muted">رمز القسم الإنجليزي (معرف فريد):</label>
+                        <input type="text" name="dept_id" class="form-control form-control-sm" placeholder="مثال: mechanical" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">اسم القسم الكامل (باللغة العربية):</label>
-                        <input type="text" name="dept_name" class="form-control" placeholder="مثال: قسم الهندسة الميكانيكية" required>
+                        <label class="form-label small fw-bold text-muted">اسم القسم بالكامل (بالعربي):</label>
+                        <input type="text" name="dept_name" class="form-control form-control-sm" placeholder="مثال: قسم الهندسة الميكانيكية" required>
                     </div>
-                    <button type="submit" class="btn btn-success w-100 fw-bold">إضافة وتثبيت القسم فوراً</button>
+                    <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold shadow-sm">تثبيت القسم في النظام فوراً</button>
                 </form>
             </div>
 
-            <!-- قائمة الأقسام الحالية المباشرة -->
-            <div class="card-custom bg-light">
-                <h5 class="fw-bold mb-3">الأقسام الحالية بالنظام:</h5>
-                <ul class="list-group">
+            <div class="card p-3 shadow-sm bg-white" style="border-radius: 12px;">
+                <h6 class="fw-bold mb-2 text-dark">📋 الأقسام الرسمية المتاحة حالياً:</h6>
+                <div class="list-group">
                     {% for key, name in departments.items() %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{ name }}
-                            <span class="badge bg-secondary text-uppercase">{{ key }}</span>
-                        </li>
+                        <div class="list-group-item p-2 d-flex justify-content-between align-items-center small bg-light mb-1 rounded border-0">
+                            <span class="fw-bold text-secondary">{{ name }}</span>
+                            <span class="badge bg-dark text-uppercase" style="font-size: 9px;">{{ key }}</span>
+                        </div>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
         </div>
     </div>
-
 </div>
 
 </body>
