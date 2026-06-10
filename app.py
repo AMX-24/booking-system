@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# الرابط المحدث باستخدام الـ Transaction Pooler
+# رابط الاتصال باستخدام الـ Transaction Pooler
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.irsvqmtkwmrokpfhschk:Cti2026Passwor@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -63,8 +63,8 @@ def admin_dashboard():
 
 @app.route('/logout')
 def logout():
-    session.pop('admin_logged_in', None)
-    return redirect(url_for('login'))
+    session.clear() # مسح الجلسة بالكامل لضمان الخروج الآمن
+    return redirect(url_for('home')) # إعادة التوجيه للرئيسية
 
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
