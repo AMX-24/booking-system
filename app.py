@@ -3,15 +3,18 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
+# حساب أدمن موحد وصلاحية واحدة للنظام كامل (تم تحديث الباسورد هنا)
 ADMIN_USERNAME = "admin_cti"
 ADMIN_PASSWORD = "cti_2026"
 
+# الأوقات الجاهزة من 8 ص إلى 3 م بفارق نصف ساعة لـ مربعات الاختيار (Checkboxes)
 AVAILABLE_SLOTS = [
     '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
     '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',
     '02:00 PM', '02:30 PM', '03:00 PM'
 ]
 
+# الأقسام الرسمية للكلية
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -19,7 +22,9 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
+# قاعدة بيانات المواعيد للمسؤولين والدكاترة (مربوطة بأقسامها)
 schedule_db = {
+    # --- شؤون المتدربين ورؤساء الأقسام ---
     'شؤون المتدربين': {
         'type': 'affairs',
         'dept': 'general',
@@ -51,6 +56,7 @@ schedule_db = {
         'slots': ['08:30 AM', '10:00 AM', '12:00 PM']
     },
 
+    # --- دكاترة قسم المواد العامة ---
     'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -72,11 +78,12 @@ schedule_db = {
     'م. منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
 
+    # --- دكاترة ومهندسي قسم الحاسب الآلي ---
     'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
     'م. أحمد رشاد': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
-    'م. amazon عنقاوي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '11:30 AM']},
+    'م. احمد عنقاوي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '11:30 AM']},
     'م. أيمن العبيدي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. بندر الثقفي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
     'م. بندر محمد العويضي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'thu'], 'slots': ['08:30 AM', '11:00 AM']},
@@ -101,10 +108,10 @@ schedule_db = {
     'م. عبدالله السهيمي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. عبدالله الشهري': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. عبدالله ناصر': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
-    'م. text_name': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
+    'م. عبدالهادي المالكي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. عبيد الحربي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. فايز شافعي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
-    'م. فهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
+    'م. fهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. محمد العرياني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. محمد الشريف': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. منصور الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
@@ -112,6 +119,7 @@ schedule_db = {
     'م. وليد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. ياسر الحبشان': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
 
+    # --- دكاترة ومهندسي قسم الاتصالات ---
     'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'د. إيمن صائغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -131,6 +139,7 @@ schedule_db = {
     'م. وليد جمعة': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. ياسر مياجي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
 
+    # --- دكاترة ومهندسي قسم الإلكترونيات ---
     'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'د. أيمن كيفي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
@@ -147,15 +156,15 @@ schedule_db = {
     'م. سعود الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. سعود خوتنلي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
     'م. سعيد ابو عسيس': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. sultan العتيبي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:30 AM']},
+    'م. سلطان العتيبي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:30 AM']},
     'م. صالح الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. طارق الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. ظافر الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. عبدالرحمن الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},  # تم إصلاح الخطأ هنا
+    'م. عبدالرحمن الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['10:00 AM', '01:00 PM']},
     'م. فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:00 AM']},
-    'م. فهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
+    'م. fهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'thu'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
@@ -230,14 +239,8 @@ def update_schedule():
 
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
-    # نحدد الاسم بناءً على النوع المختار للـ Entity
-    if entity_id == 'affairs':
-        entity_name = 'شؤون المتدربين'
-    elif entity_id == 'head':
-        entity_name = 'رئيس القسم'
-    else:
-        entity_name = 'أعضاء هيئة التدريس'
-    return render_template('select_time.html', entity_id=entity_id, entity_name=entity_name, departments=departments, schedule_db=schedule_db)
+    titles = {'affairs': 'شؤون المتدربين', 'head': 'رئيس القسم', 'faculty': 'أعضاء هيئة التدريس'}
+    return render_template('select_time.html', entity_id=entity_id, entity_name=titles.get(entity_id, 'المسؤول'), departments=departments, schedule_db=schedule_db)
 
 @app.route('/get_slots_ajax', methods=['POST'])
 def get_slots_ajax():
