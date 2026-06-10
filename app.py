@@ -5,13 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# الرابط المحدث بكلمة المرور الجديدة
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Cti2026Passwor@db.irsvqmtkwmrokpfhschk.supabase.co:6543/postgres'
+# الرابط المحدث باستخدام الـ Transaction Pooler
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.irsvqmtkwmrokpfhschk:Cti2026Passwor@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# تعريف الأقسام لحل مشكلة UndefinedError
+# تعريف الأقسام
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -39,6 +39,7 @@ def get_schedule_db_dict():
                 'days': [day.strip() for day in s.days.split(',')] if s.days else [],
                 'slots': [slot.strip() for slot in s.slots.split(',')] if s.slots else []
             }
+        print(f"DEBUG: Successfully fetched {len(schedules)} records")
         return db_dict
     except Exception as e:
         print(f"ERROR: Database fetch error: {e}")
