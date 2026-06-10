@@ -15,12 +15,11 @@ departments = {
     'communications': 'قسم الاتصالات',
     'electronics': 'قسم الإلكترونيات',
     'general': 'قسم المواد العامة',
-    'affairs': 'شؤون المتدربين' # أضفنا هذا ليتعرف عليه النظام
+    'affairs': 'شؤون المتدربين'
 }
 
 available_slots = ['08:00', '09:00', '10:00', '11:00', '12:00', '01:00', '02:00', '03:00']
 
-# تعريف نموذج البيانات
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -31,19 +30,22 @@ class Schedule(db.Model):
     slots = db.Column(db.Text, nullable=False)
 
 def get_schedule_db_dict():
-    schedules = Schedule.query.all()
-    db_dict = {}
-    for s in schedules:
-        db_dict[s.target_name] = {
-            'type': s.entity_type, 'dept': s.dept,
-            'days': s.days.split(',') if s.days else [],
-            'slots': s.slots.split(',') if s.slots else []
-        }
-    return db_dict
+    try:
+        schedules = Schedule.query.all()
+        db_dict = {}
+        for s in schedules:
+            db_dict[s.target_name] = {
+                'type': s.entity_type, 'dept': s.dept,
+                'days': s.days.split(',') if s.days else [],
+                'slots': s.slots.split(',') if s.slots else []
+            }
+        return db_dict
+    except:
+        return {}
 
 @app.route('/')
 def home():
-    return render_template('index.html', departments=departments)
+    return render_template('index.html', departments=departments, schedule_db=get_schedule_db_dict())
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -71,7 +73,6 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
-# هذا المسار هو الذي كان يسبب الـ 404
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
     return render_template('select_time.html', entity_id=entity_id, departments=departments, schedule_db=get_schedule_db_dict(), available_slots=available_slots)
