@@ -12,10 +12,8 @@
         .main-title { color: #1e3a8a; font-weight: bold; margin-bottom: 5px; }
         .sub-title { color: #6b7280; font-size: 14px; margin-bottom: 30px; }
         .section-title { font-size: 15px; font-weight: 600; color: #1e3a8a; margin-top: 20px; margin-bottom: 15px; }
-        .time-slot-btn { border: 2px solid #e5e7eb; border-radius: 10px; padding: 10px; background: white; color: #374151; transition: all 0.2s; font-weight: 500; }
-        .time-slot-btn:hover { border-color: #1e3a8a; background: #eff6ff; }
-        .time-slot-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
-        #slotsContainer button.slot-btn { margin: 5px; }
+        .slot-btn { border-radius: 10px; transition: all 0.2s; font-weight: 500; }
+        .slot-btn.active { background-color: #1e3a8a !important; color: white !important; border-color: #1e3a8a !important; }
     </style>
 </head>
 <body>
@@ -25,7 +23,7 @@
         <p class="text-center sub-title">يرجى إدخال بياناتك واختيار الموعد المناسب لإتمام الطلب</p>
         
         <form action="/book" method="POST" id="bookingForm">
-            <!-- الصف الأول: الاسم والرقم الأكاديمي -->
+            <!-- بيانات المتدرب الأساسية -->
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label font-weight-bold">اسم المتدرب ثلاثي:</label>
@@ -37,159 +35,212 @@
                 </div>
             </div>
 
-            <!-- الصف الثاني: تحديد واختيار القسم (الحل الأساسي المفقود) -->
+            <!-- حقل اختيار القسم (يظهر في رئيس القسم وأعضاء هيئة التدريس، ويختفي في شؤون المتدربين) -->
+            {% if entity_id != 'affairs' %}
             <div class="mb-3">
-                <label class="form-label">اختر القسم المختص:</label>
-                <select id="departmentSelect" class="form-select" required onchange="filterStaffByDept()">
+                <label class="form-label fw-bold">القسم التدريبي / المختص:</label>
+                <select id="departmentSelect" class="form-select" required onchange="handleDepartmentChange()">
                     <option value="" disabled selected>-- اختر القسم الأكاديمي أولاً --</option>
                     {% for dept_id, dept_name in departments.items() %}
                         <option value="{{ dept_id }}">{{ dept_name }}</option>
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
 
-            <!-- الصف الثالث: اختيار المسؤول المعني (يتم تحديثه ديناميكياً) -->
-            <div class="mb-3">
-                <label class="form-label">اختر الدكتور / المسؤول:</label>
+            <!-- حقل اختيار المسؤول (يظهر فقط في صفحة أعضاء هيئة التدريس faculty) -->
+            <div class="mb-3 {% if entity_id != 'faculty' %}d-none{% endif %}">
+                <label class="form-label fw-bold">اختر الدكتور / المهندس:</label>
                 <select name="target" id="targetStaff" class="form-select" required onchange="resetDateTime()">
-                    <option value="" disabled selected>-- الرجاء اختيار القسم أولاً لعرض المتاحين --</option>
-                    {% for name, info in schedule_db.items() %}
-                        <!-- جلب المسؤولين وتصنيفهم برمز القسم كـ class من أجل الجافا سكريبت -->
-                        <option value="{{ name }}" data-dept="{{ info.dept }}" class="staff-option d-none" data-type="{{ info.type }}">
-                            {{ name }} ({% if info.type == 'head' %}رئيس قسم{% else %}عضو هيئة تدريس{% endif %})
-                        </option>
-                    {% endfor %}
+                    {% if entity_id == 'affairs' %}
+                        <option value="شؤون المتدربين" selected>شؤون المتدربين</option>
+                    {% else %}
+                        <option value="" disabled selected>-- الرجاء اختيار القسم أولاً لعرض القائمة --</option>
+                        {% for name, info in schedule_db.items() %}
+                            <option value="{{ name }}" data-dept="{{ info.dept }}" class="staff-option d-none" data-type="{{ info.type }}">
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
                 </select>
             </div>
 
-            <!-- الصف الرابع: حقل التاريخ التفاعلي -->
+            <!-- في حال كانت الصفحة لـ رئيس قسم، نضع حقل مخفي يتم تعبئته تلقائياً بالرئيس المقابل للقسم المحدد -->
+            {% if entity_id == 'head' %}
+                <input type="hidden" name="target" id="targetStaffHidden">
+            {% endif %}
+
+            <!-- تاريخ الحجز التفاعلي -->
             <div class="mb-4">
-                <label class="form-label">تاريخ الحجز:</label>
-                <input type="text" id="liveDatePicker" name="booking_date" class="form-control bg-white" placeholder="اضغط هنا لاختيار التاريخ" required readonly>
+                <label class="form-label fw-bold">تاريخ الحجز:</label>
+                <input type="text" id="liveDatePicker" name="booking_date" class="form-control bg-white" placeholder="اضغط هنا لاختيار التاريخ من التقويم" required readonly>
             </div>
 
-            <!-- قسم الساعات المتوفرة حياً -->
-            <div class="section-title">
-                ⏱️ الساعات المتوفرة حالياً:
-            </div>
+            <!-- قسم استعراض الفترات الحية -->
+            <div class="section-title">⏱️ الساعات المتوفرة حالياً:</div>
             
-            <!-- الرسالة الافتراضية قبل اختيار التاريخ -->
-            <div id="statusPlaceholder" class="alert alert-light text-center border p-4 text-muted">
+            <div id="statusPlaceholder" class="alert alert-light text-center border p-3 text-muted">
                 الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة المتاحة.
             </div>
 
-            <!-- الحاوية التي ستظهر فيها الأزرار الحية (AJAX) -->
             <div id="slotsContainer" class="d-none mb-4">
-                <!-- الأزرار ستحمل هنا ديناميكياً -->
+                <!-- الأزرار الديناميكية سيتم حقنها هنا عبر الأياكس -->
             </div>
 
-            <!-- حقل مخفي لإرسال الساعة المحددة -->
+            <!-- المدخل المخفي لتخزين قيمة الساعة المضغوط عليها -->
             <input type="hidden" id="selectedTimeInput" name="booking_time" required>
 
             <!-- أزرار التحكم -->
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1 py-2" style="background-color: #1e3a8a;">تأكيد موعد الحجز</button>
+                <button type="submit" class="btn btn-primary flex-grow-1 py-2" style="background-color: #1e3a8a;">تأكيد موعد الحجز النهائي</button>
                 <a href="/" class="btn btn-secondary px-4 py-2">رجوع للرئيسية</a>
             </div>
         </form>
     </div>
 
-    <!-- استدعاء السكربتات المعتمدة والضرورية للأياكس والتقويم -->
+    <!-- استدعاء المكتبات الضرورية والداعمة للأجاكس والتقويم باللغة العربية -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
     <script>
-        // دالة الفلترة الذكية بناءً على القسم والأدوار الأكاديمية
+        const pageId = "{{ entity_id }}";
+
+        // التعامل مع تغيير القسم بذكاء بناءً على نوع الصفحة
+        function handleDepartmentChange() {
+            if (pageId === 'faculty') {
+                filterStaffByDept();
+            } else if (pageId === 'head') {
+                selectHeadAutomatically();
+            }
+        }
+
+        // دالة الفلترة لصفحة أعضاء هيئة التدريس فقط
         function filterStaffByDept() {
             const selectedDept = document.getElementById('departmentSelect').value;
             const staffSelect = document.getElementById('targetStaff');
-            const urlPath = window.location.pathname; // معرفة هل الصفحة فتحت لـ faculty أو affairs أو head
             
-            // تصفير القائمة واختيار الخيار الافتراضي
             staffSelect.value = "";
             resetDateTime();
             
-            // إخفاء وإظهار الدكاترة وفقاً للقسم والصفحة الحالية
+            let visibleCount = 0;
             document.querySelectorAll('.staff-option').forEach(option => {
                 const optionDept = option.getAttribute('data-dept');
                 const optionType = option.getAttribute('data-type');
                 
-                // إذا كان القسم متطابقاً نقوم بإظهاره، مع مراعاة نوع المسؤول إذا لزم الأمر
-                if (optionDept === selectedDept) {
-                    if (urlPath.includes('faculty') && optionType === 'head') {
-                        option.classList.add('d-none'); // إخفاء رؤساء الأقسام في صفحة دكاترة هيئة التدريس
-                    } else if (urlPath.includes('head') && optionType !== 'head') {
-                        option.classList.add('d-none'); // إخفاء الأعضاء العاديين في صفحة رئيس القسم
-                    } else {
-                        option.classList.remove('d-none'); // إظهار الخيار المتوافق
-                    }
+                if (optionDept === selectedDept && optionType !== 'head') {
+                    option.classList.remove('d-none');
+                    visibleCount++;
                 } else {
                     option.classList.add('d-none');
                 }
             });
             
-            // تحديث نص الخيار الأول الإرشادي
-            staffSelect.options[0].text = "-- اختر الآن من قائمة الكادر المتاح للقسم --";
+            if (visibleCount > 0) {
+                staffSelect.options[0].text = "-- اختر الآن من قائمة الكادر المتوفر للقسم --";
+            } else {
+                staffSelect.options[0].text = "-- لا يوجد مسؤولين متاحين حالياً لهذا القسم --";
+            }
         }
 
-        // دالة لإعادة تعيين التاريخ والوقت عند تغيير المسؤول أو القسم
+        // دالة تحديد رئيس القسم تلقائياً وتعبئة الحقل المخفي في صفحة رئيس القسم
+        function selectHeadAutomatically() {
+            const selectedDept = document.getElementById('departmentSelect').value;
+            const hiddenInput = document.getElementById('targetStaffHidden');
+            
+            resetDateTime();
+            
+            // خريطة ثابتة لرؤساء الأقسام بناءً على مصفوفة السيرفر لتجنب أي تأخير
+            const headsMapping = {
+                'computer': 'رئيس قسم الحاسب الآلي',
+                'communications': 'رئيس قسم الاتصالات',
+                'electronics': 'رئيس قسم الإلكترونيات',
+                'general': 'رئيس قسم المواد العامة'
+            };
+            
+            if (headsMapping[selectedDept]) {
+                hiddenInput.value = headsMapping[selectedDept];
+            }
+        }
+
+        // تصفير التاريخ والرسائل التنبيهية
         function resetDateTime() {
-            document.getElementById('liveDatePicker').value = '';
+            if (document.getElementById('liveDatePicker')._flatpickr) {
+                document.getElementById('liveDatePicker')._flatpickr.clear();
+            }
             document.getElementById('statusPlaceholder').classList.remove('d-none');
+            document.getElementById('statusPlaceholder').innerHTML = 'الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة المتاحة.';
             document.getElementById('slotsContainer').classList.add('d-none');
             document.getElementById('selectedTimeInput').value = '';
         }
 
-        // تفعيل التقويم المنبثق
+        // إطلاق التقويم بمزامنة الأياكس
         flatpickr("#liveDatePicker", {
             locale: "ar",
             dateFormat: "Y-m-d",
             minDate: "today",
             onChange: function(selectedDates, dateStr, instance) {
-                const target = document.getElementById('targetStaff').value;
-                if (target && dateStr) {
+                let target = "";
+                
+                if (pageId === 'affairs') {
+                    target = "شؤون المتدربين";
+                } else if (pageId === 'head') {
+                    target = document.getElementById('targetStaffHidden').value;
+                    if (!document.getElementById('departmentSelect').value) {
+                        alert('الرجاء تحديد القسم أولاً!');
+                        instance.clear();
+                        return;
+                    }
+                } else if (pageId === 'faculty') {
+                    target = document.getElementById('targetStaff').value;
+                    if (!target) {
+                        alert('الرجاء تحديد الدكتور أو المسؤول أولاً!');
+                        instance.clear();
+                        return;
+                    }
+                }
+
+                if (dateStr && target) {
                     fetchAvailableSlots(target, dateStr);
                 }
             }
         });
 
-        // وظيفة جلب الفترات المتاحة عبر الأياكس (متوافقة تماماً مع الكود القديم في السيرفر)
+        // سحب أوقات المقابلات من السيرفر
         function fetchAvailableSlots(target, dateStr) {
             const dateObj = new Date(dateStr);
             const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
             const dayName = days[dateObj.getDay()];
+
+            document.getElementById('statusPlaceholder').classList.remove('d-none');
+            document.getElementById('statusPlaceholder').innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> جاري فحص الساعات المتاحة...';
+            document.getElementById('slotsContainer').classList.add('d-none');
 
             $.ajax({
                 url: '/get_slots_ajax',
                 method: 'POST',
                 data: { target: target, day_name: dayName },
                 success: function(htmlResponse) {
-                    if (htmlResponse && !htmlResponse.includes('غير متاح للمقابلة')) {
+                    if (htmlResponse && !htmlResponse.includes('غير متاح')) {
                         document.getElementById('statusPlaceholder').classList.add('d-none');
                         const container = document.getElementById('slotsContainer');
                         container.classList.remove('d-none');
                         container.innerHTML = htmlResponse;
                     } else {
-                        // في حال أرجع السيرفر رسالة أن اليوم غير متاح للمسؤول
                         document.getElementById('statusPlaceholder').classList.remove('d-none');
-                        document.getElementById('statusPlaceholder').innerHTML = htmlResponse ? htmlResponse : '<span class="text-danger small">عذراً، لا تتوفر فترات مجدولة لهذا الدكتور في اليوم المختار!</span>';
+                        document.getElementById('statusPlaceholder').innerHTML = htmlResponse ? htmlResponse : '<span class="text-danger small fw-bold">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>';
                         document.getElementById('slotsContainer').classList.add('d-none');
                     }
                 }
             });
         }
 
-        // وظيفة تحديد الوقت من الأزرار الحية المستلمة
+        // دالة التحديد وتلوين الأزرار النشطة
         function selectSlot(timeString, buttonElement) {
-            document.querySelectorAll('#slotsContainer button.slot-btn').forEach(btn => {
-                btn.classList.remove('active', 'btn-primary');
-                btn.classList.add('btn-outline-primary');
+            document.querySelectorAll('#slotsContainer .slot-btn').forEach(btn => {
+                btn.classList.remove('active');
             });
-            
-            // في حال تم استخدام عناصر onclick قديمة بدون تمرير this
             if(buttonElement) {
-                buttonElement.classList.add('active', 'btn-primary');
-                buttonElement.classList.remove('btn-outline-primary');
+                buttonElement.classList.add('active');
             }
             document.getElementById('selectedTimeInput').value = timeString;
         }
