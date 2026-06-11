@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>بوابة المواعيد - الكلية التقنية</title>
-    <!-- تضمين مكتبات التصميم والتقويم الاحترافية السحابية السريعة -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -36,7 +35,7 @@
                 </div>
             </div>
 
-            <!-- حقل اختيار القسم -->
+            <!-- حقل اختيار القسم الأكاديمي -->
             {% if entity_id != 'affairs' %}
             <div class="mb-3">
                 <label class="form-label fw-bold">القسم التدريبي / المختص:</label>
@@ -50,13 +49,13 @@
             </div>
             {% endif %}
 
-            <!-- حقل اختيار المسؤول (يظهر فقط وفقط في صفحة أعضاء هيئة التدريس) -->
+            <!-- حقل اختيار الدكتور / المهندس (يظهر في صفحة أعضاء هيئة التدريس) -->
             <div class="mb-3 {% if entity_id != 'faculty' %}d-none{% endif %}">
                 <label class="form-label fw-bold">اختر الدكتور / المهندس:</label>
                 <select name="target" id="targetStaff" class="form-select" {% if entity_id == 'faculty' %}required{% endif %} onchange="handleStaffChange()">
                     <option value="" disabled selected>-- الرجاء اختيار القسم أولاً لعرض القائمة --</option>
                     {% for name, info in schedule_db.items() %}
-                        <option value="{{ name }}" data-dept="{{ info.dept }}" class="staff-option d-none" data-type="{{ info.type }}">
+                        <option value="{{ name }}" data-dept="{{ info.dept if info.dept else '' }}" data-type="{{ info.type if info.type else '' }}" class="staff-option">
                             {{ name }}
                         </option>
                     {% endfor %}
@@ -64,14 +63,14 @@
                 <div id="staffError" class="error-hint">⚠️ الرجاء اختيار الدكتور أو المهندس المطلوب لعرض مواعيده!</div>
             </div>
 
-            <!-- المدخلات المخفية لتمرير القيم تلقائياً في الأقسام الأخرى -->
+            <!-- المدخلات المخفية للأقسام الأخرى لضمان عدم حدوث تعارض -->
             {% if entity_id == 'head' %}
                 <input type="hidden" name="target" id="targetStaffHidden">
             {% elif entity_id == 'affairs' %}
                 <input type="hidden" name="target" id="targetStaffHidden" value="شؤون المتدربين">
             {% endif %}
 
-            <!-- تاريخ الحجز التفاعلي -->
+            <!-- تاريخ الحجز -->
             <div class="mb-4">
                 <label class="form-label fw-bold">تاريخ الحجز:</label>
                 <input type="text" id="liveDatePicker" name="booking_date" class="form-control bg-white" placeholder="اضغط هنا لاختيار التاريخ من التقويم" required readonly>
@@ -85,13 +84,11 @@
             </div>
 
             <div id="slotsContainer" class="d-none mb-4">
-                <!-- أزرار الأوقات سيتم حقنها هنا بالأجاكس -->
+                <!-- الأزرار الديناميكية -->
             </div>
 
-            <!-- الحقل المخفي لتخزين قيمة الساعة -->
             <input type="hidden" id="selectedTimeInput" name="booking_time" required>
 
-            <!-- أزرار التحكم -->
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1 py-2" style="background-color: #1e3a8a;">تأكيد موعد الحجز النهائي</button>
                 <a href="/" class="btn btn-secondary px-4 py-2">رجوع للرئيسية</a>
@@ -99,13 +96,13 @@
         </form>
     </div>
 
-    <!-- استدعاء مكتبات الأجاكس والتقويم العربي -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
     <script>
         const pageId = "{{ entity_id }}";
 
+        // تشغيل الفلترة الذكية فور اختيار القسم
         function handleDepartmentChange() {
             document.getElementById('deptError').style.display = 'none';
             if (pageId === 'faculty') {
@@ -120,31 +117,45 @@
             resetDateTime();
         }
 
-        // فلترة الدكاترة حسب القسم المختار
+        // دالة الفلترة الصارمة والذكية بناءً على الصورة image_7.png
         function filterStaffByDept() {
-            const selectedDept = document.getElementById('departmentSelect').value;
+            const selectedDept = document.getElementById('departmentSelect').value; // القيمة الحالية المختارة (computer, communications.. إلخ)
             const staffSelect = document.getElementById('targetStaff');
             
-            staffSelect.value = "";
+            staffSelect.value = ""; // تصفير الاختيار القديم
             resetDateTime();
             
             let visibleCount = 0;
-            document.querySelectorAll('.staff-option').forEach(option => {
-                const optionDept = option.getAttribute('data-dept');
-                const optionType = option.getAttribute('data-type');
+            
+            // قراءة الخيارات حلقة بحلقة لتصفيتها بدقة
+            const options = staffSelect.options;
+            for (let i = 0; i < options.length; i++) {
+                if (i === 0) continue; // تخطي خيار التنبيه الأول
                 
-                if (optionDept === selectedDept && optionType !== 'head') {
-                    option.classList.remove('d-none');
+                const option = options[i];
+                const staffName = option.value;
+                const optDept = option.getAttribute('data-dept').toLowerCase();
+                const optType = option.getAttribute('data-type').toLowerCase();
+                
+                // 1. حماية وتصفية أولى: إذا كان الاسم يحتوي على شؤون أو رئيس، نقوم بإخفائه فوراً في صفحة أعضاء هيئة التدريس
+                if (staffName.includes("رئيس") || staffName.includes("شؤون") || optType === 'head' || optType === 'affairs') {
+                    option.style.display = 'none';
+                    continue;
+                }
+                
+                // 2. الفلترة حسب القسم المختار بدقة
+                if (optDept === selectedDept || selectedDept.includes(optDept) || optDept.includes(selectedDept)) {
+                    option.style.display = 'block';
                     visibleCount++;
                 } else {
-                    option.classList.add('d-none');
+                    option.style.display = 'none';
                 }
-            });
+            }
             
             if (visibleCount > 0) {
-                staffSelect.options[0].text = "-- اختر الآن من قائمة الكادر المتوفر للقسم --";
+                options[0].text = "-- اختر الآن من قائمة الكادر المتوفر للقسم --";
             } else {
-                staffSelect.options[0].text = "-- لا يوجد مسؤولين متاحين حالياً لهذا القسم --";
+                options[0].text = "-- لا يوجد أعضاء هيئة تدريس متاحين لهذا القسم حالياً --";
             }
         }
 
@@ -177,13 +188,12 @@
             document.getElementById('selectedTimeInput').value = '';
         }
 
-        // تشغيل التقويم الذكي مع حجب التنبيهات المنبثقة
+        // تشغيل التقويم
         flatpickr("#liveDatePicker", {
             locale: "ar",
             dateFormat: "Y-m-d",
             minDate: "today",
             onOpen: function(selectedDates, dateStr, instance) {
-                // فحص القيود قبل فتح التقويم لمنع اللخبطة
                 if (pageId !== 'affairs' && !document.getElementById('departmentSelect').value) {
                     document.getElementById('deptError').style.display = 'block';
                     instance.close();
@@ -197,7 +207,6 @@
             },
             onChange: function(selectedDates, dateStr, instance) {
                 let target = "";
-                
                 if (pageId === 'affairs') {
                     target = "شؤون المتدربين";
                 } else if (pageId === 'head') {
