@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
@@ -237,11 +237,19 @@ def update_schedule():
         flash(f'تم حفظ تعديلات المواعيد والأيام لـ ({target_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
+# المسار المحدث لصفحة اختيار الوقت المناسب
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
     titles = {'affairs': 'شؤون المتدربين', 'head': 'رئيس القسم', 'faculty': 'أعضاء هيئة التدريس'}
-    return render_template('select_time.html', entity_id=entity_id, entity_name=titles.get(entity_id, 'المسؤول'), departments=departments, schedule_db=schedule_db)
+    return render_template(
+        'select_time.html', 
+        entity_id=entity_id, 
+        entity_name=titles.get(entity_id, 'المسؤول'), 
+        departments=departments, 
+        schedule_db=schedule_db
+    )
 
+# جلب الفترات عبر الأياكس (التوافقية التامة مع الواجهة)
 @app.route('/get_slots_ajax', methods=['POST'])
 def get_slots_ajax():
     target = request.form.get('target')
@@ -256,15 +264,26 @@ def get_slots_ajax():
         
     html_output = '<div class="d-flex flex-wrap justify-content-center gap-2">'
     for slot in info['slots']:
-        html_output += f'<button type="button" class="btn btn-outline-primary slot-btn btn-sm" onclick="selectSlot(\'{slot}\')">{slot}</button>'
+        # تم الحفاظ على استدعاء الدالة للتصميم التفاعلي
+        html_output += f'<button type="button" class="btn btn-outline-primary slot-btn btn-sm m-1" onclick="selectSlot(\'{slot}\', this)">{slot}</button>'
     html_output += '</div>'
     return html_output
 
+# استقبال وحفظ الحجز النهائي التفاعلي
 @app.route('/book', methods=['POST'])
 def book():
     student_name = request.form.get('student_name')
     student_id = request.form.get('student_id')
-    flash(f'تم تسجيل حجز الموعد بنجاح للمتدرب {student_name} (الرقم الأكاديمي: {student_id})!', 'success')
+    target_staff = request.form.get('target')  # الطبيب أو المسؤول المختار
+    booking_date = request.form.get('booking_date') # التاريخ المختار
+    booking_time = request.form.get('booking_time') # الوقت المستلم من الأزرار التفاعلية
+    
+    # التحقق من المدخلات الأساسية قبل تأكيد الحجز
+    if not booking_time:
+        flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
+        return redirect(url_for('home'))
+        
+    flash(f'تم تسجيل حجز الموعد بنجاح للمتدرب {student_name} (الرقم الأكاديمي: {student_id}) مع {target_staff} بتاريخ {booking_date} الساعة {booking_time}!', 'success')
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
