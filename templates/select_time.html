@@ -48,26 +48,24 @@
             </div>
             {% endif %}
 
-            <!-- حقل اختيار المسؤول (يظهر فقط في صفحة أعضاء هيئة التدريس faculty) -->
+            <!-- حقل اختيار المسؤول (يظهر فقط وفقط في صفحة أعضاء هيئة التدريس faculty) -->
             <div class="mb-3 {% if entity_id != 'faculty' %}d-none{% endif %}">
                 <label class="form-label fw-bold">اختر الدكتور / المهندس:</label>
-                <select name="target" id="targetStaff" class="form-select" required onchange="resetDateTime()">
-                    {% if entity_id == 'affairs' %}
-                        <option value="شؤون المتدربين" selected>شؤون المتدربين</option>
-                    {% else %}
-                        <option value="" disabled selected>-- الرجاء اختيار القسم أولاً لعرض القائمة --</option>
-                        {% for name, info in schedule_db.items() %}
-                            <option value="{{ name }}" data-dept="{{ info.dept }}" class="staff-option d-none" data-type="{{ info.type }}">
-                                {{ name }}
-                            </option>
-                        {% endfor %}
-                    {% endif %}
+                <select name="target" id="targetStaff" class="form-select" {% if entity_id == 'faculty' %}required{% endif %} onchange="resetDateTime()">
+                    <option value="" disabled selected>-- الرجاء اختيار القسم أولاً لعرض القائمة --</option>
+                    {% for name, info in schedule_db.items() %}
+                        <option value="{{ name }}" data-dept="{{ info.dept }}" class="staff-option d-none" data-type="{{ info.type }}">
+                            {{ name }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
 
-            <!-- في حال كانت الصفحة لـ رئيس قسم، نضع حقل مخفي يتم تعبئته تلقائياً بالرئيس المقابل للقسم المحدد -->
+            <!-- الحقل المخفي لصفحة رئيس القسم وصلاحية شؤون المتدربين لتمرير الاسم تلقائياً -->
             {% if entity_id == 'head' %}
                 <input type="hidden" name="target" id="targetStaffHidden">
+            {% elif entity_id == 'affairs' %}
+                <input type="hidden" name="target" id="targetStaffHidden" value="شؤون المتدربين">
             {% endif %}
 
             <!-- تاريخ الحجز التفاعلي -->
@@ -105,7 +103,7 @@
     <script>
         const pageId = "{{ entity_id }}";
 
-        // التعامل مع تغيير القسم بذكاء بناءً على نوع الصفحة
+        // التعامل مع تغيير القسم بذكاء وبدون أي تعليق
         function handleDepartmentChange() {
             if (pageId === 'faculty') {
                 filterStaffByDept();
@@ -114,7 +112,7 @@
             }
         }
 
-        // دالة الفلترة لصفحة أعضاء هيئة التدريس فقط
+        // دالة الفلترة لصفحة أعضاء هيئة التدريس
         function filterStaffByDept() {
             const selectedDept = document.getElementById('departmentSelect').value;
             const staffSelect = document.getElementById('targetStaff');
@@ -142,14 +140,13 @@
             }
         }
 
-        // دالة تحديد رئيس القسم تلقائياً وتعبئة الحقل المخفي في صفحة رئيس القسم
+        // دالة تحديد رئيس القسم تلقائياً وتعبئة الحقل المخفي
         function selectHeadAutomatically() {
             const selectedDept = document.getElementById('departmentSelect').value;
             const hiddenInput = document.getElementById('targetStaffHidden');
             
             resetDateTime();
             
-            // خريطة ثابتة لرؤساء الأقسام بناءً على مصفوفة السيرفر لتجنب أي تأخير
             const headsMapping = {
                 'computer': 'رئيس قسم الحاسب الآلي',
                 'communications': 'رئيس قسم الاتصالات',
@@ -159,10 +156,12 @@
             
             if (headsMapping[selectedDept]) {
                 hiddenInput.value = headsMapping[selectedDept];
+            } else {
+                hiddenInput.value = "";
             }
         }
 
-        // تصفير التاريخ والرسائل التنبيهية
+        // تصفير التاريخ والرسائل التنبيهية عند تغيير الاختيارات
         function resetDateTime() {
             if (document.getElementById('liveDatePicker')._flatpickr) {
                 document.getElementById('liveDatePicker')._flatpickr.clear();
@@ -173,7 +172,7 @@
             document.getElementById('selectedTimeInput').value = '';
         }
 
-        // إطلاق التقويم بمزامنة الأياكس
+        // إطلاق التقويم مع الفحص الصحيح للمدخلات لمنع ظهور رسالة الخطأ الظاهرة في image_6.png
         flatpickr("#liveDatePicker", {
             locale: "ar",
             dateFormat: "Y-m-d",
@@ -184,16 +183,21 @@
                 if (pageId === 'affairs') {
                     target = "شؤون المتدربين";
                 } else if (pageId === 'head') {
-                    target = document.getElementById('targetStaffHidden').value;
                     if (!document.getElementById('departmentSelect').value) {
-                        alert('الرجاء تحديد القسم أولاً!');
+                        alert('الرجاء تحديد القسم الأكاديمي أولاً!');
                         instance.clear();
                         return;
                     }
+                    target = document.getElementById('targetStaffHidden').value;
                 } else if (pageId === 'faculty') {
+                    if (!document.getElementById('departmentSelect').value) {
+                        alert('الرجاء تحديد القسم الأكاديمي أولاً!');
+                        instance.clear();
+                        return;
+                    }
                     target = document.getElementById('targetStaff').value;
                     if (!target) {
-                        alert('الرجاء تحديد الدكتور أو المسؤول أولاً!');
+                        alert('الرجاء تحديد الدكتور أو المهندس المسؤول!');
                         instance.clear();
                         return;
                     }
@@ -205,7 +209,7 @@
             }
         });
 
-        // سحب أوقات المقابلات من السيرفر
+        // جلب المواعيد الشاغرة بالأياكس
         function fetchAvailableSlots(target, dateStr) {
             const dateObj = new Date(dateStr);
             const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -234,7 +238,7 @@
             });
         }
 
-        // دالة التحديد وتلوين الأزرار النشطة
+        // دالة التحديد وتلوين الأزرار النشطة باللون الأزرق
         function selectSlot(timeString, buttonElement) {
             document.querySelectorAll('#slotsContainer .slot-btn').forEach(btn => {
                 btn.classList.remove('active');
