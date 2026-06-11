@@ -14,39 +14,42 @@
         .time-slot-btn { border: 2px solid #e5e7eb; border-radius: 10px; padding: 10px; background: white; color: #374151; transition: all 0.2s; font-weight: 500; }
         .time-slot-btn:hover { border-color: #1e3a8a; background: #eff6ff; }
         .time-slot-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
+        #slotsContainer button.slot-btn { margin: 5px; } /* إضافة تنسيق بسيط للأزرار الحية */
     </style>
 </head>
 <body>
 
     <div class="booking-card">
-        <h2 class="text-center main-title">بوابة المواعيد</h2>
+        <h2 class="text-center main-title">بوابة المواعيد لـ: {{ entity_name }}</h2>
         <p class="text-center sub-title">يرجى إدخال بياناتك واختيار الموعد المناسب لإتمام الطلب</p>
         
-        <form action="/submit_booking" method="POST">
+        <form action="/book" method="POST" id="bookingForm">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">اسم المتدرب بالكامل:</label>
+                    <label class="form-label font-weight-bold">اسم المتدرب ثلاثي:</label>
                     <input type="text" name="student_name" class="form-control" placeholder="أدخل اسمك الثلاثي" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">الرقم الأكاديمي / التدريبي:</label>
+                    <label class="form-label">الرقم التدريبي:</label>
                     <input type="text" name="student_id" class="form-control" placeholder="مثال: 44210000" required>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">اختر الدكتور / المهندس:</label>
-                <select name="selected_staff" class="form-select" required>
+                <label class="form-label">اختر الدكتور / المسؤول:</label>
+                <select name="target" id="targetStaff" class="form-select" required onchange="resetDateTime()">
                     <option value="" disabled selected>-- اختر من القائمة المتوفرة --</option>
-                    {% for name in staff %}
-                        <option value="{{ name }}">{{ name }}</option>
+                    {% for name, info in schedule_db.items() %}
+                        {% if info.dept == entity_id %}
+                            <option value="{{ name }}">{{ name }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>
 
             <div class="mb-4">
                 <label class="form-label">تاريخ الحجز:</label>
-                <input type="text" id="liveDatePicker" name="booking_date" class="form-control bg-white" placeholder="اضغط هنا لاختيار التاريخ من التقويم" required readonly>
+                <input type="text" id="liveDatePicker" name="booking_date" class="form-control bg-white" placeholder="اضغط هنا لاختيار التاريخ" required readonly>
             </div>
 
             <div class="section-title">
@@ -57,21 +60,10 @@
                 الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة المتاحة.
             </div>
 
-            <div id="slotsContainer" class="row g-2 mb-4 d-none">
-                <div class="col-4">
-                    <button type="button" class="btn time-slot-btn w-100" onclick="selectTimeSlot('08:00 ص', this)">08:00 ص</button>
+            <div id="slotsContainer" class="d-none mb-4">
                 </div>
-                <div class="col-4">
-                    <button type="button" class="btn time-slot-btn w-100" onclick="selectTimeSlot('10:00 ص', this)">10:00 ص</button>
-                </div>
-                <div class="col-4">
-                    <button type="button" class="btn time-slot-btn w-100" onclick="selectTimeSlot('12:30 م', this)">12:30 م</button>
-                </div>
-                <div class="col-4">
-                    <button type="button" class="btn time-slot-btn w-100" onclick="selectTimeSlot('01:15 م', this)">01:15 م</button>
-                </div>
-                <input type="hidden" id="selectedTimeInput" name="booking_time" required>
-            </div>
+
+            <input type="hidden" id="selectedTimeInput" name="booking_time" required>
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1 py-2" style="background-color: #1e3a8a;">تأكيد موعد الحجز</button>
@@ -80,29 +72,67 @@
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
     <script>
+        // دالة لإعادة تعيين التاريخ والوقت عند تغيير المسؤول
+        function resetDateTime() {
+            document.getElementById('liveDatePicker').value = '';
+            document.getElementById('statusPlaceholder').classList.remove('d-none');
+            document.getElementById('slotsContainer').classList.add('d-none');
+            document.getElementById('selectedTimeInput').value = '';
+        }
+
         // تفعيل التقويم المنبثق
         flatpickr("#liveDatePicker", {
             locale: "ar",
             dateFormat: "Y-m-d",
             minDate: "today",
             onChange: function(selectedDates, dateStr, instance) {
-                if (dateStr) {
-                    // إخفاء الرسالة التنبيهية وإظهار الأوقات
-                    document.getElementById('statusPlaceholder').classList.add('d-none');
-                    document.getElementById('slotsContainer').classList.remove('d-none');
+                const target = document.getElementById('targetStaff').value;
+                if (target && dateStr) {
+                    fetchAvailableSlots(target, dateStr);
                 }
             }
         });
 
-        // اختيار الوقت وتغيير لون الزر المختار
-        function selectTimeSlot(timeString, buttonElement) {
-            document.querySelectorAll('.time-slot-btn').forEach(btn => {
-                btn.classList.remove('active');
+        // وظيفة جلب الفترات المتاحة عبر الأياكس (متوافقة تماماً مع الكود القديم)
+        function fetchAvailableSlots(target, dateStr) {
+            const dateObj = new Date(dateStr);
+            const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+            const dayName = days[dateObj.getDay()];
+
+            $.ajax({
+                url: '/get_slots_ajax',
+                method: 'POST',
+                data: { target: target, day_name: dayName },
+                success: function(htmlResponse) {
+                    if (htmlResponse) {
+                        document.getElementById('statusPlaceholder').classList.add('d-none');
+                        const container = document.getElementById('slotsContainer');
+                        container.classList.remove('d-none');
+                        container.innerHTML = htmlResponse;
+                    } else {
+                        // في حال لم يرجع المسار شيئاً
+                        document.getElementById('statusPlaceholder').classList.remove('d-none');
+                        document.getElementById('statusPlaceholder').innerHTML = '<span class="text-danger Small">عذراً، حدث خطأ أثناء جلب المواعيد!</span>';
+                        document.getElementById('slotsContainer').classList.add('d-none');
+                    }
+                }
             });
-            buttonElement.classList.add('active');
+        }
+
+        // وظيفة تحديد الوقت من الأزرار الحية المستلمة (متوافقة مع دالة أياكس القديمة)
+        function selectSlot(timeString, buttonElement) {
+            // إزالة الكلاس 'active' من كافة الأزرار داخل الحاوية
+            document.querySelectorAll('#slotsContainer button.slot-btn').forEach(btn => {
+                btn.classList.remove('active', 'btn-primary');
+                btn.classList.add('btn-outline-primary');
+            });
+            // تحديد الزر المضغط عليه
+            buttonElement.classList.add('active', 'btn-primary');
+            buttonElement.classList.remove('btn-outline-primary');
+            // تعبئة الحقل المخفي
             document.getElementById('selectedTimeInput').value = timeString;
         }
     </script>
