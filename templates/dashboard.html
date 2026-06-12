@@ -43,6 +43,7 @@
 
             <h3 class="mb-4 text-secondary fw-bold">نظام الإدارة المركزي</h3>
 
+            <!-- القسم 1: الإحصائيات -->
             <div id="stats-sec" class="admin-section active">
                 <h5 class="section-header">📊 الإحصائيات العامة</h5>
                 <div class="row g-3 mb-5">
@@ -69,6 +70,7 @@
                 </div>
             </div>
 
+            <!-- إدارة الجهات بالرئيسية -->
             <div id="entities-sec" class="admin-section">
                 <h5 class="section-header">🏢 إدارة جهات الحجز (كروت الصفحة الرئيسية)</h5>
                 <div class="card stat-card p-4 mb-4">
@@ -123,6 +125,7 @@
                 </form>
             </div>
 
+            <!-- الأقسام الأكاديمية (هنا تمت إضافة زر الحذف بجانب التعديل) -->
             <div id="dept-sec" class="admin-section">
                 <h5 class="section-header">🏛️ إدارة الأقسام الأكاديمية</h5>
                 <div class="card stat-card p-4 mb-4">
@@ -130,7 +133,20 @@
                         <thead class="table-light"><tr><th>الرمز</th><th>القسم</th><th>إجراءات</th></tr></thead>
                         <tbody>
                             {% for d_id, d_name in departments.items() %}
-                            <tr><td dir="ltr" class="fw-bold text-primary">{{ d_id }}</td><td>{{ d_name }}</td><td><button class="btn btn-sm btn-warning fw-bold px-4" onclick="editDepartment('{{ d_id }}', '{{ d_name }}')">تعديل</button></td></tr>
+                            <tr>
+                                <td dir="ltr" class="fw-bold text-primary">{{ d_id }}</td>
+                                <td>{{ d_name }}</td>
+                                <td class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <!-- زر التعديل -->
+                                        <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editDepartment('{{ d_id }}', '{{ d_name }}')">تعديل</button>
+                                        <!-- زر الحذف -->
+                                        <form action="/admin/delete_department/{{ d_id }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا القسم نهائياً؟ (سيتم حذف جميع الدكاترة المرتبطين به أيضاً)');" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -151,6 +167,7 @@
                 </form>
             </div>
 
+            <!-- كادر أكاديمي -->
             <div id="staff-sec" class="admin-section">
                 <h5 class="section-header">👨‍🏫 إضافة كادر أكاديمي (ربط بالقسم)</h5>
                 <form action="/admin/add_staff" method="POST" class="card stat-card p-4 border-info">
@@ -168,6 +185,7 @@
                 </form>
             </div>
 
+            <!-- جداول المواعيد -->
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4">
