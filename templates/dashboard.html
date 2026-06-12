@@ -7,8 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
-        .sidebar { background-color: #1e3a8a; color: white; min-height: 100vh; padding-top: 20px; position: fixed; right: 0; width: 18%; }
-        .sidebar a { color: #cbd5e1; text-decoration: none; padding: 15px 20px; display: block; border-bottom: 1px solid #2d4a9c; transition: 0.3s; cursor: pointer; }
+        .sidebar { background-color: #1e3a8a; color: white; min-height: 100vh; padding-top: 20px; position: fixed; right: 0; width: 18%; z-index: 100; }
+        .sidebar a { color: #cbd5e1; text-decoration: none; padding: 13px 20px; display: block; border-bottom: 1px solid #2d4a9c; transition: 0.3s; cursor: pointer; font-size: 14.5px; }
         .sidebar a:hover, .sidebar a.active { background-color: #2d4a9c; color: white; border-right: 5px solid #60a5fa; }
         .main-content { margin-right: 18%; padding: 40px; }
         .stat-card { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -24,8 +24,9 @@
     <div class="row m-0">
         <div class="col-md-2 sidebar p-0">
             <h5 class="text-center mb-4 fw-bold text-white py-2">⚙️ لوحة التحكم</h5>
-            <a onclick="showSection('stats-sec', this)" class="menu-link active">📊 الإحصائيات والاستجابات</a>
-            <a onclick="showSection('dept-sec', this)" class="menu-link">🏛️ إدارة الأقسام</a>
+            <a onclick="showSection('stats-sec', this)" class="menu-link active">📊 الإحصائيات</a>
+            <a onclick="showSection('entities-sec', this)" class="menu-link text-warning fw-bold">🏢 إدارة واجهة الموقع</a>
+            <a onclick="showSection('dept-sec', this)" class="menu-link">🏛️ الأقسام الأكاديمية</a>
             <a onclick="showSection('staff-sec', this)" class="menu-link">👨‍🏫 إضافة كادر أكاديمي</a>
             <a onclick="showSection('schedule-sec', this)" class="menu-link">⏱️ إعداد المواعيد والسعة</a>
             <a href="/logout" class="text-danger mt-5 fw-bold" style="background-color: rgba(255,0,0,0.1);">🚪 تسجيل خروج</a>
@@ -40,49 +41,55 @@
                 {% endif %}
             {% endwith %}
 
-            <h3 class="mb-4 text-secondary">نظام الإدارة المركزي للمواعيد</h3>
+            <h3 class="mb-4 text-secondary fw-bold">نظام الإدارة المركزي</h3>
 
             <div id="stats-sec" class="admin-section active">
                 <h5 class="section-header">📊 الإحصائيات العامة</h5>
                 <div class="row g-3 mb-5">
-                    <div class="col-md-4">
-                        <div class="card stat-card bg-primary text-white p-4 text-center">
-                            <h2 class="fw-bold">{{ stats.total_bookings }}</h2><p class="mb-0">مقعد محجوز</p>
+                    <div class="col-md-3">
+                        <div class="card stat-card bg-primary text-white p-3 text-center">
+                            <h2 class="fw-bold">{{ stats.total_bookings }}</h2><p class="mb-0">موعد محجوز</p>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card bg-success text-white p-4 text-center">
-                            <h2 class="fw-bold">{{ stats.total_departments }}</h2><p class="mb-0">الأقسام النشطة</p>
+                    <div class="col-md-3">
+                        <div class="card stat-card bg-warning text-dark p-3 text-center">
+                            <h2 class="fw-bold">{{ stats.total_entities }}</h2><p class="mb-0">جهات بالواجهة</p>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card bg-info text-white p-4 text-center">
-                            <h2 class="fw-bold">{{ stats.total_staff }}</h2><p class="mb-0">الكادر الأكاديمي</p>
+                    <div class="col-md-3">
+                        <div class="card stat-card bg-success text-white p-3 text-center">
+                            <h2 class="fw-bold">{{ stats.total_departments }}</h2><p class="mb-0">أقسام أكاديمية</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card bg-info text-white p-3 text-center">
+                            <h2 class="fw-bold">{{ stats.total_staff }}</h2><p class="mb-0">كادر مسؤول</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="dept-sec" class="admin-section">
-                <h5 class="section-header">🏛️ إدارة الأقسام الأكاديمية</h5>
-
+            <div id="entities-sec" class="admin-section">
+                <h5 class="section-header">🏢 إدارة جهات الحجز (كروت الصفحة الرئيسية)</h5>
                 <div class="card stat-card p-4 mb-4">
-                    <h6 class="fw-bold mb-3 text-secondary">📋 الأقسام الأساسية المسجلة حالياً:</h6>
-                    <table class="table table-bordered table-hover text-center align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>رمز القسم (ID)</th>
-                                <th>الاسم الرسمي للقسم</th>
-                                <th>إجراءات</th>
-                            </tr>
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light text-center">
+                            <tr><th>الرمز</th><th>الأيقونة</th><th>الجهة</th><th>الوصف</th><th>إجراءات</th></tr>
                         </thead>
                         <tbody>
-                            {% for d_id, d_name in departments.items() %}
+                            {% for e_id, e_info in main_entities.items() %}
                             <tr>
-                                <td class="text-primary fw-bold" dir="ltr">{{ d_id }}</td>
-                                <td>{{ d_name }}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-warning fw-bold px-4" onclick="editDepartment('{{ d_id }}', '{{ d_name }}')">✏️ تعديل</button>
+                                <td class="text-primary fw-bold text-center" dir="ltr">{{ e_id }}</td>
+                                <td class="text-center fs-4">{{ e_info.icon }}</td>
+                                <td class="fw-bold">{{ e_info.title }}</td>
+                                <td>{{ e_info.desc }}</td>
+                                <td class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <button class="btn btn-sm btn-warning fw-bold" onclick="editEntity('{{ e_id }}', '{{ e_info.title }}', '{{ e_info.icon }}', '{{ e_info.desc }}')">تعديل</button>
+                                        <form action="/admin/delete_entity/{{ e_id }}" method="POST" onsubmit="return confirm('هل متأكد من الحذف؟');" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold">حذف</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -90,105 +97,93 @@
                     </table>
                 </div>
 
-                <form action="/admin/add_department" method="POST" class="card stat-card p-4 mb-4 border-primary" id="addDeptForm">
-                    <h6 class="fw-bold mb-3 text-primary">➕ إضافة قسم أكاديمي جديد:</h6>
+                <form action="/admin/add_entity" method="POST" class="card stat-card p-4 mb-4 border-primary" id="addEntityForm">
+                    <h6 class="fw-bold mb-3 text-primary">➕ إضافة كرت جهة جديد:</h6>
                     <div class="row">
-                        <div class="col-md-5 mb-3">
-                            <label class="form-label text-muted">رمز القسم (إنجليزي)</label>
-                            <input type="text" name="dept_id" class="form-control" placeholder="مثال: cyber" required>
-                        </div>
-                        <div class="col-md-5 mb-3">
-                            <label class="form-label text-muted">الاسم الرسمي للقسم</label>
-                            <input type="text" name="dept_name" class="form-control" placeholder="مثال: قسم الأمن السيبراني" required>
-                        </div>
-                        <div class="col-md-2 mt-4 pt-1">
-                            <button type="submit" class="btn btn-primary w-100 fw-bold">إضافة القسم</button>
-                        </div>
+                        <div class="col-md-2 mb-3"><input type="text" name="e_id" class="form-control" placeholder="الرمز (clinic)" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="e_title" class="form-control" placeholder="اسم الجهة" required></div>
+                        <div class="col-md-2 mb-3"><input type="text" name="e_icon" class="form-control" placeholder="أيقونة 🏥" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="e_desc" class="form-control" placeholder="الوصف" required></div>
+                        <div class="col-md-12 mt-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة للرئيسية</button></div>
                     </div>
                 </form>
 
-                <form action="/admin/edit_department" method="POST" class="card stat-card p-4 border-warning" id="editDeptForm" style="display: none;">
-                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل اسم القسم:</h6>
+                <form action="/admin/edit_entity" method="POST" class="card stat-card p-4 border-warning" id="editEntityForm" style="display: none;">
+                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل كرت الجهة:</h6>
                     <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label text-muted">رمز القسم (للقراءة فقط)</label>
-                            <input type="text" name="dept_id" id="edit_id" class="form-control bg-light" readonly>
+                        <div class="col-md-2 mb-3"><input type="text" name="e_id" id="edit_e_id" class="form-control bg-light" readonly></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="new_title" id="edit_e_title" class="form-control" required></div>
+                        <div class="col-md-2 mb-3"><input type="text" name="new_icon" id="edit_e_icon" class="form-control" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="new_desc" id="edit_e_desc" class="form-control" required></div>
+                        <div class="col-md-12 mt-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
+                            <button type="button" class="btn btn-secondary px-5 fw-bold" onclick="cancelEntityEdit()">إلغاء</button>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">الاسم الجديد للقسم</label>
-                            <input type="text" name="new_name" id="edit_name" class="form-control" required>
-                        </div>
-                        <div class="col-md-3 mt-4 pt-1 d-flex gap-2">
-                            <button type="submit" class="btn btn-warning w-100 fw-bold">حفظ</button>
-                            <button type="button" class="btn btn-secondary w-100" onclick="cancelEdit()">إلغاء</button>
-                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="dept-sec" class="admin-section">
+                <h5 class="section-header">🏛️ إدارة الأقسام الأكاديمية</h5>
+                <div class="card stat-card p-4 mb-4">
+                    <table class="table table-bordered table-hover text-center align-middle">
+                        <thead class="table-light"><tr><th>الرمز</th><th>القسم</th><th>إجراءات</th></tr></thead>
+                        <tbody>
+                            {% for d_id, d_name in departments.items() %}
+                            <tr><td dir="ltr" class="fw-bold text-primary">{{ d_id }}</td><td>{{ d_name }}</td><td><button class="btn btn-sm btn-warning fw-bold px-4" onclick="editDepartment('{{ d_id }}', '{{ d_name }}')">تعديل</button></td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <form action="/admin/add_department" method="POST" class="card stat-card p-4 mb-4 border-primary" id="addDeptForm">
+                    <div class="row">
+                        <div class="col-md-5 mb-3"><input type="text" name="dept_id" class="form-control" placeholder="رمز القسم (cyber)" required></div>
+                        <div class="col-md-5 mb-3"><input type="text" name="dept_name" class="form-control" placeholder="اسم القسم" required></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
+                    </div>
+                </form>
+                <form action="/admin/edit_department" method="POST" class="card stat-card p-4 border-warning" id="editDeptForm" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3 mb-3"><input type="text" name="dept_id" id="edit_id" class="form-control bg-light" readonly></div>
+                        <div class="col-md-6 mb-3"><input type="text" name="new_name" id="edit_name" class="form-control" required></div>
+                        <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-warning w-100 fw-bold">حفظ</button><button type="button" class="btn btn-secondary w-100" onclick="cancelEdit()">إلغاء</button></div>
                     </div>
                 </form>
             </div>
 
             <div id="staff-sec" class="admin-section">
-                <h5 class="section-header">👨‍🏫 ربط الكادر الأكاديمي بالأقسام</h5>
-                <form action="/admin/add_staff" method="POST" class="card stat-card p-4 mb-4 border-info">
-                    <p class="text-muted mb-4">استخدم هذا النموذج لتعريف عضو هيئة تدريس جديد وتحديد القسم الذي يتبعه.</p>
+                <h5 class="section-header">👨‍🏫 إضافة كادر أكاديمي (ربط بالقسم)</h5>
+                <form action="/admin/add_staff" method="POST" class="card stat-card p-4 border-info">
                     <div class="row">
+                        <div class="col-md-4 mb-3"><input type="text" name="staff_name" class="form-control" placeholder="اسم الدكتور" required></div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label fw-bold">اسم الدكتور / المهندس:</label>
-                            <input type="text" name="staff_name" class="form-control" placeholder="مثال: م. خالد السلمي" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label fw-bold">تعيين في قسم:</label>
                             <select name="dept_id" class="form-select" required>
-                                <option value="" disabled selected>-- اختر القسم الأكاديمي --</option>
-                                {% for d_id, d_name in departments.items() %}
-                                    <option value="{{ d_id }}">{{ d_name }}</option>
-                                {% endfor %}
+                                <option value="" disabled selected>-- اختر القسم --</option>
+                                {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="form-label fw-bold">المنصب:</label>
-                            <select name="staff_type" class="form-select" required>
-                                <option value="faculty">عضو هيئة تدريس</option>
-                                <option value="head">رئيس قسم</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 mt-4 pt-1">
-                            <button type="submit" class="btn btn-info text-white w-100 fw-bold">إضافة وحفظ</button>
-                        </div>
+                        <div class="col-md-2 mb-3"><select name="staff_type" class="form-select"><option value="faculty">عضو هيئة تدريس</option><option value="head">رئيس قسم</option></select></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-info text-white w-100 fw-bold">إضافة</button></div>
                     </div>
                 </form>
             </div>
 
             <div id="schedule-sec" class="admin-section">
-                <h5 class="section-header">⏱️ تحديث جداول المواعيد والسعة الاستيعابية</h5>
+                <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4">
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">1. اختر الدكتور / المسؤول المراد تعديل إعداداته:</label>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">اختر الدكتور / الجهة:</label>
                         <select name="target_name" class="form-select border-primary" required>
-                            <option value="" disabled selected>-- اختر من القائمة المنظمة --</option>
-                            <optgroup label="الإدارة العامة">
-                                <option value="شؤون المتدربين">شؤون المتدربين</option>
-                            </optgroup>
-                            {% for dept_id, dept_name in departments.items() %}
-                            <optgroup label="{{ dept_name }}">
-                                {% for name, info in schedule_db.items() %}
-                                    {% if info.dept == dept_id %}
-                                        <option value="{{ name }}">{{ name }} {% if info.type == 'head' %}(رئيس القسم){% endif %}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </optgroup>
-                            {% endfor %}
+                            {% for name, info in schedule_db.items() %} <option value="{{ name }}">{{ name }}</option> {% endfor %}
                         </select>
                     </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">2. القدرة الاستيعابية (كم طالب يستقبل في الموعد الواحد؟):</label>
-                        <input type="number" name="capacity" class="form-control" value="1" min="1" required placeholder="مثال: 1 يعني طالب واحد فقط لكل نصف ساعة">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">السعة الاستيعابية للموعد الواحد:</label>
+                        <input type="number" name="capacity" class="form-control" value="1" min="1" required>
                     </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">3. حدد أيام التواجد في المكتب:</label>
-                        <div class="d-flex gap-4 flex-wrap bg-light p-3 rounded border">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">أيام العمل:</label>
+                        <div class="d-flex gap-4 flex-wrap bg-light p-2 rounded">
                             <label><input type="checkbox" name="days" value="sun"> الأحد</label>
                             <label><input type="checkbox" name="days" value="mon"> الإثنين</label>
                             <label><input type="checkbox" name="days" value="tue"> الثلاثاء</label>
@@ -196,30 +191,17 @@
                             <label><input type="checkbox" name="days" value="thu"> الخميس</label>
                         </div>
                     </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">4. حدد الساعات المتاحة للمقابلات:</label>
-                        <div class="row bg-light p-3 rounded border mx-0">
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">بداية الدوام من:</label>
-                                <select name="start_time" class="form-select" required>
-                                    {% for slot in available_slots %}
-                                        <option value="{{ slot }}">{{ slot }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted">نهاية الدوام إلى:</label>
-                                <select name="end_time" class="form-select" required>
-                                    {% for slot in available_slots %}
-                                        <option value="{{ slot }}">{{ slot }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                    <div class="mb-4 row bg-light p-2 rounded mx-0">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">من الساعة:</label>
+                            <select name="start_time" class="form-select" required>{% for slot in available_slots %}<option value="{{ slot }}">{{ slot }}</option>{% endfor %}</select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">إلى الساعة:</label>
+                            <select name="end_time" class="form-select" required>{% for slot in available_slots %}<option value="{{ slot }}">{{ slot }}</option>{% endfor %}</select>
                         </div>
                     </div>
-
-                    <button type="submit" class="btn btn-success px-5 py-2 fw-bold w-100">حفظ وتحديث إعدادات النظام</button>
+                    <button type="submit" class="btn btn-success w-100 fw-bold">حفظ إعدادات المواعيد</button>
                 </form>
             </div>
 
@@ -233,6 +215,21 @@
         document.querySelectorAll('.menu-link').forEach(link => link.classList.remove('active'));
         document.getElementById(sectionId).classList.add('active');
         element.classList.add('active');
+    }
+
+    function editEntity(id, title, icon, desc) {
+        document.getElementById('addEntityForm').style.display = 'none';
+        document.getElementById('editEntityForm').style.display = 'block';
+        document.getElementById('edit_e_id').value = id;
+        document.getElementById('edit_e_title').value = title;
+        document.getElementById('edit_e_icon').value = icon;
+        document.getElementById('edit_e_desc').value = desc;
+        document.getElementById('editEntityForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEntityEdit() {
+        document.getElementById('editEntityForm').style.display = 'none';
+        document.getElementById('addEntityForm').style.display = 'block';
     }
 
     function editDepartment(id, name) {
