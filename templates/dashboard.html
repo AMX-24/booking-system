@@ -237,7 +237,6 @@
                 </form>
             </div>
 
-            <!-- القسم 5: إعداد الجداول (المواعيد الأسبوعية المتغيرة حسب طلبك) -->
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4 border-success">
@@ -280,16 +279,13 @@
                     <hr class="mb-4">
                     <h6 class="fw-bold text-dark mb-3">📍 إعداد المواعيد الأسبوعية المتغيرة:</h6>
                     
-                    <!-- السطر المقسم إلى 5 كما طلبت: تاريخ، يوم يدوي، بداية، نهاية، سعة -->
                     <div class="row bg-light p-3 rounded border mx-0 mb-4 g-3 align-items-end">
                         
-                        <!-- 1. التاريخ -->
                         <div class="col-md-2">
                             <label class="form-label text-muted fw-bold">التاريخ:</label>
                             <input type="date" name="spec_date" class="form-control border-primary" required>
                         </div>
                         
-                        <!-- 2. اليوم (يدوي) -->
                         <div class="col-md-2">
                             <label class="form-label text-muted fw-bold">اليوم:</label>
                             <select name="spec_day" class="form-select border-primary" required>
@@ -302,29 +298,28 @@
                             </select>
                         </div>
                         
-                        <!-- 3. من الساعة -->
+                        <!-- تم تغيير هذه القائمة لتستخدم time_markers (الأوقات الفردية النقية) -->
                         <div class="col-md-3">
                             <label class="form-label text-muted fw-bold">من الساعة:</label>
                             <select name="start_time" class="form-select border-primary" required>
                                 <option value="" disabled selected>-- البداية --</option>
-                                {% for slot in available_slots %}
-                                    <option value="{{ slot }}">{{ slot }}</option>
+                                {% for time in time_markers %}
+                                    <option value="{{ time }}">{{ time }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         
-                        <!-- 4. إلى الساعة -->
+                        <!-- تم تغيير هذه القائمة لتستخدم time_markers -->
                         <div class="col-md-3">
                             <label class="form-label text-muted fw-bold">إلى الساعة:</label>
                             <select name="end_time" class="form-select border-primary" required>
                                 <option value="" disabled selected>-- النهاية --</option>
-                                {% for slot in available_slots %}
-                                    <option value="{{ slot }}">{{ slot }}</option>
+                                {% for time in time_markers %}
+                                    <option value="{{ time }}">{{ time }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         
-                        <!-- 5. السعة -->
                         <div class="col-md-2">
                             <label class="form-label text-muted fw-bold">الاستيعاب:</label>
                             <input type="number" name="capacity" class="form-control border-primary" value="1" min="1" required>
