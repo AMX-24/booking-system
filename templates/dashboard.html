@@ -13,7 +13,6 @@
         .main-content { margin-right: 18%; padding: 40px; }
         .stat-card { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .section-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; color: #1e3a8a; font-weight: bold; }
-        /* إخفاء كل الأقسام ما عدا النشط */
         .admin-section { display: none; animation: fadeIn 0.4s; }
         .admin-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -23,18 +22,15 @@
 
 <div class="container-fluid p-0">
     <div class="row m-0">
-        <!-- القائمة الجانبية المنظمة -->
         <div class="col-md-2 sidebar p-0">
             <h5 class="text-center mb-4 fw-bold text-white py-2">⚙️ لوحة التحكم</h5>
             <a onclick="showSection('stats-sec', this)" class="menu-link active">📊 الإحصائيات والاستجابات</a>
             <a onclick="showSection('dept-sec', this)" class="menu-link">🏛️ إضافة وإدارة الأقسام</a>
-            <a onclick="showSection('schedule-sec', this)" class="menu-link">⏱️ تعديل جداول المواعيد</a>
+            <a onclick="showSection('schedule-sec', this)" class="menu-link">⏱️ إعداد المواعيد والسعة</a>
             <a href="/logout" class="text-danger mt-5 fw-bold" style="background-color: rgba(255,0,0,0.1);">🚪 تسجيل خروج</a>
         </div>
 
-        <!-- المحتوى الرئيسي -->
         <div class="col-md-10 main-content">
-            
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -45,13 +41,13 @@
 
             <h3 class="mb-4 text-secondary">نظام الإدارة المركزي للمواعيد</h3>
 
-            <!-- القسم الأول: الإحصائيات والاستجابات (يظهر افتراضياً) -->
+            <!-- القسم 1: الإحصائيات -->
             <div id="stats-sec" class="admin-section active">
                 <h5 class="section-header">📊 الإحصائيات العامة</h5>
                 <div class="row g-3 mb-5">
                     <div class="col-md-4">
                         <div class="card stat-card bg-primary text-white p-4 text-center">
-                            <h2 class="fw-bold">{{ stats.total_bookings }}</h2><p class="mb-0">إجمالي الاستجابات</p>
+                            <h2 class="fw-bold">{{ stats.total_bookings }}</h2><p class="mb-0">مقعد محجوز</p>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -65,21 +61,9 @@
                         </div>
                     </div>
                 </div>
-
-                <h5 class="section-header">📩 أحدث الاستجابات والحجوزات</h5>
-                <div class="card stat-card p-3">
-                    <table class="table table-hover table-bordered mb-0">
-                        <thead class="table-light">
-                            <tr><th>رقم الحجز</th><th>المتدرب</th><th>الجهة المستهدفة</th><th>التاريخ والوقت</th><th>الحالة</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>#1001</td><td>عمار كردي</td><td>قسم الحاسب الآلي</td><td>2026-06-15 | 09:00 AM</td><td><span class="badge bg-success">تم التأكيد</span></td></tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
 
-            <!-- القسم الثاني: إدارة الأقسام -->
+            <!-- القسم 2: الأقسام -->
             <div id="dept-sec" class="admin-section">
                 <h5 class="section-header">🏛️ إضافة قسم أكاديمي جديد</h5>
                 <form action="/admin/add_department" method="POST" class="card stat-card p-4">
@@ -99,23 +83,18 @@
                 </form>
             </div>
 
-            <!-- القسم الثالث: إدارة الجداول والمواعيد (تم تنظيمه وتعديل الوقت فيه بناءً على طلبك) -->
+            <!-- القسم 3: الجداول والقدرة الاستيعابية -->
             <div id="schedule-sec" class="admin-section">
-                <h5 class="section-header">⏱️ تحديث جداول المواعيد وأيام العمل</h5>
+                <h5 class="section-header">⏱️ تحديث جداول المواعيد والسعة الاستيعابية</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4">
                     
-                    <!-- تنظيم الدكاترة حسب القسم في القائمة المنسدلة -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">1. اختر الدكتور / المسؤول المراد تعديل جدوله:</label>
+                        <label class="form-label fw-bold">1. اختر الدكتور / المسؤول المراد تعديل إعداداته:</label>
                         <select name="target_name" class="form-select border-primary" required>
                             <option value="" disabled selected>-- اختر من القائمة المنظمة --</option>
-                            
-                            <!-- شؤون المتدربين لحالها -->
                             <optgroup label="الإدارة العامة">
                                 <option value="شؤون المتدربين">شؤون المتدربين</option>
                             </optgroup>
-                            
-                            <!-- جلب الدكاترة مصنفين تحت أقسامهم -->
                             {% for dept_id, dept_name in departments.items() %}
                             <optgroup label="{{ dept_name }}">
                                 {% for name, info in schedule_db.items() %}
@@ -129,7 +108,12 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">2. حدد أيام التواجد:</label>
+                        <label class="form-label fw-bold">2. القدرة الاستيعابية (كم طالب يستقبل في الموعد الواحد؟):</label>
+                        <input type="number" name="capacity" class="form-control" value="1" min="1" required placeholder="مثال: 1 يعني طالب واحد فقط لكل نصف ساعة">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">3. حدد أيام التواجد في المكتب:</label>
                         <div class="d-flex gap-4 flex-wrap bg-light p-3 rounded border">
                             <label><input type="checkbox" name="days" value="sun"> الأحد</label>
                             <label><input type="checkbox" name="days" value="mon"> الإثنين</label>
@@ -139,12 +123,11 @@
                         </div>
                     </div>
 
-                    <!-- التعديل الجديد: تحديد النطاق الزمني (من - إلى) -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">3. حدد الساعات المتاحة للمقابلات:</label>
+                        <label class="form-label fw-bold">4. حدد الساعات المتاحة للمقابلات:</label>
                         <div class="row bg-light p-3 rounded border mx-0">
                             <div class="col-md-6">
-                                <label class="form-label text-muted">من الساعة:</label>
+                                <label class="form-label text-muted">بداية الدوام من:</label>
                                 <select name="start_time" class="form-select" required>
                                     {% for slot in available_slots %}
                                         <option value="{{ slot }}">{{ slot }}</option>
@@ -152,7 +135,7 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-muted">إلى الساعة:</label>
+                                <label class="form-label text-muted">نهاية الدوام إلى:</label>
                                 <select name="end_time" class="form-select" required>
                                     {% for slot in available_slots %}
                                         <option value="{{ slot }}">{{ slot }}</option>
@@ -162,7 +145,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success px-5 py-2 fw-bold w-100">حفظ وتحديث الجدول في النظام</button>
+                    <button type="submit" class="btn btn-success px-5 py-2 fw-bold w-100">حفظ وتحديث إعدادات النظام</button>
                 </form>
             </div>
 
@@ -171,18 +154,12 @@
 </div>
 
 <script>
-    // سكربت بسيط للتبديل بين الصفحات داخل لوحة التحكم بهدوء
     function showSection(sectionId, element) {
-        // إخفاء كل الأقسام
         document.querySelectorAll('.admin-section').forEach(sec => sec.classList.remove('active'));
-        // إزالة اللون الأزرق من كل الروابط
         document.querySelectorAll('.menu-link').forEach(link => link.classList.remove('active'));
-        
-        // إظهار القسم المطلوب وتلوين الزر حقه
         document.getElementById(sectionId).classList.add('active');
         element.classList.add('active');
     }
 </script>
-
 </body>
 </html>
