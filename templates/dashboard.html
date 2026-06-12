@@ -106,6 +106,19 @@
                         <div class="col-md-12 mt-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة للرئيسية</button></div>
                     </div>
                 </form>
+                <form action="/admin/edit_entity" method="POST" class="card stat-card p-4 border-warning" id="editEntityForm" style="display: none;">
+                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل كرت الجهة:</h6>
+                    <div class="row">
+                        <div class="col-md-2 mb-3"><input type="text" name="e_id" id="edit_e_id" class="form-control bg-light" readonly></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="new_title" id="edit_e_title" class="form-control" required></div>
+                        <div class="col-md-2 mb-3"><input type="text" name="new_icon" id="edit_e_icon" class="form-control" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="new_desc" id="edit_e_desc" class="form-control" required></div>
+                        <div class="col-md-12 mt-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
+                            <button type="button" class="btn btn-secondary px-5 fw-bold" onclick="cancelEntityEdit()">إلغاء</button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
             <div id="dept-sec" class="admin-section">
@@ -136,6 +149,13 @@
                         <div class="col-md-5 mb-3"><input type="text" name="dept_id" class="form-control" placeholder="رمز القسم (cyber)" required></div>
                         <div class="col-md-5 mb-3"><input type="text" name="dept_name" class="form-control" placeholder="اسم القسم" required></div>
                         <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
+                    </div>
+                </form>
+                <form action="/admin/edit_department" method="POST" class="card stat-card p-4 border-warning" id="editDeptForm" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3 mb-3"><input type="text" name="dept_id" id="edit_id" class="form-control bg-light" readonly></div>
+                        <div class="col-md-6 mb-3"><input type="text" name="new_name" id="edit_name" class="form-control" required></div>
+                        <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-warning w-100 fw-bold">حفظ</button><button type="button" class="btn btn-secondary w-100" onclick="cancelEdit()">إلغاء</button></div>
                     </div>
                 </form>
             </div>
@@ -222,36 +242,49 @@
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4">
                     
                     <div class="mb-3 bg-light p-3 rounded border">
-                        <label class="form-label fw-bold text-success">🔍 اختر القسم أولاً لتنظيف القائمة المنسدلة التالية:</label>
-                        <select id="scheduleDeptFilter" class="form-select border-success fw-bold" onchange="filterAdminScheduleDropdown()">
-                            <option value="">-- عرض كل الأسماء بالسيستم --</option>
-                            <option value="affairs_admin">شؤون المتدربين</option>
+                        <label class="form-label fw-bold text-primary">1. اختر الجهة المراد تعديل جدولها:</label>
+                        <select id="entityTypeFilter" class="form-select border-primary fw-bold" onchange="handleAdminScheduleFlow()">
+                            <option value="" disabled selected>-- الرجاء التحديد أولاً --</option>
+                            <option value="affairs">شؤون المتدربين</option>
+                            <option value="head">رؤساء الأقسام</option>
+                            <option value="faculty">أعضاء هيئة التدريس</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 bg-light p-3 rounded border" id="departmentFilterDiv" style="display: none;">
+                        <label class="form-label fw-bold text-success">2. اختر القسم التابع له:</label>
+                        <select id="scheduleDeptFilter" class="form-select border-success fw-bold" onchange="handleAdminScheduleFlow()">
+                            <option value="" disabled selected>-- اختر القسم --</option>
                             {% for d_id, d_name in departments.items() %}
                                 <option value="{{ d_id }}">{{ d_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">اختر الدكتور / الجهة:</label>
-                        <select name="target_name" id="scheduleTargetStaff" class="form-select border-primary fw-bold" required>
-                            <option value="" disabled selected>-- الرجاء تحديد المسؤول --</option>
-                            <option value="شؤون المتدربين" data-dept="affairs_admin">شؤون المتدربين</option>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">3. اختر الدكتور / المسؤول المراد إعداد جدوله:</label>
+                        <select name="target_name" id="scheduleTargetStaff" class="form-select border-dark fw-bold" required>
+                            <option value="" disabled selected>-- سيتم إظهار الأسماء هنا بعد اختيار الجهة والقسم --</option>
+                            <option value="شؤون المتدربين" data-type="affairs" data-dept="affairs_admin" style="display:none;">شؤون المتدربين</option>
                             {% for name, info in schedule_db.items() %} 
                                 {% if info.type in ['faculty', 'head'] %}
-                                    <option value="{{ name }}" data-dept="{{ info.dept }}">{{ name }} ({% if info.type == 'head' %}رئيس قسم{% else %}عضو كادر{% endif %})</option> 
+                                    <option value="{{ name }}" data-type="{{ info.type }}" data-dept="{{ info.dept }}" style="display:none;">
+                                        {{ name }}
+                                    </option> 
                                 {% endif %}
                             {% endfor %}
                         </select>
                     </div>
 
+                    <hr class="mb-4">
+
                     <div class="mb-3">
-                        <label class="form-label fw-bold">السعة الاستيعابية للموعد الواحد:</label>
+                        <label class="form-label fw-bold">السعة الاستيعابية للموعد الواحد (كم طالب؟):</label>
                         <input type="number" name="capacity" class="form-control" value="1" min="1" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">أيام العمل:</label>
-                        <div class="d-flex gap-4 flex-wrap bg-light p-2 rounded">
+                        <label class="form-label fw-bold">أيام العمل المتاحة للحجوزات:</label>
+                        <div class="d-flex gap-4 flex-wrap bg-light p-3 rounded border">
                             <label><input type="checkbox" name="days" value="sun"> الأحد</label>
                             <label><input type="checkbox" name="days" value="mon"> الإثنين</label>
                             <label><input type="checkbox" name="days" value="tue"> الثلاثاء</label>
@@ -259,7 +292,7 @@
                             <label><input type="checkbox" name="days" value="thu"> الخميس</label>
                         </div>
                     </div>
-                    <div class="mb-4 row bg-light p-2 rounded mx-0">
+                    <div class="mb-4 row bg-light p-3 rounded border mx-0">
                         <div class="col-md-6">
                             <label class="form-label text-muted">من الساعة:</label>
                             <select name="start_time" class="form-select" required>{% for slot in available_slots %}<option value="{{ slot }}">{{ slot }}</option>{% endfor %}</select>
@@ -269,7 +302,7 @@
                             <select name="end_time" class="form-select" required>{% for slot in available_slots %}<option value="{{ slot }}">{{ slot }}</option>{% endfor %}</select>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-success w-100 fw-bold py-2">حفظ إعدادات المواعيد</button>
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2 fs-5">حفظ إعدادات المواعيد</button>
                 </form>
             </div>
 
@@ -278,6 +311,7 @@
 </div>
 
 <script>
+    // التبديل بين التبويبات
     function showSection(sectionId, element) {
         document.querySelectorAll('.admin-section').forEach(sec => sec.classList.remove('active'));
         document.querySelectorAll('.menu-link').forEach(link => link.classList.remove('active'));
@@ -285,39 +319,22 @@
         element.classList.add('active');
     }
 
-    // 1. دالة تصفية الجدول في صفحة الدكاترة فوراً
-    function filterStaffTableByDept() {
-        let selectedDept = document.getElementById('tableDeptFilter').value;
-        let rows = document.querySelectorAll('.admin-staff-row');
-        
-        rows.forEach(row => {
-            let rowDept = row.getAttribute('data-dept');
-            if (selectedDept === "" || rowDept === selectedDept) {
-                row.style.display = ""; // إظهار
-            } else {
-                row.style.display = "none"; // إخفاء
-            }
-        });
+    // إدارة الكيانات الرئيسية
+    function editEntity(id, title, icon, desc) {
+        document.getElementById('addEntityForm').style.display = 'none';
+        document.getElementById('editEntityForm').style.display = 'block';
+        document.getElementById('edit_e_id').value = id;
+        document.getElementById('edit_e_title').value = title;
+        document.getElementById('edit_e_icon').value = icon;
+        document.getElementById('edit_e_desc').value = desc;
+        document.getElementById('editEntityForm').scrollIntoView({ behavior: 'smooth' });
+    }
+    function cancelEntityEdit() {
+        document.getElementById('editEntityForm').style.display = 'none';
+        document.getElementById('addEntityForm').style.display = 'block';
     }
 
-    // 2. دالة تصفية قائمة الجدولة (من - إلى) لمنع اللخبطة
-    function filterAdminScheduleDropdown() {
-        let selectedDept = document.getElementById('scheduleDeptFilter').value;
-        let staffSelect = document.getElementById('scheduleTargetStaff');
-        staffSelect.value = ""; // تصفير الاختيار الحالي لقفل الخطأ
-        
-        let options = staffSelect.options;
-        for (let i = 1; i < options.length; i++) {
-            let option = options[i];
-            let optDept = option.getAttribute('data-dept');
-            if (selectedDept === "" || optDept === selectedDept) {
-                option.style.display = "block";
-            } else {
-                option.style.display = "none";
-            }
-        }
-    }
-
+    // إدارة الأقسام
     function editDepartment(id, name) {
         document.getElementById('addDeptForm').style.display = 'none';
         document.getElementById('editDeptForm').style.display = 'block';
@@ -330,6 +347,22 @@
         document.getElementById('addDeptForm').style.display = 'block';
     }
 
+    // فلترة جدول الدكاترة
+    function filterStaffTableByDept() {
+        let selectedDept = document.getElementById('tableDeptFilter').value;
+        let rows = document.querySelectorAll('.admin-staff-row');
+        
+        rows.forEach(row => {
+            let rowDept = row.getAttribute('data-dept');
+            if (selectedDept === "" || rowDept === selectedDept) {
+                row.style.display = ""; 
+            } else {
+                row.style.display = "none"; 
+            }
+        });
+    }
+
+    // إدارة الكادر (تعديل)
     function editStaff(name, dept, type) {
         document.getElementById('addStaffForm').style.display = 'none';
         document.getElementById('editStaffForm').style.display = 'block';
@@ -342,6 +375,56 @@
     function cancelStaffEdit() {
         document.getElementById('editStaffForm').style.display = 'none';
         document.getElementById('addStaffForm').style.display = 'block';
+    }
+
+    // ----------------------------------------------------
+    // الدالة الذكية لفلترة قسم إعداد المواعيد (Cascading Dropdown)
+    // ----------------------------------------------------
+    function handleAdminScheduleFlow() {
+        let entityType = document.getElementById('entityTypeFilter').value;
+        let deptDiv = document.getElementById('departmentFilterDiv');
+        let deptSelect = document.getElementById('scheduleDeptFilter');
+        let targetSelect = document.getElementById('scheduleTargetStaff');
+
+        // تصفير القائمة النهائية
+        targetSelect.value = "";
+        targetSelect.options[0].text = "-- اختر من القائمة --";
+
+        // حالة شؤون المتدربين (إخفاء الأقسام وتحديد مباشر)
+        if (entityType === 'affairs') {
+            deptDiv.style.display = 'none'; 
+            deptSelect.value = ""; 
+
+            for (let i = 1; i < targetSelect.options.length; i++) {
+                let opt = targetSelect.options[i];
+                if (opt.getAttribute('data-type') === 'affairs') {
+                    opt.style.display = 'block';
+                    targetSelect.value = opt.value; 
+                } else {
+                    opt.style.display = 'none';
+                }
+            }
+        } 
+        // حالة رؤساء الأقسام أو الكادر (إظهار الأقسام والفلترة بناء عليها)
+        else if (entityType === 'head' || entityType === 'faculty') {
+            deptDiv.style.display = 'block'; 
+            let selectedDept = deptSelect.value;
+
+            let count = 0;
+            for (let i = 1; i < targetSelect.options.length; i++) {
+                let opt = targetSelect.options[i];
+                // إظهار الخيار إذا تطابق نوعه وقسمه مع الاختيارات
+                if (selectedDept && opt.getAttribute('data-type') === entityType && opt.getAttribute('data-dept') === selectedDept) {
+                    opt.style.display = 'block';
+                    count++;
+                } else {
+                    opt.style.display = 'none';
+                }
+            }
+            if(selectedDept && count === 0) {
+                targetSelect.options[0].text = "-- لا يوجد أسماء مسجلة في هذا القسم --";
+            }
+        }
     }
 </script>
 </body>
