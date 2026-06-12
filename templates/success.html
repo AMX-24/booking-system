@@ -2,62 +2,138 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تم تأكيد الحجز بنجاح</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <title>تم الحجز بنجاح</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #a3bded 0%, #f4f7f6 100%);
+            /* خلفية متدرجة زرقاء هادئة مطابقة للصورة */
+            background: linear-gradient(135deg, #d4e4f7 0%, #e2e8f0 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
             padding: 20px;
         }
         .success-card {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 15px;
             padding: 40px;
-            max-width: 600px;
+            max-width: 500px;
             width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .checkmark {
+            color: #2d7a5d;
+            font-size: 70px;
+            text-align: center;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+        .title {
+            text-align: center;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 10px;
+            font-size: 26px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 15px;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #f8fafc;
+            border-right: 5px solid #2d7a5d; /* الخط الأخضر على اليمين */
+            border-radius: 8px;
+            padding: 25px 20px;
+            margin-bottom: 30px;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+            font-size: 15px;
+            color: #2d3748;
+        }
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        .info-label {
+            font-weight: 700;
+            margin-left: 5px;
+        }
+        .info-icon {
+            margin-left: 12px;
+            color: #4a5568;
+            font-size: 18px;
+            width: 25px;
             text-align: center;
         }
-        .ticket-box {
-            background-color: #f8f9fa;
-            border-right: 5px solid #2d6a4f;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: right;
-            margin-top: 25px;
+        .time-badge {
+            background: #2d7a5d;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
         }
-        .check-icon {
-            font-size: 4.5rem;
-            color: #2d6a4f;
+        .btn-home {
+            background: #2d7a5d;
+            color: white;
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            border: none;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        .btn-home:hover {
+            background: #235c46;
+            color: white;
         }
     </style>
 </head>
 <body>
 
-<div class="success-card">
-    <div class="check-icon">✓</div>
-    <h2 class="fw-bold text-dark mt-2">تم تسجيل حجزك بنجاح!</h2>
-    <p class="text-secondary">يرجى تصوير الشاشة والالتزام بالموعد المحدد أدناه:</p>
-    
-    <div class="ticket-box shadow-sm">
-        <p class="mb-2"><strong>👤 اسم المتدرب:</strong> {{ info.name }}</p>
-        <p class="mb-2"><strong>💳 الرقم التدريبي:</strong> {{ info.id }}</p>
-        <p class="mb-2"><strong>📁 القسم:</strong> {{ info.dept }}</p>
-        <p class="mb-2"><strong>🏛️ المراجعة لدى:</strong> {{ info.entity }}</p>
-        <p class="mb-2"><strong>📅 تاريخ الحجز:</strong> {{ info.date }}</p>
-        <p class="m-0"><strong>⏱️ الوقت المحدد:</strong> <span class="badge bg-success fs-6 px-3" style="background-color: #2d6a4f !important;">{{ info.time }}</span></p>
+    <div class="success-card">
+        <div class="checkmark">✓</div>
+        <h3 class="title">تم تسجيل حجزك بنجاح!</h3>
+        <p class="subtitle">يرجى تصوير الشاشة والالتزام بالموعد المحدد أدناه:</p>
+
+        <div class="info-box">
+            <div class="info-row">
+                <span class="info-icon">👤</span>
+                <span class="info-label">اسم المتدرب:</span> {{ data.student_name }}
+            </div>
+            <div class="info-row">
+                <span class="info-icon">💳</span>
+                <span class="info-label">الرقم التدريبي:</span> {{ data.student_id }}
+            </div>
+            <div class="info-row">
+                <span class="info-icon">📁</span>
+                <span class="info-label">القسم:</span> {{ data.department }}
+            </div>
+            <div class="info-row">
+                <span class="info-icon">🏛️</span>
+                <span class="info-label">المراجعة لدى:</span> {{ data.target }}
+            </div>
+            <div class="info-row">
+                <span class="info-icon">📅</span>
+                <span class="info-label">تاريخ الحجز:</span> {{ data.date }}
+            </div>
+            <div class="info-row mt-4">
+                <span class="info-icon">⏱️</span>
+                <span class="info-label">الوقت المحدد:</span> 
+                <span class="time-badge">{{ data.time }}</span>
+            </div>
+        </div>
+
+        <a href="/" class="btn btn-home d-block text-center text-decoration-none">العودة للبوابة الرئيسية</a>
     </div>
-    
-    <div class="d-grid mt-4">
-        <a href="{{ url_for('home') }}" class="btn btn-success btn-lg fw-bold" style="background-color: #2d6a4f;">العودة للبوابة الرئيسية</a>
-    </div>
-</div>
 
 </body>
 </html>
