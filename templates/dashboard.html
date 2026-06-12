@@ -45,7 +45,7 @@
 
             <div id="stats-sec" class="admin-section active">
                 <h5 class="section-header">📊 الإحصائيات العامة</h5>
-                <div class="row g-3 mb-5">
+                <div class="row g-3 mb-4">
                     <div class="col-md-3">
                         <div class="card stat-card bg-primary text-white p-3 text-center">
                             <h2 class="fw-bold">{{ stats.total_bookings }}</h2><p class="mb-0">موعد محجوز</p>
@@ -63,8 +63,51 @@
                     </div>
                     <div class="col-md-3">
                         <div class="card stat-card bg-info text-white p-3 text-center">
-                            <h2 class="fw-bold">{{ stats.total_staff }}</h2><p class="mb-0">كادر مسؤول</p>
+                            <h2 class="fw-bold">{{ stats.total_staff }}</h2><p class="mb-0">الدكاتره / المهندسين</p>
                         </div>
+                    </div>
+                </div>
+
+                <div class="card stat-card p-4 mt-2 border-primary">
+                    <h5 class="fw-bold text-primary mb-3">📋 سجل الحجوزات التفصيلي للمتدربين</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle text-center">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>رقم المتدرب</th>
+                                    <th>اسم المتدرب</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>محجوز عند (المسؤول)</th>
+                                    <th>تاريخ الموعد</th>
+                                    <th>وقت الموعد</th>
+                                    <th>إجراءات</th> </tr>
+                            </thead>
+                            <tbody>
+                                {% for b in detailed_bookings|reverse %}
+                                <tr>
+                                    <td class="fw-bold">{{ b.student_id }}</td>
+                                    <td>{{ b.student_name }}</td>
+                                    <td>{{ b.student_email }}</td>
+                                    <td class="text-primary fw-bold">{{ b.target }}</td>
+                                    <td>{{ b.date }}</td>
+                                    <td class="text-success fw-bold" dir="ltr">{{ b.time }}</td>
+                                    <td>
+                                        <form action="/admin/delete_booking" method="POST" onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الحجز؟ سيتم إتاحة المقعد مجدداً للطلاب فوراً.');" style="display:inline;">
+                                            <input type="hidden" name="student_id" value="{{ b.student_id }}">
+                                            <input type="hidden" name="target" value="{{ b.target }}">
+                                            <input type="hidden" name="date" value="{{ b.date }}">
+                                            <input type="hidden" name="time" value="{{ b.time }}">
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-muted py-4">لا يوجد أي حجوزات مسجلة في النظام حتى الآن.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -106,19 +149,6 @@
                         <div class="col-md-12 mt-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة للرئيسية</button></div>
                     </div>
                 </form>
-                <form action="/admin/edit_entity" method="POST" class="card stat-card p-4 border-warning" id="editEntityForm" style="display: none;">
-                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل كرت الجهة:</h6>
-                    <div class="row">
-                        <div class="col-md-2 mb-3"><input type="text" name="e_id" id="edit_e_id" class="form-control bg-light" readonly></div>
-                        <div class="col-md-4 mb-3"><input type="text" name="new_title" id="edit_e_title" class="form-control" required></div>
-                        <div class="col-md-2 mb-3"><input type="text" name="new_icon" id="edit_e_icon" class="form-control" required></div>
-                        <div class="col-md-4 mb-3"><input type="text" name="new_desc" id="edit_e_desc" class="form-control" required></div>
-                        <div class="col-md-12 mt-2 d-flex gap-2">
-                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
-                            <button type="button" class="btn btn-secondary px-5 fw-bold" onclick="cancelEntityEdit()">إلغاء</button>
-                        </div>
-                    </div>
-                </form>
             </div>
 
             <div id="dept-sec" class="admin-section">
@@ -151,18 +181,10 @@
                         <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
                     </div>
                 </form>
-                <form action="/admin/edit_department" method="POST" class="card stat-card p-4 border-warning" id="editDeptForm" style="display: none;">
-                    <div class="row">
-                        <div class="col-md-3 mb-3"><input type="text" name="dept_id" id="edit_id" class="form-control bg-light" readonly></div>
-                        <div class="col-md-6 mb-3"><input type="text" name="new_name" id="edit_name" class="form-control" required></div>
-                        <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-warning w-100 fw-bold">حفظ</button><button type="button" class="btn btn-secondary w-100" onclick="cancelEdit()">إلغاء</button></div>
-                    </div>
-                </form>
             </div>
 
             <div id="staff-sec" class="admin-section">
                 <h5 class="section-header">👨‍🏫 إدارة الدكاترة والمهندسين</h5>
-                
                 <div class="mb-4 card p-3 bg-light border-primary">
                     <label class="form-label fw-bold text-primary">🔍 اختر القسم لتصفية وعرض أعضاء الكادر المسجلين فقط:</label>
                     <select id="tableDeptFilter" class="form-select border-primary fw-bold" onchange="filterStaffTableByDept()">
@@ -172,9 +194,7 @@
                         {% endfor %}
                     </select>
                 </div>
-
                 <div class="card stat-card p-4 mb-4">
-                    <h6 class="fw-bold mb-3 text-secondary">📋 قائمة الكادر المسجل حالياً:</h6>
                     <table class="table table-bordered table-hover align-middle text-center" id="staffMainTable">
                         <thead class="table-light">
                             <tr><th>الاسم</th><th>القسم التابع له</th><th>المنصب</th><th>إجراءات</th></tr>
@@ -200,9 +220,7 @@
                         </tbody>
                     </table>
                 </div>
-
                 <form action="/admin/add_staff" method="POST" class="card stat-card p-4 border-primary mb-4" id="addStaffForm">
-                    <h6 class="fw-bold mb-3 text-primary">➕ إضافة دكتور / مهندس جديد:</h6>
                     <div class="row">
                         <div class="col-md-4 mb-3"><input type="text" name="staff_name" class="form-control" placeholder="اسم الدكتور ثلاثي" required></div>
                         <div class="col-md-4 mb-3">
@@ -215,32 +233,11 @@
                         <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
                     </div>
                 </form>
-
-                <form action="/admin/edit_staff" method="POST" class="card stat-card p-4 border-warning" id="editStaffForm" style="display: none;">
-                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل بيانات العضو:</h6>
-                    <input type="hidden" name="old_staff_name" id="edit_old_staff_name">
-                    <div class="row">
-                        <div class="col-md-4 mb-3"><input type="text" name="new_staff_name" id="edit_staff_name" class="form-control" required></div>
-                        <div class="col-md-4 mb-3">
-                            <select name="dept_id" id="edit_staff_dept" class="form-select" required>
-                                {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <select name="staff_type" id="edit_staff_type" class="form-select">
-                                <option value="faculty">عضو هيئة تدريس</option>
-                                <option value="head">رئيس قسم</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 d-flex gap-2"><button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button><button type="button" class="btn btn-secondary px-3" onclick="cancelStaffEdit()">إلغاء</button></div>
-                    </div>
-                </form>
             </div>
 
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4 border-success">
-                    
                     <div class="mb-3 bg-light p-3 rounded border">
                         <label class="form-label fw-bold text-primary">1. اختر الجهة المراد إضافة موعد لها:</label>
                         <select id="entityTypeFilter" class="form-select border-primary fw-bold" onchange="handleAdminScheduleFlow()">
@@ -250,17 +247,13 @@
                             <option value="faculty">أعضاء هيئة التدريس</option>
                         </select>
                     </div>
-
                     <div class="mb-3 bg-light p-3 rounded border" id="departmentFilterDiv" style="display: none;">
                         <label class="form-label fw-bold text-success">2. اختر القسم التابع له:</label>
                         <select id="scheduleDeptFilter" class="form-select border-success fw-bold" onchange="handleAdminScheduleFlow()">
                             <option value="" disabled selected>-- اختر القسم --</option>
-                            {% for d_id, d_name in departments.items() %}
-                                <option value="{{ d_id }}">{{ d_name }}</option>
-                            {% endfor %}
+                            {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
                         </select>
                     </div>
-
                     <div class="mb-4">
                         <label class="form-label fw-bold">3. اختر الدكتور / المسؤول المراد إعداد جدوله:</label>
                         <select name="target_name" id="scheduleTargetStaff" class="form-select border-dark fw-bold" required>
@@ -268,65 +261,44 @@
                             <option value="شؤون المتدربين" data-type="affairs" data-dept="affairs_admin" style="display:none;">شؤون المتدربين</option>
                             {% for name, info in schedule_db.items() %} 
                                 {% if info.type in ['faculty', 'head'] %}
-                                    <option value="{{ name }}" data-type="{{ info.type }}" data-dept="{{ info.dept }}" style="display:none;">
-                                        {{ name }}
-                                    </option> 
+                                    <option value="{{ name }}" data-type="{{ info.type }}" data-dept="{{ info.dept }}" style="display:none;">{{ name }}</option> 
                                 {% endif %}
                             {% endfor %}
                         </select>
                     </div>
-
                     <hr class="mb-4">
                     <h6 class="fw-bold text-dark mb-3">📍 إعداد المواعيد الأسبوعية المتغيرة:</h6>
-                    
                     <div class="row bg-light p-3 rounded border mx-0 mb-4 g-3 align-items-end">
-                        
                         <div class="col-md-2">
                             <label class="form-label text-muted fw-bold">التاريخ:</label>
                             <input type="date" name="spec_date" class="form-control border-primary" required>
                         </div>
-                        
                         <div class="col-md-2">
                             <label class="form-label text-muted fw-bold">اليوم:</label>
                             <select name="spec_day" class="form-select border-primary" required>
                                 <option value="" disabled selected>-- اختر --</option>
-                                <option value="sun">الأحد</option>
-                                <option value="mon">الإثنين</option>
-                                <option value="tue">الثلاثاء</option>
-                                <option value="wed">الأربعاء</option>
-                                <option value="thu">الخميس</option>
+                                <option value="sun">الأحد</option><option value="mon">الإثنين</option><option value="tue">الثلاثاء</option><option value="wed">الأربعاء</option><option value="thu">الخميس</option>
                             </select>
                         </div>
-                        
-                        <!-- تم تغيير هذه القائمة لتستخدم time_markers (الأوقات الفردية النقية) -->
                         <div class="col-md-3">
                             <label class="form-label text-muted fw-bold">من الساعة:</label>
                             <select name="start_time" class="form-select border-primary" required>
                                 <option value="" disabled selected>-- البداية --</option>
-                                {% for time in time_markers %}
-                                    <option value="{{ time }}">{{ time }}</option>
-                                {% endfor %}
+                                {% for time in time_markers %} <option value="{{ time }}">{{ time }}</option> {% endfor %}
                             </select>
                         </div>
-                        
-                        <!-- تم تغيير هذه القائمة لتستخدم time_markers -->
                         <div class="col-md-3">
                             <label class="form-label text-muted fw-bold">إلى الساعة:</label>
                             <select name="end_time" class="form-select border-primary" required>
                                 <option value="" disabled selected>-- النهاية --</option>
-                                {% for time in time_markers %}
-                                    <option value="{{ time }}">{{ time }}</option>
-                                {% endfor %}
+                                {% for time in time_markers %} <option value="{{ time }}">{{ time }}</option> {% endfor %}
                             </select>
                         </div>
-                        
                         <div class="col-md-2">
                             <label class="form-label text-muted fw-bold">الاستيعاب:</label>
                             <input type="number" name="capacity" class="form-control border-primary" value="1" min="1" required>
                         </div>
-
                     </div>
-
                     <button type="submit" class="btn btn-success w-100 fw-bold py-2 fs-5">حفظ إعدادات الموعد المخصص</button>
                 </form>
             </div>
@@ -341,32 +313,6 @@
         document.querySelectorAll('.menu-link').forEach(link => link.classList.remove('active'));
         document.getElementById(sectionId).classList.add('active');
         element.classList.add('active');
-    }
-
-    function editEntity(id, title, icon, desc) {
-        document.getElementById('addEntityForm').style.display = 'none';
-        document.getElementById('editEntityForm').style.display = 'block';
-        document.getElementById('edit_e_id').value = id;
-        document.getElementById('edit_e_title').value = title;
-        document.getElementById('edit_e_icon').value = icon;
-        document.getElementById('edit_e_desc').value = desc;
-        document.getElementById('editEntityForm').scrollIntoView({ behavior: 'smooth' });
-    }
-    function cancelEntityEdit() {
-        document.getElementById('editEntityForm').style.display = 'none';
-        document.getElementById('addEntityForm').style.display = 'block';
-    }
-
-    function editDepartment(id, name) {
-        document.getElementById('addDeptForm').style.display = 'none';
-        document.getElementById('editDeptForm').style.display = 'block';
-        document.getElementById('edit_id').value = id;
-        document.getElementById('edit_name').value = name;
-        document.getElementById('editDeptForm').scrollIntoView({ behavior: 'smooth' });
-    }
-    function cancelEdit() {
-        document.getElementById('editDeptForm').style.display = 'none';
-        document.getElementById('addDeptForm').style.display = 'block';
     }
 
     function filterStaffTableByDept() {
@@ -405,15 +351,11 @@
         if (entityType === 'affairs') {
             deptDiv.style.display = 'none'; 
             deptSelect.value = ""; 
-
             for (let i = 1; i < targetSelect.options.length; i++) {
                 let opt = targetSelect.options[i];
                 if (opt.getAttribute('data-type') === 'affairs') {
-                    opt.style.display = 'block';
-                    targetSelect.value = opt.value; 
-                } else {
-                    opt.style.display = 'none';
-                }
+                    opt.style.display = 'block'; targetSelect.value = opt.value; 
+                } else opt.style.display = 'none';
             }
         } 
         else if (entityType === 'head' || entityType === 'faculty') {
@@ -423,11 +365,8 @@
             for (let i = 1; i < targetSelect.options.length; i++) {
                 let opt = targetSelect.options[i];
                 if (selectedDept && opt.getAttribute('data-type') === entityType && opt.getAttribute('data-dept') === selectedDept) {
-                    opt.style.display = 'block';
-                    count++;
-                } else {
-                    opt.style.display = 'none';
-                }
+                    opt.style.display = 'block'; count++;
+                } else opt.style.display = 'none';
             }
             if(selectedDept && count === 0) targetSelect.options[0].text = "-- لا يوجد أسماء مسجلة --";
         }
