@@ -25,7 +25,7 @@
         <div class="col-md-2 sidebar p-0">
             <h5 class="text-center mb-4 fw-bold text-white py-2">⚙️ لوحة التحكم</h5>
             <a onclick="showSection('stats-sec', this)" class="menu-link active">📊 الإحصائيات والاستجابات</a>
-            <a onclick="showSection('dept-sec', this)" class="menu-link">🏛️ إضافة وإدارة الأقسام</a>
+            <a onclick="showSection('dept-sec', this)" class="menu-link">🏛️ إدارة الأقسام</a>
             <a onclick="showSection('schedule-sec', this)" class="menu-link">⏱️ إعداد المواعيد والسعة</a>
             <a href="/logout" class="text-danger mt-5 fw-bold" style="background-color: rgba(255,0,0,0.1);">🚪 تسجيل خروج</a>
         </div>
@@ -34,14 +34,13 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} text-center" role="alert">{{ message }}</div>
+                        <div class="alert alert-{{ category }} text-center fw-bold" role="alert">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
 
             <h3 class="mb-4 text-secondary">نظام الإدارة المركزي للمواعيد</h3>
 
-            <!-- القسم 1: الإحصائيات -->
             <div id="stats-sec" class="admin-section active">
                 <h5 class="section-header">📊 الإحصائيات العامة</h5>
                 <div class="row g-3 mb-5">
@@ -63,17 +62,42 @@
                 </div>
             </div>
 
-            <!-- القسم 2: الأقسام -->
             <div id="dept-sec" class="admin-section">
-                <h5 class="section-header">🏛️ إضافة قسم أكاديمي جديد</h5>
-                <form action="/admin/add_department" method="POST" class="card stat-card p-4">
+                <h5 class="section-header">🏛️ إدارة الأقسام الأكاديمية</h5>
+
+                <div class="card stat-card p-4 mb-4">
+                    <h6 class="fw-bold mb-3 text-secondary">📋 الأقسام الأساسية المسجلة حالياً:</h6>
+                    <table class="table table-bordered table-hover text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رمز القسم (ID)</th>
+                                <th>الاسم الرسمي للقسم</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d_id, d_name in departments.items() %}
+                            <tr>
+                                <td class="text-primary fw-bold" dir="ltr">{{ d_id }}</td>
+                                <td>{{ d_name }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning fw-bold px-4" onclick="editDepartment('{{ d_id }}', '{{ d_name }}')">✏️ تعديل</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <form action="/admin/add_department" method="POST" class="card stat-card p-4 mb-4 border-primary" id="addDeptForm">
+                    <h6 class="fw-bold mb-3 text-primary">➕ إضافة قسم أكاديمي جديد:</h6>
                     <div class="row">
                         <div class="col-md-5 mb-3">
-                            <label class="form-label fw-bold">رمز القسم (إنجليزي)</label>
+                            <label class="form-label text-muted">رمز القسم (إنجليزي)</label>
                             <input type="text" name="dept_id" class="form-control" placeholder="مثال: cyber" required>
                         </div>
                         <div class="col-md-5 mb-3">
-                            <label class="form-label fw-bold">الاسم الرسمي للقسم</label>
+                            <label class="form-label text-muted">الاسم الرسمي للقسم</label>
                             <input type="text" name="dept_name" class="form-control" placeholder="مثال: قسم الأمن السيبراني" required>
                         </div>
                         <div class="col-md-2 mt-4 pt-1">
@@ -81,9 +105,26 @@
                         </div>
                     </div>
                 </form>
+
+                <form action="/admin/edit_department" method="POST" class="card stat-card p-4 border-warning" id="editDeptForm" style="display: none;">
+                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل اسم القسم:</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted">رمز القسم (للقراءة فقط)</label>
+                            <input type="text" name="dept_id" id="edit_id" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">الاسم الجديد للقسم</label>
+                            <input type="text" name="new_name" id="edit_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-3 mt-4 pt-1 d-flex gap-2">
+                            <button type="submit" class="btn btn-warning w-100 fw-bold">حفظ</button>
+                            <button type="button" class="btn btn-secondary w-100" onclick="cancelEdit()">إلغاء</button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
-            <!-- القسم 3: الجداول والقدرة الاستيعابية -->
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ تحديث جداول المواعيد والسعة الاستيعابية</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4">
@@ -154,11 +195,30 @@
 </div>
 
 <script>
+    // التبديل بين التبويبات
     function showSection(sectionId, element) {
         document.querySelectorAll('.admin-section').forEach(sec => sec.classList.remove('active'));
         document.querySelectorAll('.menu-link').forEach(link => link.classList.remove('active'));
         document.getElementById(sectionId).classList.add('active');
         element.classList.add('active');
+    }
+
+    // إظهار نموذج التعديل وتعبئة البيانات فيه
+    function editDepartment(id, name) {
+        document.getElementById('addDeptForm').style.display = 'none';
+        document.getElementById('editDeptForm').style.display = 'block';
+        
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_name').value = name;
+        
+        // تمرير الشاشة للأسفل بسلاسة لرؤية النموذج
+        document.getElementById('editDeptForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // إخفاء نموذج التعديل والعودة للإضافة
+    function cancelEdit() {
+        document.getElementById('editDeptForm').style.display = 'none';
+        document.getElementById('addDeptForm').style.display = 'block';
     }
 </script>
 </body>
