@@ -26,25 +26,29 @@ departments = {
 # الشكل: {(اسم الدكتور, التاريخ, الوقت): عدد الطلاب المحجوزين}
 bookings_db = {}
 
-# قاعدة بيانات الدكاترة والمواعيد (تم تحديث الأوقات لفترات، وإضافة capacity افتراضية = 1)
+# قاعدة بيانات الدكاترة والمواعيد
 schedule_db = {
     'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 5, 'slots': AVAILABLE_SLOTS[0:6]},
+    
     'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     'رئيس قسم الاتصالات': {'type': 'head', 'dept': 'communications', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[4:8]},
     'رئيس قسم الإلكترونيات': {'type': 'head', 'dept': 'electronics', 'days': ['sun', 'tue', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
     'رئيس قسم المواد العامة': {'type': 'head', 'dept': 'general', 'days': ['mon', 'tue', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:8]},
 
-    # --- نموذج دكاترة (يمكنك إضافة البقية بنفس النمط من الواجهة) ---
+    # --- دكاترة قسم المواد العامة ---
     'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'capacity': 2, 'slots': AVAILABLE_SLOTS[1:5]},
     'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'capacity': 3, 'slots': AVAILABLE_SLOTS[4:9]},
     
+    # --- دكاترة قسم الحاسب الآلي ---
     'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
     'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
     
+    # --- دكاترة قسم الاتصالات ---
     'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'capacity': 2, 'slots': AVAILABLE_SLOTS[1:4]},
     'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     
+    # --- دكاترة قسم الإلكترونيات ---
     'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
     'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
 }
@@ -77,7 +81,7 @@ def admin_dashboard():
     stats = {
         'total_departments': len(departments),
         'total_staff': len(schedule_db),
-        'total_bookings': sum(bookings_db.values()) # إحصائية حقيقية لعدد الحجوزات
+        'total_bookings': sum(bookings_db.values()) # إحصائية حقيقية لعدد الحجوزات المسجلة
     }
     return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, available_slots=AVAILABLE_SLOTS, stats=stats)
 
@@ -115,7 +119,6 @@ def update_schedule():
     start_time = request.form.get('start_time')
     end_time = request.form.get('end_time')
     
-    # التقاط القدرة الاستيعابية
     capacity = int(request.form.get('capacity', 1))
     
     if target_name in schedule_db:
@@ -147,7 +150,7 @@ def select_time(entity_id):
 def get_slots_ajax():
     target = request.form.get('target')
     day_name = request.form.get('day_name')
-    date_str = request.form.get('date_str') # استقبال التاريخ الدقيق
+    date_str = request.form.get('date_str')
     
     if not target or target not in schedule_db:
         return ''
@@ -160,14 +163,11 @@ def get_slots_ajax():
     
     html_output = '<div class="row g-2">'
     for slot in info['slots']:
-        # التحقق من عدد الحجوزات المسجلة لهذا الموعد في هذا اليوم بالذات
         current_bookings = bookings_db.get((target, date_str, slot), 0)
         
         if current_bookings < capacity_limit:
-            # زر متاح
             html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
         else:
-            # زر مغلق (ممتلئ)
             html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
             
     html_output += '</div>'
@@ -176,6 +176,7 @@ def get_slots_ajax():
 @app.route('/book', methods=['POST'])
 def book():
     student_name = request.form.get('student_name')
+    student_id = request.form.get('student_id')
     student_email = request.form.get('student_email')
     target_staff = request.form.get('target')
     booking_date = request.form.get('booking_date')
@@ -185,7 +186,7 @@ def book():
         flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
         return redirect(url_for('home'))
         
-    # فحص أخير للتأكد أن السعة لم تكتمل (الحماية القصوى)
+    # فحص أخير للتأكد أن السعة لم تكتمل
     capacity_limit = schedule_db.get(target_staff, {}).get('capacity', 1)
     current_bookings = bookings_db.get((target_staff, booking_date, booking_time), 0)
     
@@ -196,11 +197,27 @@ def book():
     # تسجيل الحجز
     bookings_db[(target_staff, booking_date, booking_time)] = current_bookings + 1
     
+    # جلب اسم القسم الفعلي للدكتور لعرضه في الإيصال
+    dept_id = schedule_db.get(target_staff, {}).get('dept', '')
+    dept_name = departments.get(dept_id, 'غير محدد')
+    if target_staff == 'شؤون المتدربين':
+        dept_name = 'شؤون المتدربين'
+        
+    # تجميع البيانات لإرسالها لصفحة النجاح
+    success_data = {
+        'student_name': student_name,
+        'student_id': student_id,
+        'department': dept_name,
+        'target': target_staff,
+        'date': booking_date,
+        'time': booking_time
+    }
+    
     print(f"--- تم تأكيد الموعد وإرسال الإيميل ---")
     print(f"طالب: {student_name} | دكتور: {target_staff} | وقت: {booking_time}")
         
-    flash(f'تم تسجيل الحجز بنجاح! تم حجز مقعد من أصل {capacity_limit} وإرسال إيميل للمتدرب.', 'success')
-    return redirect(url_for('home'))
+    # توجيه المتدرب لصفحة الإيصال النهائي بدلاً من الصفحة الرئيسية
+    return render_template('success.html', data=success_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
