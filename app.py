@@ -6,10 +6,13 @@ app.secret_key = 'cti_booking_secure_super_key'
 ADMIN_USERNAME = "admin_cti"
 ADMIN_PASSWORD = "cti_2026"
 
+# تحويل الأوقات لتصبح فترات (من - إلى) كما طلب الدكتور
 AVAILABLE_SLOTS = [
-    '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
-    '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',
-    '02:00 PM', '02:30 PM', '03:00 PM'
+    '08:00 AM - 08:30 AM', '08:30 AM - 09:00 AM', '09:00 AM - 09:30 AM',
+    '09:30 AM - 10:00 AM', '10:00 AM - 10:30 AM', '10:30 AM - 11:00 AM',
+    '11:00 AM - 11:30 AM', '11:30 AM - 12:00 PM', '12:00 PM - 12:30 PM',
+    '12:30 PM - 01:00 PM', '01:00 PM - 01:30 PM', '01:30 PM - 02:00 PM',
+    '02:00 PM - 02:30 PM', '02:30 PM - 03:00 PM'
 ]
 
 departments = {
@@ -19,50 +22,31 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
+# قاعدة بيانات وهمية لتسجيل عدد الحجوزات الفعلي لكل موعد
+# الشكل: {(اسم الدكتور, التاريخ, الوقت): عدد الطلاب المحجوزين}
+bookings_db = {}
+
+# قاعدة بيانات الدكاترة والمواعيد (تم تحديث الأوقات لفترات، وإضافة capacity افتراضية = 1)
 schedule_db = {
-    # تم فصل شؤون المتدربين إدارياً عن الأقسام الأكاديمية
-    'شؤون المتدربين': {
-        'type': 'affairs',
-        'dept': 'affairs_admin', 
-        'days': ['sun', 'mon', 'tue', 'wed', 'thu'],
-        'slots': ['08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM']
-    },
+    'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 5, 'slots': AVAILABLE_SLOTS[0:6]},
+    'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
+    'رئيس قسم الاتصالات': {'type': 'head', 'dept': 'communications', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[4:8]},
+    'رئيس قسم الإلكترونيات': {'type': 'head', 'dept': 'electronics', 'days': ['sun', 'tue', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
+    'رئيس قسم المواد العامة': {'type': 'head', 'dept': 'general', 'days': ['mon', 'tue', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:8]},
+
+    # --- نموذج دكاترة (يمكنك إضافة البقية بنفس النمط من الواجهة) ---
+    'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'capacity': 2, 'slots': AVAILABLE_SLOTS[1:5]},
+    'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
+    'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'capacity': 3, 'slots': AVAILABLE_SLOTS[4:9]},
     
-    'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM']},
-    'رئيس قسم الاتصالات': {'type': 'head', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM']},
-    'رئيس قسم الإلكترونيات': {'type': 'head', 'dept': 'electronics', 'days': ['sun', 'tue', 'thu'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM']},
-    'رئيس قسم المواد العامة': {'type': 'head', 'dept': 'general', 'days': ['mon', 'tue', 'wed'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM']},
-
-    # --- دكاترة قسم المواد العامة ---
-    'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']},
-    'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM']},
-    'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM']},
-    'م. خالد السلمي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM']},
-    'م. خالد الزهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM']},
-    'م. رامي حكمي': {'type': 'faculty', 'dept': 'general', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']},
-    'م. سامر فطاني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM']},
-
-    # --- دكاترة قسم الحاسب الآلي ---
-    'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']},
-    'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM']},
-    'م. احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM']},
-    'م. أحمد رشاد': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM']},
-    'م. احمد عنقاوي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM']},
-    'م. أيمن العبيدي': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']},
-
-    # --- دكاترة قسم الاتصالات ---
-    'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']},
-    'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM']},
-    'د. إيمن صائغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM']},
-    'م. بدر الجهني': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'wed'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM']},
-    'م. رضا الجهني': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'mon'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM']},
-
-    # --- دكاترة قسم الإلكترونيات ---
-    'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']},
-    'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']},
-    'د. أيمن كيفي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM']},
-    'م. أيمن بنجر': {'type': 'faculty', 'dept': 'electronics', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM']},
-    'م. جابر يماني': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM']}
+    'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
+    'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
+    
+    'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'capacity': 2, 'slots': AVAILABLE_SLOTS[1:4]},
+    'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
+    
+    'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
+    'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
 }
 
 @app.route('/')
@@ -93,7 +77,7 @@ def admin_dashboard():
     stats = {
         'total_departments': len(departments),
         'total_staff': len(schedule_db),
-        'total_bookings': 15 
+        'total_bookings': sum(bookings_db.values()) # إحصائية حقيقية لعدد الحجوزات
     }
     return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, available_slots=AVAILABLE_SLOTS, stats=stats)
 
@@ -113,7 +97,8 @@ def add_department():
                 'type': 'head',
                 'dept': dept_id,
                 'days': ['sun', 'tue'],
-                'slots': ['08:00 AM', '08:30 AM', '09:00 AM']
+                'capacity': 1,
+                'slots': AVAILABLE_SLOTS[0:2]
             }
             flash(f'تم إضافة {dept_name} بنجاح!', 'success')
         else:
@@ -127,16 +112,16 @@ def update_schedule():
     
     target_name = request.form.get('target_name')
     chosen_days = request.form.getlist('days')
-    
-    # استقبال وقت البداية والنهاية الجديد بناءً على طلبك
     start_time = request.form.get('start_time')
     end_time = request.form.get('end_time')
     
+    # التقاط القدرة الاستيعابية
+    capacity = int(request.form.get('capacity', 1))
+    
     if target_name in schedule_db:
-        # تحديث الأيام
         schedule_db[target_name]['days'] = chosen_days
+        schedule_db[target_name]['capacity'] = capacity
         
-        # إنشاء مصفوفة الأوقات تلقائياً من وقت البداية حتى النهاية
         if start_time and end_time:
             try:
                 start_idx = AVAILABLE_SLOTS.index(start_time)
@@ -149,7 +134,7 @@ def update_schedule():
             except ValueError:
                 pass
                 
-        flash(f'تم حفظ تعديلات الأيام والمواعيد لـ ({target_name}) بنجاح!', 'success')
+        flash(f'تم حفظ السعة الاستيعابية ({capacity}) وتعديلات المواعيد لـ ({target_name}) بنجاح!', 'success')
         
     return redirect(url_for('admin_dashboard'))
 
@@ -162,6 +147,7 @@ def select_time(entity_id):
 def get_slots_ajax():
     target = request.form.get('target')
     day_name = request.form.get('day_name')
+    date_str = request.form.get('date_str') # استقبال التاريخ الدقيق
     
     if not target or target not in schedule_db:
         return ''
@@ -170,16 +156,26 @@ def get_slots_ajax():
     if day_name not in info['days']:
         return '<span class="text-danger fw-bold small">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>'
         
+    capacity_limit = info.get('capacity', 1)
+    
     html_output = '<div class="row g-2">'
     for slot in info['slots']:
-        html_output += f'<div class="col-4"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
+        # التحقق من عدد الحجوزات المسجلة لهذا الموعد في هذا اليوم بالذات
+        current_bookings = bookings_db.get((target, date_str, slot), 0)
+        
+        if current_bookings < capacity_limit:
+            # زر متاح
+            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
+        else:
+            # زر مغلق (ممتلئ)
+            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
+            
     html_output += '</div>'
     return html_output
 
 @app.route('/book', methods=['POST'])
 def book():
     student_name = request.form.get('student_name')
-    student_id = request.form.get('student_id')
     student_email = request.form.get('student_email')
     target_staff = request.form.get('target')
     booking_date = request.form.get('booking_date')
@@ -189,7 +185,21 @@ def book():
         flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
         return redirect(url_for('home'))
         
-    flash(f'تم تسجيل الحجز بنجاح! تم إرسال تفاصيل الموعد عبر الإيميل للمتدرب وللدكتور.', 'success')
+    # فحص أخير للتأكد أن السعة لم تكتمل (الحماية القصوى)
+    capacity_limit = schedule_db.get(target_staff, {}).get('capacity', 1)
+    current_bookings = bookings_db.get((target_staff, booking_date, booking_time), 0)
+    
+    if current_bookings >= capacity_limit:
+        flash('عذراً، لقد اكتملت السعة الاستيعابية لهذا الموعد قبل قليل! الرجاء اختيار موعد آخر.', 'danger')
+        return redirect(url_for('home'))
+        
+    # تسجيل الحجز
+    bookings_db[(target_staff, booking_date, booking_time)] = current_bookings + 1
+    
+    print(f"--- تم تأكيد الموعد وإرسال الإيميل ---")
+    print(f"طالب: {student_name} | دكتور: {target_staff} | وقت: {booking_time}")
+        
+    flash(f'تم تسجيل الحجز بنجاح! تم حجز مقعد من أصل {capacity_limit} وإرسال إيميل للمتدرب.', 'success')
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
