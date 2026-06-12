@@ -5,7 +5,6 @@
     <title>بوابة المواعيد - الكلية التقنية</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- مكتبة SweetAlert2 لمربعات التنبيه الاحترافية (ملاحظة الدكتور) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background: #f0f4f8; padding: 40px 10px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -33,9 +32,9 @@
                     <label class="form-label fw-bold">الرقم التدريبي:</label>
                     <input type="text" name="student_id" class="form-control" placeholder="مثال: 44210000" required>
                 </div>
-                <!-- إضافة حقل الإيميل (ملاحظة الدكتور) -->
+                <!-- حقل الإيميل المطلوب -->
                 <div class="col-md-12 mb-3">
-                    <label class="form-label fw-bold">البريد الإلكتروني (لاستلام الموعد):</label>
+                    <label class="form-label fw-bold">البريد الإلكتروني (لاستلام تفاصيل الموعد):</label>
                     <input type="email" name="student_email" class="form-control" placeholder="example@tvtc.edu.sa" required>
                 </div>
             </div>
@@ -76,7 +75,11 @@
             </div>
 
             <div class="section-title">⏱️ الساعات المتوفرة حالياً:</div>
-            <div id="statusPlaceholder" class="alert alert-light text-center border p-3 text-muted">الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة.</div>
+            
+            <div id="statusPlaceholder" class="alert alert-light text-center border p-3 text-muted">
+                الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة المتاحة.
+            </div>
+
             <div id="slotsContainer" class="d-none mb-4"></div>
             <input type="hidden" id="selectedTimeInput" name="booking_time" required>
 
@@ -94,18 +97,25 @@
         const pageId = "{{ entity_id }}";
 
         function handleDepartmentChange() {
-            if (pageId === 'faculty') filterStaffByDept();
-            else if (pageId === 'head') selectHeadAutomatically();
+            if (pageId === 'faculty') {
+                filterStaffByDept();
+            } else if (pageId === 'head') {
+                selectHeadAutomatically();
+            }
         }
 
-        function handleStaffChange() { resetDateTime(); }
+        function handleStaffChange() {
+            resetDateTime();
+        }
 
         function filterStaffByDept() {
             const selectedDept = document.getElementById('departmentSelect').value;
             const staffSelect = document.getElementById('targetStaff');
-            staffSelect.value = ""; resetDateTime();
-            let visibleCount = 0;
             
+            staffSelect.value = ""; 
+            resetDateTime();
+            
+            let visibleCount = 0;
             const options = staffSelect.options;
             for (let i = 1; i < options.length; i++) {
                 const option = options[i];
@@ -114,51 +124,90 @@
                 const optType = option.getAttribute('data-type').toLowerCase();
                 
                 if (staffName.includes("رئيس") || staffName.includes("شؤون") || optType === 'head' || optType === 'affairs') {
-                    option.style.display = 'none'; continue;
+                    option.style.display = 'none';
+                    continue;
                 }
                 
                 if (optDept === selectedDept || selectedDept.includes(optDept) || optDept.includes(selectedDept)) {
-                    option.style.display = 'block'; visibleCount++;
-                } else { option.style.display = 'none'; }
+                    option.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    option.style.display = 'none';
+                }
             }
-            options[0].text = visibleCount > 0 ? "-- اختر الآن من قائمة الكادر المتوفر --" : "-- لا يوجد أعضاء متاحين لهذا القسم --";
+            
+            if (visibleCount > 0) {
+                options[0].text = "-- اختر الآن من قائمة الكادر المتوفر للقسم --";
+            } else {
+                options[0].text = "-- لا يوجد أعضاء هيئة تدريس متاحين لهذا القسم حالياً --";
+            }
         }
 
         function selectHeadAutomatically() {
             const selectedDept = document.getElementById('departmentSelect').value;
             const hiddenInput = document.getElementById('targetStaffHidden');
             resetDateTime();
-            const headsMapping = { 'computer': 'رئيس قسم الحاسب الآلي', 'communications': 'رئيس قسم الاتصالات', 'electronics': 'رئيس قسم الإلكترونيات', 'general': 'رئيس قسم المواد العامة' };
+            const headsMapping = {
+                'computer': 'رئيس قسم الحاسب الآلي',
+                'communications': 'رئيس قسم الاتصالات',
+                'electronics': 'رئيس قسم الإلكترونيات',
+                'general': 'رئيس قسم المواد العامة'
+            };
             hiddenInput.value = headsMapping[selectedDept] || "";
         }
 
         function resetDateTime() {
-            if (document.getElementById('liveDatePicker')._flatpickr) document.getElementById('liveDatePicker')._flatpickr.clear();
+            if (document.getElementById('liveDatePicker')._flatpickr) {
+                document.getElementById('liveDatePicker')._flatpickr.clear();
+            }
             document.getElementById('statusPlaceholder').style.display = 'block';
-            document.getElementById('statusPlaceholder').innerHTML = 'الرجاء إكمال الاختيارات والتاريخ لعرض الفترات.';
+            document.getElementById('statusPlaceholder').innerHTML = 'الرجاء إكمال الاختيارات والتاريخ لعرض الفترات المتوفرة المتاحة.';
             document.getElementById('slotsContainer').classList.add('d-none');
             document.getElementById('selectedTimeInput').value = '';
         }
 
         flatpickr("#liveDatePicker", {
-            locale: "ar", dateFormat: "Y-m-d", minDate: "today",
+            locale: "ar",
+            dateFormat: "Y-m-d",
+            minDate: "today",
             onOpen: function(selectedDates, dateStr, instance) {
-                // استبدال الـ alert العادي بمربع تنبيه احترافي (ملاحظة الدكتور)
+                // التنبيه المربع الجديد SweetAlert
                 if (pageId !== 'affairs' && !document.getElementById('departmentSelect').value) {
-                    Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'الرجاء تحديد القسم الأكاديمي أولاً!', confirmButtonColor: '#1e3a8a' });
-                    instance.close(); return;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'تنبيه تنظيمي',
+                        text: 'الرجاء تحديد القسم الأكاديمي أولاً لعرض التواريخ!',
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#1e3a8a'
+                    });
+                    instance.close();
+                    return;
                 }
                 if (pageId === 'faculty' && !document.getElementById('targetStaff').value) {
-                    Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'الرجاء تحديد الدكتور أو المهندس المطلوب!', confirmButtonColor: '#1e3a8a' });
-                    instance.close(); return;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'تنبيه تنظيمي',
+                        text: 'الرجاء تحديد الدكتور أو المهندس المسؤول أولاً!',
+                        confirmButtonText: 'حسناً',
+                        confirmButtonColor: '#1e3a8a'
+                    });
+                    instance.close();
+                    return;
                 }
             },
             onChange: function(selectedDates, dateStr, instance) {
                 let target = "";
-                if (pageId === 'affairs') target = "شؤون المتدربين";
-                else if (pageId === 'head') target = document.getElementById('targetStaffHidden').value;
-                else if (pageId === 'faculty') target = document.getElementById('targetStaff').value;
-                if (dateStr && target) fetchAvailableSlots(target, dateStr);
+                if (pageId === 'affairs') {
+                    target = "شؤون المتدربين";
+                } else if (pageId === 'head') {
+                    target = document.getElementById('targetStaffHidden').value;
+                } else if (pageId === 'faculty') {
+                    target = document.getElementById('targetStaff').value;
+                }
+
+                if (dateStr && target) {
+                    fetchAvailableSlots(target, dateStr);
+                }
             }
         });
 
@@ -168,19 +217,22 @@
             const dayName = days[dateObj.getDay()];
 
             document.getElementById('statusPlaceholder').style.display = 'block';
-            document.getElementById('statusPlaceholder').innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> جاري جلب الساعات...';
+            document.getElementById('statusPlaceholder').innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> جاري جلب الساعات المتاحة...';
             document.getElementById('slotsContainer').classList.add('d-none');
 
             $.ajax({
-                url: '/get_slots_ajax', method: 'POST', data: { target: target, day_name: dayName },
+                url: '/get_slots_ajax',
+                method: 'POST',
+                data: { target: target, day_name: dayName },
                 success: function(htmlResponse) {
                     if (htmlResponse && !htmlResponse.includes('غير متاح')) {
                         document.getElementById('statusPlaceholder').style.display = 'none';
                         const container = document.getElementById('slotsContainer');
-                        container.classList.remove('d-none'); container.innerHTML = htmlResponse;
+                        container.classList.remove('d-none');
+                        container.innerHTML = htmlResponse;
                     } else {
                         document.getElementById('statusPlaceholder').style.display = 'block';
-                        document.getElementById('statusPlaceholder').innerHTML = '<span class="text-danger small fw-bold">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>';
+                        document.getElementById('statusPlaceholder').innerHTML = htmlResponse ? htmlResponse : '<span class="text-danger small fw-bold">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>';
                         document.getElementById('slotsContainer').classList.add('d-none');
                     }
                 }
@@ -188,8 +240,12 @@
         }
 
         function selectSlot(timeString, buttonElement) {
-            document.querySelectorAll('#slotsContainer .slot-btn').forEach(btn => btn.classList.remove('active'));
-            if(buttonElement) buttonElement.classList.add('active');
+            document.querySelectorAll('#slotsContainer .slot-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if(buttonElement) {
+                buttonElement.classList.add('active');
+            }
             document.getElementById('selectedTimeInput').value = timeString;
         }
     </script>
