@@ -27,7 +27,6 @@
             <a onclick="showSection('stats-sec', this)" class="menu-link active">📊 الإحصائيات</a>
             <a onclick="showSection('entities-sec', this)" class="menu-link text-warning fw-bold">🏢 إدارة واجهة الموقع</a>
             <a onclick="showSection('dept-sec', this)" class="menu-link">🏛️ الأقسام الأكاديمية</a>
-            <!-- تم التعديل هنا كما طلبت -->
             <a onclick="showSection('staff-sec', this)" class="menu-link">👨‍🏫 الدكاترة / المهندسين</a>
             <a onclick="showSection('schedule-sec', this)" class="menu-link">⏱️ إعداد المواعيد والسعة</a>
             <a href="/logout" class="text-danger mt-5 fw-bold" style="background-color: rgba(255,0,0,0.1);">🚪 تسجيل خروج</a>
@@ -107,19 +106,6 @@
                         <div class="col-md-12 mt-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة للرئيسية</button></div>
                     </div>
                 </form>
-                <form action="/admin/edit_entity" method="POST" class="card stat-card p-4 border-warning" id="editEntityForm" style="display: none;">
-                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل كرت الجهة:</h6>
-                    <div class="row">
-                        <div class="col-md-2 mb-3"><input type="text" name="e_id" id="edit_e_id" class="form-control bg-light" readonly></div>
-                        <div class="col-md-4 mb-3"><input type="text" name="new_title" id="edit_e_title" class="form-control" required></div>
-                        <div class="col-md-2 mb-3"><input type="text" name="new_icon" id="edit_e_icon" class="form-control" required></div>
-                        <div class="col-md-4 mb-3"><input type="text" name="new_desc" id="edit_e_desc" class="form-control" required></div>
-                        <div class="col-md-12 mt-2 d-flex gap-2">
-                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
-                            <button type="button" class="btn btn-secondary px-5 fw-bold" onclick="cancelEntityEdit()">إلغاء</button>
-                        </div>
-                    </div>
-                </form>
             </div>
 
             <div id="dept-sec" class="admin-section">
@@ -135,7 +121,7 @@
                                 <td class="text-center">
                                     <div class="d-flex gap-1 justify-content-center">
                                         <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editDepartment('{{ d_id }}', '{{ d_name }}')">تعديل</button>
-                                        <form action="/admin/delete_department/{{ d_id }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا القسم نهائياً؟ (سيتم حذف جميع الدكاترة المرتبطين به أيضاً)');" style="display:inline;">
+                                        <form action="/admin/delete_department/{{ d_id }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟');" style="display:inline;">
                                             <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
                                         </form>
                                     </div>
@@ -152,36 +138,38 @@
                         <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
                     </div>
                 </form>
-                <form action="/admin/edit_department" method="POST" class="card stat-card p-4 border-warning" id="editDeptForm" style="display: none;">
-                    <div class="row">
-                        <div class="col-md-3 mb-3"><input type="text" name="dept_id" id="edit_id" class="form-control bg-light" readonly></div>
-                        <div class="col-md-6 mb-3"><input type="text" name="new_name" id="edit_name" class="form-control" required></div>
-                        <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-warning w-100 fw-bold">حفظ</button><button type="button" class="btn btn-secondary w-100" onclick="cancelEdit()">إلغاء</button></div>
-                    </div>
-                </form>
             </div>
 
-            <!-- التعديل الشامل هنا: الدكاترة / المهندسين (عرض، إضافة، تعديل، حذف) -->
             <div id="staff-sec" class="admin-section">
                 <h5 class="section-header">👨‍🏫 إدارة الدكاترة والمهندسين</h5>
                 
+                <div class="mb-4 card p-3 bg-light border-primary">
+                    <label class="form-label fw-bold text-primary">🔍 اختر القسم لتصفية وعرض أعضاء الكادر المسجلين فقط:</label>
+                    <select id="tableDeptFilter" class="form-select border-primary fw-bold" onchange="filterStaffTableByDept()">
+                        <option value="">-- عرض كل الأقسام (كل الكادر معاً) --</option>
+                        {% for d_id, d_name in departments.items() %}
+                            <option value="{{ d_id }}">{{ d_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <div class="card stat-card p-4 mb-4">
                     <h6 class="fw-bold mb-3 text-secondary">📋 قائمة الكادر المسجل حالياً:</h6>
-                    <table class="table table-bordered table-hover align-middle text-center">
+                    <table class="table table-bordered table-hover align-middle text-center" id="staffMainTable">
                         <thead class="table-light">
                             <tr><th>الاسم</th><th>القسم التابع له</th><th>المنصب</th><th>إجراءات</th></tr>
                         </thead>
                         <tbody>
                             {% for name, info in schedule_db.items() %}
                                 {% if info.type in ['faculty', 'head'] %}
-                                <tr>
-                                    <td class="fw-bold">{{ name }}</td>
-                                    <td>{{ departments.get(info.dept, 'غير محدد') }}</td>
+                                <tr class="admin-staff-row" data-dept="{{ info.dept }}">
+                                    <td class="fw-bold text-dark">{{ name }}</td>
+                                    <td class="text-primary fw-bold">{{ departments.get(info.dept, 'غير محدد') }}</td>
                                     <td>{{ 'رئيس قسم' if info.type == 'head' else 'عضو هيئة تدريس' }}</td>
                                     <td>
                                         <div class="d-flex gap-1 justify-content-center">
                                             <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editStaff('{{ name }}', '{{ info.dept }}', '{{ info.type }}')">تعديل</button>
-                                            <form action="/admin/delete_staff/{{ name }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا العضو من النظام؟');" style="display:inline;">
+                                            <form action="/admin/delete_staff/{{ name }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟');" style="display:inline;">
                                                 <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
                                             </form>
                                         </div>
@@ -196,10 +184,10 @@
                 <form action="/admin/add_staff" method="POST" class="card stat-card p-4 border-primary mb-4" id="addStaffForm">
                     <h6 class="fw-bold mb-3 text-primary">➕ إضافة دكتور / مهندس جديد:</h6>
                     <div class="row">
-                        <div class="col-md-4 mb-3"><input type="text" name="staff_name" class="form-control" placeholder="اسم الدكتور" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="staff_name" class="form-control" placeholder="اسم الدكتور ثلاثي" required></div>
                         <div class="col-md-4 mb-3">
                             <select name="dept_id" class="form-select" required>
-                                <option value="" disabled selected>-- اختر القسم --</option>
+                                <option value="" disabled selected>-- اختر القسم التابع له --</option>
                                 {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
                             </select>
                         </div>
@@ -212,27 +200,19 @@
                     <h6 class="fw-bold mb-3 text-warning">✏️ تعديل بيانات العضو:</h6>
                     <input type="hidden" name="old_staff_name" id="edit_old_staff_name">
                     <div class="row">
+                        <div class="col-md-4 mb-3"><input type="text" name="new_staff_name" id="edit_staff_name" class="form-control" required></div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">الاسم</label>
-                            <input type="text" name="new_staff_name" id="edit_staff_name" class="form-control" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">تغيير القسم التابع له</label>
                             <select name="dept_id" id="edit_staff_dept" class="form-select" required>
                                 {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label text-muted">المنصب</label>
                             <select name="staff_type" id="edit_staff_type" class="form-select">
                                 <option value="faculty">عضو هيئة تدريس</option>
                                 <option value="head">رئيس قسم</option>
                             </select>
                         </div>
-                        <div class="col-md-2 mt-4 pt-1 d-flex gap-2">
-                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
-                            <button type="button" class="btn btn-secondary px-3 fw-bold" onclick="cancelStaffEdit()">إلغاء</button>
-                        </div>
+                        <div class="col-md-2 d-flex gap-2"><button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button><button type="button" class="btn btn-secondary px-3" onclick="cancelStaffEdit()">إلغاء</button></div>
                     </div>
                 </form>
             </div>
@@ -240,12 +220,31 @@
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">اختر الدكتور / الجهة:</label>
-                        <select name="target_name" class="form-select border-primary" required>
-                            {% for name, info in schedule_db.items() %} <option value="{{ name }}">{{ name }}</option> {% endfor %}
+                    
+                    <div class="mb-3 bg-light p-3 rounded border">
+                        <label class="form-label fw-bold text-success">🔍 اختر القسم أولاً لتنظيف القائمة المنسدلة التالية:</label>
+                        <select id="scheduleDeptFilter" class="form-select border-success fw-bold" onchange="filterAdminScheduleDropdown()">
+                            <option value="">-- عرض كل الأسماء بالسيستم --</option>
+                            <option value="affairs_admin">شؤون المتدربين</option>
+                            {% for d_id, d_name in departments.items() %}
+                                <option value="{{ d_id }}">{{ d_name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">اختر الدكتور / الجهة:</label>
+                        <select name="target_name" id="scheduleTargetStaff" class="form-select border-primary fw-bold" required>
+                            <option value="" disabled selected>-- الرجاء تحديد المسؤول --</option>
+                            <option value="شؤون المتدربين" data-dept="affairs_admin">شؤون المتدربين</option>
+                            {% for name, info in schedule_db.items() %} 
+                                {% if info.type in ['faculty', 'head'] %}
+                                    <option value="{{ name }}" data-dept="{{ info.dept }}">{{ name }} ({% if info.type == 'head' %}رئيس قسم{% else %}عضو كادر{% endif %})</option> 
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-bold">السعة الاستيعابية للموعد الواحد:</label>
                         <input type="number" name="capacity" class="form-control" value="1" min="1" required>
@@ -270,7 +269,7 @@
                             <select name="end_time" class="form-select" required>{% for slot in available_slots %}<option value="{{ slot }}">{{ slot }}</option>{% endfor %}</select>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-success w-100 fw-bold">حفظ إعدادات المواعيد</button>
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2">حفظ إعدادات المواعيد</button>
                 </form>
             </div>
 
@@ -286,18 +285,37 @@
         element.classList.add('active');
     }
 
-    function editEntity(id, title, icon, desc) {
-        document.getElementById('addEntityForm').style.display = 'none';
-        document.getElementById('editEntityForm').style.display = 'block';
-        document.getElementById('edit_e_id').value = id;
-        document.getElementById('edit_e_title').value = title;
-        document.getElementById('edit_e_icon').value = icon;
-        document.getElementById('edit_e_desc').value = desc;
-        document.getElementById('editEntityForm').scrollIntoView({ behavior: 'smooth' });
+    // 1. دالة تصفية الجدول في صفحة الدكاترة فوراً
+    function filterStaffTableByDept() {
+        let selectedDept = document.getElementById('tableDeptFilter').value;
+        let rows = document.querySelectorAll('.admin-staff-row');
+        
+        rows.forEach(row => {
+            let rowDept = row.getAttribute('data-dept');
+            if (selectedDept === "" || rowDept === selectedDept) {
+                row.style.display = ""; // إظهار
+            } else {
+                row.style.display = "none"; // إخفاء
+            }
+        });
     }
-    function cancelEntityEdit() {
-        document.getElementById('editEntityForm').style.display = 'none';
-        document.getElementById('addEntityForm').style.display = 'block';
+
+    // 2. دالة تصفية قائمة الجدولة (من - إلى) لمنع اللخبطة
+    function filterAdminScheduleDropdown() {
+        let selectedDept = document.getElementById('scheduleDeptFilter').value;
+        let staffSelect = document.getElementById('scheduleTargetStaff');
+        staffSelect.value = ""; // تصفير الاختيار الحالي لقفل الخطأ
+        
+        let options = staffSelect.options;
+        for (let i = 1; i < options.length; i++) {
+            let option = options[i];
+            let optDept = option.getAttribute('data-dept');
+            if (selectedDept === "" || optDept === selectedDept) {
+                option.style.display = "block";
+            } else {
+                option.style.display = "none";
+            }
+        }
     }
 
     function editDepartment(id, name) {
@@ -312,16 +330,13 @@
         document.getElementById('addDeptForm').style.display = 'block';
     }
 
-    // دوال الجافاسكربت الجديدة للتحكم في فورم الدكاترة
     function editStaff(name, dept, type) {
         document.getElementById('addStaffForm').style.display = 'none';
         document.getElementById('editStaffForm').style.display = 'block';
-        
         document.getElementById('edit_old_staff_name').value = name;
         document.getElementById('edit_staff_name').value = name;
         document.getElementById('edit_staff_dept').value = dept;
         document.getElementById('edit_staff_type').value = type;
-        
         document.getElementById('editStaffForm').scrollIntoView({ behavior: 'smooth' });
     }
     function cancelStaffEdit() {
