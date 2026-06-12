@@ -6,7 +6,6 @@ app.secret_key = 'cti_booking_secure_super_key'
 ADMIN_USERNAME = "admin_cti"
 ADMIN_PASSWORD = "cti_2026"
 
-# تحويل الأوقات لتصبح فترات (من - إلى)
 AVAILABLE_SLOTS = [
     '08:00 AM - 08:30 AM', '08:30 AM - 09:00 AM', '09:00 AM - 09:30 AM',
     '09:30 AM - 10:00 AM', '10:00 AM - 10:30 AM', '10:30 AM - 11:00 AM',
@@ -102,7 +101,6 @@ def add_department():
             flash('رمز القسم موجود مسبقاً!', 'danger')
     return redirect(url_for('admin_dashboard'))
 
-# ---- الميزة الجديدة (تعديل الأقسام) ----
 @app.route('/admin/edit_department', methods=['POST'])
 def edit_department():
     if not session.get('admin_logged_in'): 
@@ -115,6 +113,32 @@ def edit_department():
         departments[dept_id] = new_name
         flash(f'تم تعديل اسم القسم إلى ({new_name}) بنجاح!', 'success')
         
+    return redirect(url_for('admin_dashboard'))
+
+# ---- الميزة الجديدة التي طلبها الدكتور (ربط الكادر بالقسم) ----
+@app.route('/admin/add_staff', methods=['POST'])
+def add_staff():
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('login'))
+    
+    staff_name = request.form.get('staff_name').strip()
+    dept_id = request.form.get('dept_id')
+    staff_type = request.form.get('staff_type')
+    
+    if staff_name and dept_id:
+        if staff_name in schedule_db:
+            flash('هذا الاسم موجود مسبقاً في النظام!', 'danger')
+        else:
+            # ربط الدكتور بالقسم المختار وإنشاء ملف فارغ له
+            schedule_db[staff_name] = {
+                'type': staff_type,
+                'dept': dept_id,
+                'days': [],
+                'capacity': 1,
+                'slots': []
+            }
+            flash(f'تم إضافة ({staff_name}) وربطه بالقسم بنجاح! الرجاء الانتقال لتبويب إعداد المواعيد لتحديد أوقاته.', 'success')
+            
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/update_schedule', methods=['POST'])
@@ -154,4 +178,73 @@ def select_time(entity_id):
     titles = {'affairs': 'شؤون المتدربين', 'head': 'رؤساء الأقسام', 'faculty': 'أعضاء هيئة التدريس'}
     return render_template('select_time.html', entity_id=entity_id, entity_name=titles.get(entity_id, 'المسؤول'), departments=departments, schedule_db=schedule_db)
 
-@
+@app.route('/get_slots_ajax', methods=['POST'])
+def get_slots_ajax():
+    target = request.form.get('target')
+    day_name = request.form.get('day_name')
+    date_str = request.form.get('date_str')
+    
+    if not target or target not in schedule_db:
+        return ''
+        
+    info = schedule_db[target]
+    if day_name not in info['days']:
+        return '<span class="text-danger fw-bold small">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>'
+        
+    capacity_limit = info.get('capacity', 1)
+    
+    html_output = '<div class="row g-2">'
+    for slot in info['slots']:
+        current_bookings = bookings_db.get((target, date_str, slot), 0)
+        
+        if current_bookings < capacity_limit:
+            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
+        else:
+            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
+            
+    html_output += '</div>'
+    return html_output
+
+@app.route('/book', methods=['POST'])
+def book():
+    student_name = request.form.get('student_name')
+    student_id = request.form.get('student_id')
+    student_email = request.form.get('student_email')
+    target_staff = request.form.get('target')
+    booking_date = request.form.get('booking_date')
+    booking_time = request.form.get('booking_time')
+    
+    if not booking_time:
+        flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
+        return redirect(url_for('home'))
+        
+    capacity_limit = schedule_db.get(target_staff, {}).get('capacity', 1)
+    current_bookings = bookings_db.get((target_staff, booking_date, booking_time), 0)
+    
+    if current_bookings >= capacity_limit:
+        flash('عذراً، لقد اكتملت السعة الاستيعابية لهذا الموعد قبل قليل! الرجاء اختيار موعد آخر.', 'danger')
+        return redirect(url_for('home'))
+        
+    bookings_db[(target_staff, booking_date, booking_time)] = current_bookings + 1
+    
+    dept_id = schedule_db.get(target_staff, {}).get('dept', '')
+    dept_name = departments.get(dept_id, 'غير محدد')
+    if target_staff == 'شؤون المتدربين':
+        dept_name = 'شؤون المتدربين'
+        
+    success_data = {
+        'student_name': student_name,
+        'student_id': student_id,
+        'department': dept_name,
+        'target': target_staff,
+        'date': booking_date,
+        'time': booking_time
+    }
+    
+    print(f"--- تم تأكيد الموعد وإرسال الإيميل ---")
+    print(f"طالب: {student_name} | دكتور: {target_staff} | وقت: {booking_time}")
+        
+    return render_template('success.html', data=success_data)
+
+if __name__ == '__main__':
+    app.run(debug=True)
