@@ -29,15 +29,129 @@ departments = {
 
 bookings_db = {}
 
-# (قاعدة البيانات للأسماء تبقى كما هي من الكود السابق، لن أطيلها هنا اختصاراً ولكن أبقها لديك كما هي)
-# للتبسيط هنا سأضع بيانات مختصرة، **أنت احتفظ باللستة الطويلة التي عندك في كودك**
+# قاعدة بيانات الدكاترة كاملة
 schedule_db = {
     'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 5, 'slots': AVAILABLE_SLOTS[0:6]},
     'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     'رئيس قسم الاتصالات': {'type': 'head', 'dept': 'communications', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     'رئيس قسم الإلكترونيات': {'type': 'head', 'dept': 'electronics', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     'رئيس قسم المواد العامة': {'type': 'head', 'dept': 'general', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
-    # (ضع باقي الدكاترة الـ 100 هنا كما كانوا في النسخة السابقة)
+
+    # ==================== قسم الإلكترونيات ====================
+    'اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'أيمن كيفي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'أيمن بنجر': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'جابر يماني': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'جميل الجهني': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'حاتم الردادي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'حاتم الزهراني': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'حسن بادويل': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'حسين المكرمي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'خالد حجازي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'رمزي مهدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'سعود المطيري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'سعود الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'سعود خوتنلي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'سعيد ابو عسيس': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'سلطان العتيبي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'صالح الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'طارق الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'ظافر الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالرحمن الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'فهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد عشري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'هيثم نايته': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'يزيد الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+
+    # ==================== قسم الاتصالات ====================
+    'احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'إيمن صائغ': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'بدر الجهني': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'رضا الجهني': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'سعيد ظافر': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'سامي قرامي': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'سعيد عبدالرحيم': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'عمر الصايغ': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'عيد الحربي': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'عيسى السقاف': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'ماجد السريحي': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'ماهر نحاس': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد العلياني': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد سلامي': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'منصور الحازمي': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'وليد جمعة': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+    'ياسر مياجي': {'type': 'faculty', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
+
+    # ==================== قسم الحاسب الآلي ====================
+    'ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'أحمد رشاد': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'احمد عنقاوي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'أيمن العبيدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'بندر الثقفي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'بندر محمد العويضي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'ثامر عطيه الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'جمعان الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'جميل الخليفي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'حسن المالكي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'حسين احمد باداود': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'حمد الشهابي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'حامد الشيخ': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'حامد الشمراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'خالد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'خليل ال صمع': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'سالم الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'سلطان ال مغلف': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'سلمان الشهري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'صالح الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عادل الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالرحمن المنتشري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالرحمن الحربي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله الحازمي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله السهيمي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله الشهري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله ناصر': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالهادي المالكي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'عبيد الحربي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'فايز شافعي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'فهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد العرياني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد الشريف': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'منصور الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'موسى المحمادي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'وليد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'ياسر الحبشان': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+
+    # ==================== قسم المواد العامة ====================
+    'بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'خالد السلمي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'خالد الزهراني': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'رامي حكمي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'سامر فطاني': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالعزيز السلمي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله القحطاني': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله البشري': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'عبدالله الرفاعي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'علي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'علي الشهري': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'عمر رزق الله': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'فهيد المطيري': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'فواز الحربي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'فيصل الحارثي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد ناجي': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []},
+    'هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []}
 }
 
 @app.route('/')
@@ -73,15 +187,141 @@ def admin_dashboard():
     }
     return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, main_entities=main_entities, available_slots=AVAILABLE_SLOTS, stats=stats)
 
-# --- (دوال الإضافة والتعديل والحذف للأقسام والجهات والكادر تبقى كما هي) ---
+@app.route('/admin/add_entity', methods=['POST'])
+def add_entity():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    e_id = request.form.get('e_id').strip().lower()
+    e_title = request.form.get('e_title').strip()
+    e_icon = request.form.get('e_icon').strip()
+    e_desc = request.form.get('e_desc').strip()
+    
+    if e_id and e_title:
+        if e_id not in main_entities:
+            main_entities[e_id] = {'title': e_title, 'icon': e_icon, 'desc': e_desc}
+            if e_title not in schedule_db:
+                schedule_db[e_title] = {'type': 'custom_entity', 'dept': 'general_admin', 'days': [], 'capacity': 1, 'slots': []}
+            flash(f'تم إضافة جهة الحجز ({e_title}) بنجاح!', 'success')
+        else:
+            flash('الرمز التعريفي للجهة موجود مسبقاً!', 'danger')
+    return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/edit_entity', methods=['POST'])
+def edit_entity():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    e_id = request.form.get('e_id')
+    e_title = request.form.get('new_title').strip()
+    e_icon = request.form.get('new_icon').strip()
+    e_desc = request.form.get('new_desc').strip()
+    
+    if e_id in main_entities:
+        old_title = main_entities[e_id]['title']
+        main_entities[e_id] = {'title': e_title, 'icon': e_icon, 'desc': e_desc}
+        if old_title != e_title and old_title in schedule_db:
+            schedule_db[e_title] = schedule_db.pop(old_title)
+        flash('تم تعديل بيانات الجهة بنجاح!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_entity/<entity_id>', methods=['POST'])
+def delete_entity(entity_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    if entity_id in main_entities:
+        if entity_id in ['affairs', 'head', 'faculty']:
+            flash('لا يمكن حذف الجهات الأساسية المدمجة في هيكل النظام!', 'danger')
+        else:
+            e_title = main_entities[entity_id]['title']
+            del main_entities[entity_id]
+            if e_title in schedule_db:
+                del schedule_db[e_title]
+            flash(f'تم حذف جهة ({e_title}) نهائياً!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_department', methods=['POST'])
+def add_department():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    dept_id = request.form.get('dept_id').strip().lower()
+    dept_name = request.form.get('dept_name').strip()
+    if dept_id and dept_name:
+        if dept_id not in departments:
+            departments[dept_id] = dept_name
+            head_title = f"رئيس {dept_name}"
+            schedule_db[head_title] = {'type': 'head', 'dept': dept_id, 'days': [], 'capacity': 1, 'slots': []}
+            flash(f'تم إضافة {dept_name} بنجاح!', 'success')
+        else:
+            flash('رمز القسم موجود مسبقاً!', 'danger')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/edit_department', methods=['POST'])
+def edit_department():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    dept_id = request.form.get('dept_id')
+    new_name = request.form.get('new_name').strip()
+    if dept_id in departments and new_name:
+        departments[dept_id] = new_name
+        flash(f'تم تعديل اسم القسم إلى ({new_name}) بنجاح!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_department/<dept_id>', methods=['POST'])
+def delete_department(dept_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    if dept_id in departments:
+        dept_name = departments[dept_id]
+        del departments[dept_id]
+        staff_to_delete = [staff_name for staff_name, info in schedule_db.items() if info.get('dept') == dept_id]
+        for staff in staff_to_delete:
+            del schedule_db[staff]
+        flash(f'تم حذف ({dept_name}) وجميع الكوادر المرتبطة به بنجاح!', 'success')
+    else:
+        flash('القسم غير موجود!', 'danger')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_staff', methods=['POST'])
+def add_staff():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    staff_name = request.form.get('staff_name').strip()
+    dept_id = request.form.get('dept_id')
+    staff_type = request.form.get('staff_type')
+    if staff_name and dept_id:
+        if staff_name in schedule_db:
+            flash('هذا الاسم موجود مسبقاً في النظام!', 'danger')
+        else:
+            schedule_db[staff_name] = {'type': staff_type, 'dept': dept_id, 'days': [], 'capacity': 1, 'slots': []}
+            flash(f'تم إضافة ({staff_name}) وربطه بالقسم بنجاح!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/edit_staff', methods=['POST'])
+def edit_staff():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    old_name = request.form.get('old_staff_name')
+    new_name = request.form.get('new_staff_name').strip()
+    dept_id = request.form.get('dept_id')
+    staff_type = request.form.get('staff_type')
+    
+    if old_name in schedule_db and new_name and dept_id:
+        staff_data = schedule_db.pop(old_name)
+        staff_data['dept'] = dept_id
+        staff_data['type'] = staff_type
+        schedule_db[new_name] = staff_data
+        flash(f'تم تعديل بيانات ({new_name}) بنجاح!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_staff/<staff_name>', methods=['POST'])
+def delete_staff(staff_name):
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    if staff_name in schedule_db:
+        del schedule_db[staff_name]
+        flash(f'تم حذف ({staff_name}) من النظام بنجاح!', 'success')
+    else:
+        flash('العضو غير موجود!', 'danger')
+    return redirect(url_for('admin_dashboard'))
+
+# التعديل الجديد: إعداد الجدول الأسبوعي الديناميكي
 @app.route('/admin/update_schedule', methods=['POST'])
 def update_schedule():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
     
     target_name = request.form.get('target_name')
     spec_date = request.form.get('spec_date')
-    spec_day = request.form.get('spec_day') # اليوم المختار يدوياً
+    spec_day = request.form.get('spec_day')  # تم إضافة اليوم يدوياً بناءً على طلبك
     start_time = request.form.get('start_time')
     end_time = request.form.get('end_time')
     capacity = int(request.form.get('capacity', 1))
@@ -90,17 +330,17 @@ def update_schedule():
         if 'custom_dates' not in schedule_db[target_name]:
             schedule_db[target_name]['custom_dates'] = {}
             
-        if spec_date not in schedule_db[target_name]['custom_dates']:
-            schedule_db[target_name]['custom_dates'][spec_date] = {}
-            
+        # مسح أوقات هذا التاريخ إذا كانت موجودة مسبقاً وتجديدها
+        schedule_db[target_name]['custom_dates'][spec_date] = {}
+        
         try:
             start_idx = AVAILABLE_SLOTS.index(start_time)
             end_idx = AVAILABLE_SLOTS.index(end_time)
             if start_idx <= end_idx:
-                # توليد فترات المواعيد بين البداية والنهاية للتاريخ المختار
+                # توليد الفترات الزمنية بين من وإلى لهذا التاريخ
                 for slot in AVAILABLE_SLOTS[start_idx:end_idx+1]:
                     schedule_db[target_name]['custom_dates'][spec_date][slot] = capacity
-                flash(f'تم حفظ المواعيد لـ ({target_name}) بتاريخ {spec_date} من {start_time} إلى {end_time} بنجاح!', 'success')
+                flash(f'تم حفظ المواعيد لـ ({target_name}) بتاريخ {spec_date} من الساعة {start_time} إلى {end_time} بنجاح!', 'success')
             else:
                 flash('تنبيه: وقت البداية يجب أن يكون قبل وقت النهاية!', 'danger')
         except ValueError:
@@ -126,7 +366,7 @@ def get_slots_ajax():
     if not target or target not in schedule_db: return ''
     info = schedule_db[target]
     
-    # التحقق من وجود مواعيد مخصصة (بالتاريخ)
+    # 1. البحث في المواعيد المخصصة (بالتاريخ)
     custom_dates = info.get('custom_dates', {})
     if date_str in custom_dates and custom_dates[date_str]:
         slots_data = custom_dates[date_str]
@@ -142,9 +382,9 @@ def get_slots_ajax():
         html_output += '</div>'
         return html_output
         
-    # إذا لم يجد موعد مخصص لهذا التاريخ، يعود للجدول الافتراضي أو يرفض
+    # 2. الجداول الافتراضية القديمة (في حال وجودها للجهات التي لم يتم تعديلها بعد)
     if day_name not in info.get('days', []): 
-        return '<span class="text-danger fw-bold small">عذراً، لا يوجد موعد متاح لهذا اليوم!</span>'
+        return '<span class="text-danger fw-bold small">عذراً، لم يتم إضافة مواعيد متاحة لهذا اليوم!</span>'
         
     capacity_limit = info.get('capacity', 1)
     html_output = '<div class="row g-2">'
@@ -159,4 +399,38 @@ def get_slots_ajax():
 
 @app.route('/book', methods=['POST'])
 def book():
-    # ... (دالة الحجز تبقى كما هي) ...
+    student_name = request.form.get('student_name')
+    student_id = request.form.get('student_id')
+    student_email = request.form.get('student_email')
+    target_staff = request.form.get('target')
+    booking_date = request.form.get('booking_date')
+    booking_time = request.form.get('booking_time')
+    
+    if not booking_time:
+        flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
+        return redirect(url_for('home'))
+        
+    # التحقق من السعة 
+    info = schedule_db.get(target_staff, {})
+    capacity_limit = info.get('capacity', 1)
+    if 'custom_dates' in info and booking_date in info['custom_dates'] and booking_time in info['custom_dates'][booking_date]:
+        capacity_limit = info['custom_dates'][booking_date][booking_time]
+        
+    current_bookings = bookings_db.get((target_staff, booking_date, booking_time), 0)
+    
+    if current_bookings >= capacity_limit:
+        flash('عذراً، لقد اكتملت السعة الاستيعابية لهذا الموعد قبل قليل! الرجاء اختيار موعد آخر.', 'danger')
+        return redirect(url_for('home'))
+        
+    bookings_db[(target_staff, booking_date, booking_time)] = current_bookings + 1
+    
+    dept_id = schedule_db.get(target_staff, {}).get('dept', '')
+    dept_name = departments.get(dept_id, 'إدارة الكلية')
+    if target_staff == 'شؤون المتدربين' or schedule_db.get(target_staff, {}).get('type') == 'custom_entity':
+        dept_name = 'إدارة الكلية / الجهات الرئيسية'
+        
+    success_data = {'student_name': student_name, 'student_id': student_id, 'department': dept_name, 'target': target_staff, 'date': booking_date, 'time': booking_time}
+    return render_template('success.html', data=success_data)
+
+if __name__ == '__main__':
+    app.run(debug=True)
