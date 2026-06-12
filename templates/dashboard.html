@@ -237,12 +237,13 @@
                 </form>
             </div>
 
+            <!-- القسم 5: إعداد الجداول (المواعيد الأسبوعية المتغيرة حسب طلبك) -->
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
-                <form action="/admin/update_schedule" method="POST" class="card stat-card p-4">
+                <form action="/admin/update_schedule" method="POST" class="card stat-card p-4 border-success">
                     
                     <div class="mb-3 bg-light p-3 rounded border">
-                        <label class="form-label fw-bold text-primary">1. اختر الجهة المراد تعديل جدولها:</label>
+                        <label class="form-label fw-bold text-primary">1. اختر الجهة المراد إضافة موعد لها:</label>
                         <select id="entityTypeFilter" class="form-select border-primary fw-bold" onchange="handleAdminScheduleFlow()">
                             <option value="" disabled selected>-- الرجاء التحديد أولاً --</option>
                             <option value="affairs">شؤون المتدربين</option>
@@ -277,32 +278,61 @@
                     </div>
 
                     <hr class="mb-4">
+                    <h6 class="fw-bold text-dark mb-3">📍 إعداد المواعيد الأسبوعية المتغيرة:</h6>
+                    
+                    <!-- السطر المقسم إلى 5 كما طلبت: تاريخ، يوم يدوي، بداية، نهاية، سعة -->
+                    <div class="row bg-light p-3 rounded border mx-0 mb-4 g-3 align-items-end">
+                        
+                        <!-- 1. التاريخ -->
+                        <div class="col-md-2">
+                            <label class="form-label text-muted fw-bold">التاريخ:</label>
+                            <input type="date" name="spec_date" class="form-control border-primary" required>
+                        </div>
+                        
+                        <!-- 2. اليوم (يدوي) -->
+                        <div class="col-md-2">
+                            <label class="form-label text-muted fw-bold">اليوم:</label>
+                            <select name="spec_day" class="form-select border-primary" required>
+                                <option value="" disabled selected>-- اختر --</option>
+                                <option value="sun">الأحد</option>
+                                <option value="mon">الإثنين</option>
+                                <option value="tue">الثلاثاء</option>
+                                <option value="wed">الأربعاء</option>
+                                <option value="thu">الخميس</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 3. من الساعة -->
+                        <div class="col-md-3">
+                            <label class="form-label text-muted fw-bold">من الساعة:</label>
+                            <select name="start_time" class="form-select border-primary" required>
+                                <option value="" disabled selected>-- البداية --</option>
+                                {% for slot in available_slots %}
+                                    <option value="{{ slot }}">{{ slot }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- 4. إلى الساعة -->
+                        <div class="col-md-3">
+                            <label class="form-label text-muted fw-bold">إلى الساعة:</label>
+                            <select name="end_time" class="form-select border-primary" required>
+                                <option value="" disabled selected>-- النهاية --</option>
+                                {% for slot in available_slots %}
+                                    <option value="{{ slot }}">{{ slot }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- 5. السعة -->
+                        <div class="col-md-2">
+                            <label class="form-label text-muted fw-bold">الاستيعاب:</label>
+                            <input type="number" name="capacity" class="form-control border-primary" value="1" min="1" required>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">السعة الاستيعابية للموعد الواحد (كم طالب؟):</label>
-                        <input type="number" name="capacity" class="form-control" value="1" min="1" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">أيام العمل المتاحة للحجوزات:</label>
-                        <div class="d-flex gap-4 flex-wrap bg-light p-3 rounded border">
-                            <label><input type="checkbox" name="days" value="sun"> الأحد</label>
-                            <label><input type="checkbox" name="days" value="mon"> الإثنين</label>
-                            <label><input type="checkbox" name="days" value="tue"> الثلاثاء</label>
-                            <label><input type="checkbox" name="days" value="wed"> الأربعاء</label>
-                            <label><input type="checkbox" name="days" value="thu"> الخميس</label>
-                        </div>
-                    </div>
-                    <div class="mb-4 row bg-light p-3 rounded border mx-0">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted">من الساعة:</label>
-                            <select name="start_time" class="form-select" required>{% for slot in available_slots %}<option value="{{ slot }}">{{ slot }}</option>{% endfor %}</select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted">إلى الساعة:</label>
-                            <select name="end_time" class="form-select" required>{% for slot in available_slots %}<option value="{{ slot }}">{{ slot }}</option>{% endfor %}</select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100 fw-bold py-2 fs-5">حفظ إعدادات المواعيد</button>
+
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2 fs-5">حفظ إعدادات الموعد المخصص</button>
                 </form>
             </div>
 
@@ -311,7 +341,6 @@
 </div>
 
 <script>
-    // التبديل بين التبويبات
     function showSection(sectionId, element) {
         document.querySelectorAll('.admin-section').forEach(sec => sec.classList.remove('active'));
         document.querySelectorAll('.menu-link').forEach(link => link.classList.remove('active'));
@@ -319,7 +348,6 @@
         element.classList.add('active');
     }
 
-    // إدارة الكيانات الرئيسية
     function editEntity(id, title, icon, desc) {
         document.getElementById('addEntityForm').style.display = 'none';
         document.getElementById('editEntityForm').style.display = 'block';
@@ -334,7 +362,6 @@
         document.getElementById('addEntityForm').style.display = 'block';
     }
 
-    // إدارة الأقسام
     function editDepartment(id, name) {
         document.getElementById('addDeptForm').style.display = 'none';
         document.getElementById('editDeptForm').style.display = 'block';
@@ -347,22 +374,16 @@
         document.getElementById('addDeptForm').style.display = 'block';
     }
 
-    // فلترة جدول الدكاترة
     function filterStaffTableByDept() {
         let selectedDept = document.getElementById('tableDeptFilter').value;
         let rows = document.querySelectorAll('.admin-staff-row');
-        
         rows.forEach(row => {
             let rowDept = row.getAttribute('data-dept');
-            if (selectedDept === "" || rowDept === selectedDept) {
-                row.style.display = ""; 
-            } else {
-                row.style.display = "none"; 
-            }
+            if (selectedDept === "" || rowDept === selectedDept) row.style.display = ""; 
+            else row.style.display = "none"; 
         });
     }
 
-    // إدارة الكادر (تعديل)
     function editStaff(name, dept, type) {
         document.getElementById('addStaffForm').style.display = 'none';
         document.getElementById('editStaffForm').style.display = 'block';
@@ -377,20 +398,15 @@
         document.getElementById('addStaffForm').style.display = 'block';
     }
 
-    // ----------------------------------------------------
-    // الدالة الذكية لفلترة قسم إعداد المواعيد (Cascading Dropdown)
-    // ----------------------------------------------------
     function handleAdminScheduleFlow() {
         let entityType = document.getElementById('entityTypeFilter').value;
         let deptDiv = document.getElementById('departmentFilterDiv');
         let deptSelect = document.getElementById('scheduleDeptFilter');
         let targetSelect = document.getElementById('scheduleTargetStaff');
 
-        // تصفير القائمة النهائية
         targetSelect.value = "";
         targetSelect.options[0].text = "-- اختر من القائمة --";
 
-        // حالة شؤون المتدربين (إخفاء الأقسام وتحديد مباشر)
         if (entityType === 'affairs') {
             deptDiv.style.display = 'none'; 
             deptSelect.value = ""; 
@@ -405,15 +421,12 @@
                 }
             }
         } 
-        // حالة رؤساء الأقسام أو الكادر (إظهار الأقسام والفلترة بناء عليها)
         else if (entityType === 'head' || entityType === 'faculty') {
             deptDiv.style.display = 'block'; 
             let selectedDept = deptSelect.value;
-
             let count = 0;
             for (let i = 1; i < targetSelect.options.length; i++) {
                 let opt = targetSelect.options[i];
-                // إظهار الخيار إذا تطابق نوعه وقسمه مع الاختيارات
                 if (selectedDept && opt.getAttribute('data-type') === entityType && opt.getAttribute('data-dept') === selectedDept) {
                     opt.style.display = 'block';
                     count++;
@@ -421,9 +434,7 @@
                     opt.style.display = 'none';
                 }
             }
-            if(selectedDept && count === 0) {
-                targetSelect.options[0].text = "-- لا يوجد أسماء مسجلة في هذا القسم --";
-            }
+            if(selectedDept && count === 0) targetSelect.options[0].text = "-- لا يوجد أسماء مسجلة --";
         }
     }
 </script>
