@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from datetime import datetime # استيراد ضروري لمعرفة اليوم من التاريخ
 
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
@@ -36,7 +37,7 @@ departments = {
 bookings_db = {} 
 detailed_bookings_list = [] 
 
-# قاعدة بيانات الدكاترة كاملة
+# قاعدة بيانات الدكاترة 
 schedule_db = {
     'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': [], 'capacity': 5, 'slots': []},
     'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
@@ -198,14 +199,11 @@ def admin_dashboard():
 @app.route('/admin/delete_booking', methods=['POST'])
 def delete_booking():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
-    
     student_id = request.form.get('student_id')
     target = request.form.get('target')
     date = request.form.get('date')
     time = request.form.get('time')
-    
     global detailed_bookings_list, bookings_db
-    
     for b in detailed_bookings_list:
         if b['student_id'] == student_id and b['target'] == target and b['date'] == date and b['time'] == time:
             detailed_bookings_list.remove(b)
@@ -213,7 +211,6 @@ def delete_booking():
                 bookings_db[(target, date, time)] = max(0, bookings_db[(target, date, time)] - 1)
             flash(f'تم إلغاء حجز المتدرب ذو الرقم ({student_id}) وإعادة إتاحة المقعد بنجاح!', 'success')
             break
-            
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add_entity', methods=['POST'])
@@ -229,8 +226,6 @@ def add_entity():
             if e_title not in schedule_db:
                 schedule_db[e_title] = {'type': 'custom_entity', 'dept': 'general_admin', 'days': [], 'capacity': 1, 'slots': []}
             flash(f'تم إضافة جهة الحجز ({e_title}) بنجاح!', 'success')
-        else:
-            flash('الرمز التعريفي للجهة موجود مسبقاً!', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/edit_entity', methods=['POST'])
@@ -252,14 +247,10 @@ def edit_entity():
 def delete_entity(entity_id):
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
     if entity_id in main_entities:
-        if entity_id in ['affairs', 'head', 'faculty']:
-            flash('لا يمكن حذف الجهات الأساسية المدمجة في هيكل النظام!', 'danger')
-        else:
-            e_title = main_entities[entity_id]['title']
-            del main_entities[entity_id]
-            if e_title in schedule_db:
-                del schedule_db[e_title]
-            flash(f'تم حذف جهة ({e_title}) نهائياً!', 'success')
+        e_title = main_entities[entity_id]['title']
+        del main_entities[entity_id]
+        if e_title in schedule_db: del schedule_db[e_title]
+        flash(f'تم حذف جهة ({e_title}) نهائياً!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add_department', methods=['POST'])
@@ -273,8 +264,6 @@ def add_department():
             head_title = f"رئيس {dept_name}"
             schedule_db[head_title] = {'type': 'head', 'dept': dept_id, 'days': [], 'capacity': 1, 'slots': []}
             flash(f'تم إضافة {dept_name} بنجاح!', 'success')
-        else:
-            flash('رمز القسم موجود مسبقاً!', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/edit_department', methods=['POST'])
@@ -294,11 +283,8 @@ def delete_department(dept_id):
         dept_name = departments[dept_id]
         del departments[dept_id]
         staff_to_delete = [staff_name for staff_name, info in schedule_db.items() if info.get('dept') == dept_id]
-        for staff in staff_to_delete:
-            del schedule_db[staff]
+        for staff in staff_to_delete: del schedule_db[staff]
         flash(f'تم حذف ({dept_name}) وجميع الكوادر المرتبطة به بنجاح!', 'success')
-    else:
-        flash('القسم غير موجود!', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add_staff', methods=['POST'])
@@ -308,9 +294,7 @@ def add_staff():
     dept_id = request.form.get('dept_id')
     staff_type = request.form.get('staff_type')
     if staff_name and dept_id:
-        if staff_name in schedule_db:
-            flash('هذا الاسم موجود مسبقاً في النظام!', 'danger')
-        else:
+        if staff_name not in schedule_db:
             schedule_db[staff_name] = {'type': staff_type, 'dept': dept_id, 'days': [], 'capacity': 1, 'slots': []}
             flash(f'تم إضافة ({staff_name}) وربطه بالقسم بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
@@ -336,44 +320,54 @@ def delete_staff(staff_name):
     if staff_name in schedule_db:
         del schedule_db[staff_name]
         flash(f'تم حذف ({staff_name}) من النظام بنجاح!', 'success')
-    else:
-        flash('العضو غير موجود!', 'danger')
     return redirect(url_for('admin_dashboard'))
 
+
+# ==================== التعديل الجذري: قبول عدة فترات جدول أسبوعي ====================
 @app.route('/admin/update_schedule', methods=['POST'])
 def update_schedule():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
-    target_name = request.form.get('target_name')
-    spec_date = request.form.get('spec_date')
-    spec_day = request.form.get('spec_day')  
-    start_time = request.form.get('start_time')
-    end_time = request.form.get('end_time')
-    capacity = int(request.form.get('capacity', 1))
     
-    if target_name in schedule_db and spec_date and start_time and end_time:
-        if 'custom_dates' not in schedule_db[target_name]:
-            schedule_db[target_name]['custom_dates'] = {}
+    target_name = request.form.get('target_name')
+    # نستقبل البيانات كـ List لأنها ممكن تكون عدة صفوف
+    days_list = request.form.getlist('spec_day[]')
+    starts_list = request.form.getlist('start_time[]')
+    ends_list = request.form.getlist('end_time[]')
+    caps_list = request.form.getlist('capacity[]')
+    
+    if target_name in schedule_db and days_list:
+        # إنشاء هيكل جديد للجدول الأسبوعي يربط كل يوم بفتراته وسعاته
+        schedule_db[target_name]['weekly_schedule'] = {}
+        schedule_db[target_name]['days'] = list(set(days_list)) # لحفظ الأيام النشطة
+        
+        for i in range(len(days_list)):
+            day = days_list[i]
+            start = starts_list[i]
+            end = ends_list[i]
+            cap = int(caps_list[i])
             
-        schedule_db[target_name]['custom_dates'][spec_date] = {}
-        try:
-            start_idx = TIME_MARKERS.index(start_time)
-            end_idx = TIME_MARKERS.index(end_time)
-            if start_idx < end_idx:
-                for slot in AVAILABLE_SLOTS[start_idx:end_idx]:
-                    schedule_db[target_name]['custom_dates'][spec_date][slot] = capacity
-                flash(f'تم حفظ المواعيد لـ ({target_name}) بتاريخ {spec_date} من {start_time} إلى {end_time} بنجاح!', 'success')
-            else:
-                flash('تنبيه: وقت البداية يجب أن يكون قبل وقت النهاية!', 'danger')
-        except ValueError:
-            pass
+            if day not in schedule_db[target_name]['weekly_schedule']:
+                schedule_db[target_name]['weekly_schedule'][day] = {}
+                
+            try:
+                start_idx = TIME_MARKERS.index(start)
+                end_idx = TIME_MARKERS.index(end)
+                if start_idx < end_idx:
+                    for slot in AVAILABLE_SLOTS[start_idx:end_idx]:
+                        schedule_db[target_name]['weekly_schedule'][day][slot] = cap
+            except ValueError:
+                continue
+                
+        flash(f'تم تحديث الجدول الأسبوعي بنجاح للمسؤول ({target_name})!', 'success')
+    else:
+        flash('الرجاء التأكد من تعبئة البيانات بشكل صحيح!', 'danger')
+        
     return redirect(url_for('admin_dashboard'))
 
-# ==================== المسارات اللي سقطت ورجعناها ====================
-
+# ==================== التعديلات للمتدرب لتقرأ النظام الجديد ====================
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
-    if entity_id not in main_entities:
-        return redirect(url_for('home'))
+    if entity_id not in main_entities: return redirect(url_for('home'))
     entity_name = main_entities[entity_id]['title']
     return render_template('select_time.html', entity_id=entity_id, entity_name=entity_name, departments=departments, schedule_db=schedule_db)
 
@@ -381,10 +375,8 @@ def select_time(entity_id):
 def get_staff_by_dept():
     dept_id = request.form.get('dept_id')
     filtered_staff = {name: info for name, info in schedule_db.items() if info.get('dept') == dept_id}
-    
     html = '<option value="">-- اختر الدكتور / المهندس --</option>'
-    for name in filtered_staff.keys():
-        html += f'<option value="{name}">{name}</option>'
+    for name in filtered_staff.keys(): html += f'<option value="{name}">{name}</option>'
     return html
 
 @app.route('/get_slots_ajax', methods=['POST'])
@@ -396,9 +388,11 @@ def get_slots_ajax():
     if not target or target not in schedule_db: return ''
     info = schedule_db[target]
     
-    custom_dates = info.get('custom_dates', {})
-    if date_str in custom_dates and custom_dates[date_str]:
-        slots_data = custom_dates[date_str]
+    weekly_schedule = info.get('weekly_schedule', {})
+    
+    # إذا كان اليوم مسجل في الجدول الأسبوعي للمسؤول
+    if day_name in weekly_schedule and weekly_schedule[day_name]:
+        slots_data = weekly_schedule[day_name]
         html_output = '<div class="row g-2">'
         for slot in AVAILABLE_SLOTS:
             if slot in slots_data:
@@ -410,20 +404,21 @@ def get_slots_ajax():
                     html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
         html_output += '</div>'
         return html_output
+    
+    # التوافق مع الجداول القديمة إن وجدت
+    if day_name in info.get('days', []) and 'slots' in info:
+        capacity_limit = info.get('capacity', 1)
+        html_output = '<div class="row g-2">'
+        for slot in info['slots']:
+            current_bookings = bookings_db.get((target, date_str, slot), 0)
+            if current_bookings < capacity_limit:
+                html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
+            else:
+                html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
+        html_output += '</div>'
+        return html_output
         
-    if day_name not in info.get('days', []): 
-        return '<span class="text-danger fw-bold small">عذراً، لم يتم إضافة مواعيد متاحة لهذا اليوم!</span>'
-        
-    capacity_limit = info.get('capacity', 1)
-    html_output = '<div class="row g-2">'
-    for slot in info.get('slots', []):
-        current_bookings = bookings_db.get((target, date_str, slot), 0)
-        if current_bookings < capacity_limit:
-            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
-        else:
-            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
-    html_output += '</div>'
-    return html_output
+    return '<span class="text-danger fw-bold small">عذراً، لا توجد مواعيد متاحة في هذا اليوم!</span>'
 
 @app.route('/book', methods=['POST'])
 def book():
@@ -435,18 +430,27 @@ def book():
     booking_time = request.form.get('booking_time')
     
     if not booking_time:
-        flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
+        flash('الرجاء اختيار وقت محدد!', 'danger')
         return redirect(url_for('home'))
         
     info = schedule_db.get(target_staff, {})
     capacity_limit = info.get('capacity', 1)
-    if 'custom_dates' in info and booking_date in info['custom_dates'] and booking_time in info['custom_dates'][booking_date]:
-        capacity_limit = info['custom_dates'][booking_date][booking_time]
+    
+    # استخراج اسم اليوم من التاريخ للتحقق من السعة في النظام الجديد
+    try:
+        date_obj = datetime.strptime(booking_date, '%Y-%m-%d')
+        days_map = {6: 'sun', 0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat'}
+        day_name = days_map[date_obj.weekday()]
+        
+        if 'weekly_schedule' in info and day_name in info['weekly_schedule'] and booking_time in info['weekly_schedule'][day_name]:
+            capacity_limit = info['weekly_schedule'][day_name][booking_time]
+    except:
+        pass
         
     current_bookings = bookings_db.get((target_staff, booking_date, booking_time), 0)
     
     if current_bookings >= capacity_limit:
-        flash('عذراً، لقد اكتملت السعة الاستيعابية لهذا الموعد قبل قليل! الرجاء اختيار موعد آخر.', 'danger')
+        flash('عذراً، لقد اكتملت السعة الاستيعابية!', 'danger')
         return redirect(url_for('home'))
         
     bookings_db[(target_staff, booking_date, booking_time)] = current_bookings + 1
@@ -460,9 +464,9 @@ def book():
         'time': booking_time
     })
     
-    dept_id = schedule_db.get(target_staff, {}).get('dept', '')
+    dept_id = info.get('dept', '')
     dept_name = departments.get(dept_id, 'إدارة الكلية')
-    if target_staff == 'شؤون المتدربين' or schedule_db.get(target_staff, {}).get('type') == 'custom_entity':
+    if target_staff == 'شؤون المتدربين' or info.get('type') == 'custom_entity':
         dept_name = 'إدارة الكلية / الجهات الرئيسية'
         
     success_data = {'student_name': student_name, 'student_id': student_id, 'department': dept_name, 'target': target_staff, 'date': booking_date, 'time': booking_time}
