@@ -29,9 +29,7 @@ departments = {
 
 bookings_db = {}
 
-# قاعدة البيانات الشاملة مع جميع الأسماء التي أرسلتها
 schedule_db = {
-    # الإدارات ورؤساء الأقسام
     'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 5, 'slots': AVAILABLE_SLOTS[0:6]},
     'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     'رئيس قسم الاتصالات': {'type': 'head', 'dept': 'communications', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
@@ -83,7 +81,7 @@ schedule_db = {
     'عمر الصايغ': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[3:7]},
     'عيد الحربي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[0:5]},
     'عيسى السقاف': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
-    'ماجد السريحي': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:6]},
+    'maجد السريحي': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:6]},
     'ماهر نحاس': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[3:8]},
     'محمد العلياني': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[0:4]},
     'محمد سلامي': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
@@ -91,7 +89,7 @@ schedule_db = {
     'وليد جمعة': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
     'ياسر مياجي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[3:7]},
 
-    # ==================== قسم الحاسب ====================
+    # ==================== قسم الحاسب الآلي ====================
     'ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[0:5]},
     'أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
     'احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:6]},
@@ -111,7 +109,7 @@ schedule_db = {
     'خالد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:5]},
     'خليل ال صمع': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[3:7]},
     'سالم الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[0:5]},
-    'سلطان ال مغلف': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
+    'sultan ال مغلف': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
     'سلمان الشهري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[1:6]},
     'صالح الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[3:8]},
     'عادل الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[0:4]},
@@ -154,7 +152,6 @@ schedule_db = {
     'منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[0:5]},
     'هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]}
 }
-
 
 @app.route('/')
 def home():
@@ -202,7 +199,7 @@ def add_entity():
             main_entities[e_id] = {'title': e_title, 'icon': e_icon, 'desc': e_desc}
             if e_title not in schedule_db:
                 schedule_db[e_title] = {'type': 'custom_entity', 'dept': 'general_admin', 'days': [], 'capacity': 1, 'slots': []}
-            flash(f'تم إضافة جهة الحجز ({e_title}) للصفحة الرئيسية بنجاح!', 'success')
+            flash(f'تم إضافة جهة الحجز ({e_title}) بنجاح!', 'success')
         else:
             flash('الرمز التعريفي للجهة موجود مسبقاً!', 'danger')
     return redirect(url_for('admin_dashboard'))
@@ -234,7 +231,7 @@ def delete_entity(entity_id):
             del main_entities[entity_id]
             if e_title in schedule_db:
                 del schedule_db[e_title]
-            flash(f'تم حذف جهة ({e_title}) من الصفحة الرئيسية نهائياً!', 'success')
+            flash(f'تم حذف جهة ({e_title}) نهائياً!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add_department', methods=['POST'])
