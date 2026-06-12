@@ -161,6 +161,28 @@ def edit_department():
         flash(f'تم تعديل اسم القسم إلى ({new_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
+# الدالة الجديدة لحذف القسم
+@app.route('/admin/delete_department/<dept_id>', methods=['POST'])
+def delete_department(dept_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    
+    if dept_id in departments:
+        dept_name = departments[dept_id]
+        
+        # 1. حذف القسم من قائمة الأقسام
+        del departments[dept_id]
+        
+        # 2. تنظيف النظام: حذف أي دكتور أو رئيس قسم كان تابع لهذا القسم المحذوف
+        staff_to_delete = [staff_name for staff_name, info in schedule_db.items() if info.get('dept') == dept_id]
+        for staff in staff_to_delete:
+            del schedule_db[staff]
+            
+        flash(f'تم حذف ({dept_name}) وجميع الكوادر المرتبطة به بنجاح!', 'success')
+    else:
+        flash('القسم غير موجود!', 'danger')
+        
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/add_staff', methods=['POST'])
 def add_staff():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
