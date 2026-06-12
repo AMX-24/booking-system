@@ -14,7 +14,6 @@
         .section-title { font-size: 15px; font-weight: 600; color: #1e3a8a; margin-top: 20px; margin-bottom: 15px; }
         .slot-btn { border-radius: 10px; transition: all 0.2s; font-weight: 500; font-size: 14px; }
         .slot-btn.active { background-color: #1e3a8a !important; color: white !important; border-color: #1e3a8a !important; }
-        .error-hint { color: #dc3545; font-size: 13px; font-weight: 600; display: none; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -27,19 +26,19 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">اسم المتدرب ثلاثي:</label>
-                    <input type="text" name="student_name" class="form-control" placeholder="أدخل اسمك الثلاثي" required>
+                    <input type="text" name="student_name" class="form-control" required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">الرقم التدريبي:</label>
-                    <input type="text" name="student_id" class="form-control" placeholder="مثال: 44210000" required>
+                    <input type="text" name="student_id" class="form-control" required>
                 </div>
                 <div class="col-md-12 mb-3">
                     <label class="form-label fw-bold">البريد الإلكتروني:</label>
-                    <input type="email" name="student_email" class="form-control" placeholder="example@tvtc.edu.sa" required>
+                    <input type="email" name="student_email" class="form-control" required>
                 </div>
             </div>
 
-            {% if entity_id != 'affairs' %}
+            {% if entity_id in ['head', 'faculty'] %}
             <div class="mb-3">
                 <label class="form-label fw-bold">القسم التدريبي / المختص:</label>
                 <select id="departmentSelect" class="form-select" required onchange="handleDepartmentChange()">
@@ -63,10 +62,10 @@
                 </select>
             </div>
 
-            {% if entity_id == 'head' %}
+            {% if entity_id not in ['head', 'faculty'] %}
+                <input type="hidden" name="target" id="targetStaffHidden" value="{{ entity_name }}">
+            {% elif entity_id == 'head' %}
                 <input type="hidden" name="target" id="targetStaffHidden">
-            {% elif entity_id == 'affairs' %}
-                <input type="hidden" name="target" id="targetStaffHidden" value="شؤون المتدربين">
             {% endif %}
 
             <div class="mb-4">
@@ -116,7 +115,7 @@
                 const optDept = option.getAttribute('data-dept').toLowerCase();
                 const optType = option.getAttribute('data-type').toLowerCase();
                 
-                if (staffName.includes("رئيس") || staffName.includes("شؤون") || optType === 'head' || optType === 'affairs') {
+                if (staffName.includes("رئيس") || staffName.includes("شؤون") || optType === 'head' || optType === 'affairs' || optType === 'custom_entity') {
                     option.style.display = 'none'; continue;
                 }
                 
@@ -145,7 +144,7 @@
         flatpickr("#liveDatePicker", {
             locale: "ar", dateFormat: "Y-m-d", minDate: "today",
             onOpen: function(selectedDates, dateStr, instance) {
-                if (pageId !== 'affairs' && !document.getElementById('departmentSelect').value) {
+                if (['head', 'faculty'].includes(pageId) && !document.getElementById('departmentSelect').value) {
                     Swal.fire({icon: 'warning', title: 'تنبيه', text: 'الرجاء تحديد القسم أولاً!', confirmButtonColor: '#1e3a8a'});
                     instance.close(); return;
                 }
@@ -156,9 +155,10 @@
             },
             onChange: function(selectedDates, dateStr, instance) {
                 let target = "";
-                if (pageId === 'affairs') target = "شؤون المتدربين";
-                else if (pageId === 'head') target = document.getElementById('targetStaffHidden').value;
+                if (pageId === 'head') target = document.getElementById('targetStaffHidden').value;
                 else if (pageId === 'faculty') target = document.getElementById('targetStaff').value;
+                else target = "{{ entity_name }}"; // للجهات الجديدة الديناميكية
+
                 if (dateStr && target) fetchAvailableSlots(target, dateStr);
             }
         });
@@ -175,7 +175,6 @@
             $.ajax({
                 url: '/get_slots_ajax',
                 method: 'POST',
-                // أرسلنا التاريخ الدقيق هنا عشان السيرفر يحسب السعة الاستيعابية صح
                 data: { target: target, day_name: dayName, date_str: dateStr },
                 success: function(htmlResponse) {
                     if (htmlResponse && !htmlResponse.includes('غير متاح')) {
