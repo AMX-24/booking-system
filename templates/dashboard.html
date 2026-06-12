@@ -43,6 +43,7 @@
 
             <h3 class="mb-4 text-secondary fw-bold">نظام الإدارة المركزي</h3>
 
+            <!-- القسم 1: الإحصائيات -->
             <div id="stats-sec" class="admin-section active">
                 <h5 class="section-header">📊 الإحصائيات العامة</h5>
                 <div class="row g-3 mb-4">
@@ -85,14 +86,14 @@
                                     <td>{{ b.date }}</td>
                                     <td class="text-success fw-bold" dir="ltr">{{ b.time }}</td>
                                     <td>
-                                        <form action="/admin/delete_booking" method="POST" onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الحجز؟');" style="display:inline;">
+                                        <form action="/admin/delete_booking" method="POST" onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الحجز؟ سيتم إتاحة المقعد مجدداً للطلاب فوراً.');" style="display:inline;">
                                             <input type="hidden" name="student_id" value="{{ b.student_id }}"><input type="hidden" name="target" value="{{ b.target }}"><input type="hidden" name="date" value="{{ b.date }}"><input type="hidden" name="time" value="{{ b.time }}">
                                             <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
                                         </form>
                                     </td>
                                 </tr>
                                 {% else %}
-                                <tr><td colspan="7" class="text-muted py-4">لا يوجد أي حجوزات مسجلة.</td></tr>
+                                <tr><td colspan="7" class="text-muted py-4">لا يوجد أي حجوزات مسجلة في النظام حتى الآن.</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -100,39 +101,195 @@
                 </div>
             </div>
 
+            <!-- القسم 2: إدارة جهات الحجز (استرجاع النماذج وأزرار التعديل بالكامل) -->
             <div id="entities-sec" class="admin-section">
-                <h5 class="section-header">🏢 إدارة جهات الحجز</h5>
+                <h5 class="section-header">🏢 إدارة جهات الحجز (كروت الصفحة الرئيسية)</h5>
                 <div class="card stat-card p-4 mb-4">
-                    <table class="table table-bordered table-hover align-middle text-center"><thead class="table-light"><tr><th>الرمز</th><th>الجهة</th><th>إجراءات</th></tr></thead><tbody>
-                        {% for e_id, e_info in main_entities.items() %}
-                        <tr><td dir="ltr">{{ e_id }}</td><td>{{ e_info.title }}</td><td><form action="/admin/delete_entity/{{ e_id }}" method="POST"><button class="btn btn-sm btn-danger">حذف</button></form></td></tr>
-                        {% endfor %}
-                    </tbody></table>
+                    <table class="table table-bordered table-hover align-middle text-center">
+                        <thead class="table-light">
+                            <tr><th>الرمز</th><th>الأيقونة</th><th>الجهة</th><th>الوصف</th><th>إجراءات</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for e_id, e_info in main_entities.items() %}
+                            <tr>
+                                <td class="text-primary fw-bold" dir="ltr">{{ e_id }}</td>
+                                <td class="fs-4">{{ e_info.icon }}</td>
+                                <td class="fw-bold">{{ e_info.title }}</td>
+                                <td>{{ e_info.desc }}</td>
+                                <td>
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editEntity('{{ e_id }}', '{{ e_info.title }}', '{{ e_info.icon }}', '{{ e_info.desc }}')">تعديل</button>
+                                        <form action="/admin/delete_entity/{{ e_id }}" method="POST" onsubmit="return confirm('هل متأكد من الحذف؟');" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                
+                <form action="/admin/add_entity" method="POST" class="card stat-card p-4 mb-4 border-primary" id="addEntityForm">
+                    <h6 class="fw-bold mb-3 text-primary">➕ إضافة كرت جهة جديد:</h6>
+                    <div class="row">
+                        <div class="col-md-2 mb-3"><input type="text" name="e_id" class="form-control" placeholder="الرمز (clinic)" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="e_title" class="form-control" placeholder="اسم الجهة" required></div>
+                        <div class="col-md-2 mb-3"><input type="text" name="e_icon" class="form-control" placeholder="أيقونة 🏥" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="e_desc" class="form-control" placeholder="الوصف" required></div>
+                        <div class="col-md-12 mt-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة للرئيسية</button></div>
+                    </div>
+                </form>
+
+                <form action="/admin/edit_entity" method="POST" class="card stat-card p-4 border-warning" id="editEntityForm" style="display: none;">
+                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل كرت الجهة:</h6>
+                    <div class="row">
+                        <div class="col-md-2 mb-3"><input type="text" name="e_id" id="edit_e_id" class="form-control bg-light" readonly></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="new_title" id="edit_e_title" class="form-control" required></div>
+                        <div class="col-md-2 mb-3"><input type="text" name="new_icon" id="edit_e_icon" class="form-control" required></div>
+                        <div class="col-md-4 mb-3"><input type="text" name="new_desc" id="edit_e_desc" class="form-control" required></div>
+                        <div class="col-md-12 mt-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
+                            <button type="button" class="btn btn-secondary px-5 fw-bold" onclick="cancelEntityEdit()">إلغاء</button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
+            <!-- القسم 3: إدارة الأقسام (استرجاع النماذج وأزرار التعديل بالكامل) -->
             <div id="dept-sec" class="admin-section">
                 <h5 class="section-header">🏛️ إدارة الأقسام الأكاديمية</h5>
                 <div class="card stat-card p-4 mb-4">
-                    <table class="table table-bordered table-hover text-center align-middle"><thead class="table-light"><tr><th>الرمز</th><th>القسم</th><th>إجراءات</th></tr></thead><tbody>
-                        {% for d_id, d_name in departments.items() %}
-                        <tr><td dir="ltr">{{ d_id }}</td><td>{{ d_name }}</td><td><form action="/admin/delete_department/{{ d_id }}" method="POST"><button class="btn btn-sm btn-danger">حذف</button></form></td></tr>
-                        {% endfor %}
-                    </tbody></table>
+                    <table class="table table-bordered table-hover text-center align-middle">
+                        <thead class="table-light"><tr><th>الرمز</th><th>القسم</th><th>إجراءات</th></tr></thead>
+                        <tbody>
+                            {% for d_id, d_name in departments.items() %}
+                            <tr>
+                                <td dir="ltr" class="fw-bold text-primary">{{ d_id }}</td>
+                                <td>{{ d_name }}</td>
+                                <td>
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editDepartment('{{ d_id }}', '{{ d_name }}')">تعديل</button>
+                                        <form action="/admin/delete_department/{{ d_id }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟');" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+
+                <form action="/admin/add_department" method="POST" class="card stat-card p-4 mb-4 border-primary" id="addDeptForm">
+                    <h6 class="fw-bold mb-3 text-primary">➕ إضافة قسم جديد:</h6>
+                    <div class="row">
+                        <div class="col-md-5 mb-3"><input type="text" name="dept_id" class="form-control" placeholder="رمز القسم (cyber)" required></div>
+                        <div class="col-md-5 mb-3"><input type="text" name="dept_name" class="form-control" placeholder="اسم القسم" required></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
+                    </div>
+                </form>
+
+                <form action="/admin/edit_department" method="POST" class="card stat-card p-4 border-warning" id="editDeptForm" style="display: none;">
+                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل بيانات القسم:</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3"><input type="text" name="dept_id" id="edit_id" class="form-control bg-light" readonly></div>
+                        <div class="col-md-6 mb-3"><input type="text" name="new_name" id="edit_name" class="form-control" required></div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
+                            <button type="button" class="btn btn-secondary px-4" onclick="cancelEdit()">إلغاء</button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
+            <!-- القسم 4: إدارة الدكاترة والمهندسين (استرجاع النماذج وأزرار التعديل بالكامل) -->
             <div id="staff-sec" class="admin-section">
                 <h5 class="section-header">👨‍🏫 إدارة الدكاترة والمهندسين</h5>
-                <div class="card stat-card p-4 mb-4">
-                    <table class="table table-bordered table-hover align-middle text-center"><thead class="table-light"><tr><th>الاسم</th><th>القسم</th><th>إجراءات</th></tr></thead><tbody>
-                        {% for name, info in schedule_db.items() %} {% if info.type in ['faculty', 'head'] %}
-                        <tr><td>{{ name }}</td><td>{{ departments.get(info.dept, 'غير محدد') }}</td><td><form action="/admin/delete_staff/{{ name }}" method="POST"><button class="btn btn-sm btn-danger">حذف</button></form></td></tr>
-                        {% endif %} {% endfor %}
-                    </tbody></table>
+                
+                <div class="mb-4 card p-3 bg-light border-primary">
+                    <label class="form-label fw-bold text-primary">🔍 اختر القسم لتصفية وعرض أعضاء الكادر المسجلين فقط:</label>
+                    <select id="tableDeptFilter" class="form-select border-primary fw-bold" onchange="filterStaffTableByDept()">
+                        <option value="">-- عرض كل الأقسام (كل الكادر معاً) --</option>
+                        {% for d_id, d_name in departments.items() %}
+                            <option value="{{ d_id }}">{{ d_name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
+
+                <div class="card stat-card p-4 mb-4">
+                    <h6 class="fw-bold mb-3 text-secondary">📋 قائمة الكادر المسجل حالياً:</h6>
+                    <table class="table table-bordered table-hover align-middle text-center" id="staffMainTable">
+                        <thead class="table-light">
+                            <tr><th>الاسم</th><th>القسم التابع له</th><th>المنصب</th><th>إجراءات</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for name, info in schedule_db.items() %}
+                                {% if info.type in ['faculty', 'head'] %}
+                                <tr class="admin-staff-row" data-dept="{{ info.dept }}">
+                                    <td class="fw-bold text-dark">{{ name }}</td>
+                                    <td class="text-primary fw-bold">{{ departments.get(info.dept, 'غير محدد') }}</td>
+                                    <td>{{ 'رئيس قسم' if info.type == 'head' else 'عضو هيئة تدريس' }}</td>
+                                    <td>
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editStaff('{{ name }}', '{{ info.dept }}', '{{ info.type }}')">تعديل</button>
+                                            <form action="/admin/delete_staff/{{ name }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟');" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <form action="/admin/add_staff" method="POST" class="card stat-card p-4 border-primary mb-4" id="addStaffForm">
+                    <h6 class="fw-bold mb-3 text-primary">➕ إضافة دكتور / مهندس جديد:</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3"><input type="text" name="staff_name" class="form-control" placeholder="اسم الدكتور ثلاثي" required></div>
+                        <div class="col-md-4 mb-3">
+                            <select name="dept_id" class="form-select" required>
+                                <option value="" disabled selected>-- اختر القسم التابع له --</option>
+                                {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <select name="staff_type" class="form-select">
+                                <option value="faculty">عضو هيئة تدريس</option>
+                                <option value="head">رئيس قسم</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
+                    </div>
+                </form>
+
+                <form action="/admin/edit_staff" method="POST" class="card stat-card p-4 border-warning" id="editStaffForm" style="display: none;">
+                    <h6 class="fw-bold mb-3 text-warning">✏️ تعديل بيانات العضو:</h6>
+                    <input type="hidden" name="old_staff_name" id="edit_old_staff_name">
+                    <div class="row">
+                        <div class="col-md-4 mb-3"><input type="text" name="new_staff_name" id="edit_staff_name" class="form-control" required></div>
+                        <div class="col-md-4 mb-3">
+                            <select name="dept_id" id="edit_staff_dept" class="form-select" required>
+                                {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <select name="staff_type" id="edit_staff_type" class="form-select">
+                                <option value="faculty">عضو هيئة تدريس</option>
+                                <option value="head">رئيس قسم</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
+                            <button type="button" class="btn btn-secondary px-3" onclick="cancelStaffEdit()">إلغاء</button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
+            <!-- القسم 5: إعداد الجداول (التحديث الأخير مع الإضافة المتعددة) -->
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4 border-success">
@@ -178,7 +335,6 @@
 
                     <div id="scheduleRowsContainer">
                         <div class="schedule-row row bg-light p-3 rounded border mx-0 mb-3 g-2 align-items-end position-relative">
-                            
                             <div class="col-md-3">
                                 <label class="form-label text-muted fw-bold">اليوم:</label>
                                 <select name="spec_day[]" class="form-select border-primary" required>
@@ -190,7 +346,6 @@
                                     <option value="thu">الخميس</option>
                                 </select>
                             </div>
-                            
                             <div class="col-md-3">
                                 <label class="form-label text-muted fw-bold">من الساعة:</label>
                                 <select name="start_time[]" class="form-select border-primary" required>
@@ -200,7 +355,6 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            
                             <div class="col-md-3">
                                 <label class="form-label text-muted fw-bold">إلى الساعة:</label>
                                 <select name="end_time[]" class="form-select border-primary" required>
@@ -210,23 +364,17 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            
                             <div class="col-md-2">
                                 <label class="form-label text-muted fw-bold">الاستيعاب:</label>
                                 <input type="number" name="capacity[]" class="form-control border-primary" value="1" min="1" required>
                             </div>
-
                             <div class="col-md-1 text-center">
                                 <button type="button" class="btn btn-outline-danger w-100 remove-row-btn" style="display:none;" onclick="this.closest('.schedule-row').remove()">🗑️</button>
                             </div>
-
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-outline-primary mb-4 fw-bold" onclick="addScheduleRow()">
-                        ➕ إضافة فترة أخرى لنفس الدكتور
-                    </button>
-
+                    <button type="button" class="btn btn-outline-primary mb-4 fw-bold" onclick="addScheduleRow()">➕ إضافة فترة أخرى لنفس الدكتور</button>
                     <button type="submit" class="btn btn-success w-100 fw-bold py-2 fs-5">حفظ وإعتماد الجدول الأسبوعي</button>
                 </form>
             </div>
@@ -243,7 +391,60 @@
         if(element) element.classList.add('active');
     }
 
-    // دالة الفلترة في الجدولة
+    // دوال إدارة الجهات
+    function editEntity(id, title, icon, desc) {
+        document.getElementById('addEntityForm').style.display = 'none';
+        document.getElementById('editEntityForm').style.display = 'block';
+        document.getElementById('edit_e_id').value = id;
+        document.getElementById('edit_e_title').value = title;
+        document.getElementById('edit_e_icon').value = icon;
+        document.getElementById('edit_e_desc').value = desc;
+        document.getElementById('editEntityForm').scrollIntoView({ behavior: 'smooth' });
+    }
+    function cancelEntityEdit() {
+        document.getElementById('editEntityForm').style.display = 'none';
+        document.getElementById('addEntityForm').style.display = 'block';
+    }
+
+    // دوال إدارة الأقسام
+    function editDepartment(id, name) {
+        document.getElementById('addDeptForm').style.display = 'none';
+        document.getElementById('editDeptForm').style.display = 'block';
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('editDeptForm').scrollIntoView({ behavior: 'smooth' });
+    }
+    function cancelEdit() {
+        document.getElementById('editDeptForm').style.display = 'none';
+        document.getElementById('addDeptForm').style.display = 'block';
+    }
+
+    // دوال إدارة الدكاترة
+    function filterStaffTableByDept() {
+        let selectedDept = document.getElementById('tableDeptFilter').value;
+        let rows = document.querySelectorAll('.admin-staff-row');
+        rows.forEach(row => {
+            let rowDept = row.getAttribute('data-dept');
+            if (selectedDept === "" || rowDept === selectedDept) row.style.display = ""; 
+            else row.style.display = "none"; 
+        });
+    }
+
+    function editStaff(name, dept, type) {
+        document.getElementById('addStaffForm').style.display = 'none';
+        document.getElementById('editStaffForm').style.display = 'block';
+        document.getElementById('edit_old_staff_name').value = name;
+        document.getElementById('edit_staff_name').value = name;
+        document.getElementById('edit_staff_dept').value = dept;
+        document.getElementById('edit_staff_type').value = type;
+        document.getElementById('editStaffForm').scrollIntoView({ behavior: 'smooth' });
+    }
+    function cancelStaffEdit() {
+        document.getElementById('editStaffForm').style.display = 'none';
+        document.getElementById('addStaffForm').style.display = 'block';
+    }
+
+    // دوال قسم إعداد المواعيد
     function handleAdminScheduleFlow() {
         let entityType = document.getElementById('entityTypeFilter').value;
         let deptDiv = document.getElementById('departmentFilterDiv');
@@ -277,25 +478,15 @@
         }
     }
 
-    // الدالة الذكية لنسخ صف الفترات (زر الـ +)
     function addScheduleRow() {
-        // البحث عن الحاوية
         const container = document.getElementById('scheduleRowsContainer');
-        // جلب أول صف كقالب (Template)
         const firstRow = container.querySelector('.schedule-row');
-        // نسخ الصف بالكامل
         const clonedRow = firstRow.cloneNode(true);
-
-        // تصفير القيم في الصف الجديد عشان ما ينسخ اختيارات المستخدم السابقة
         clonedRow.querySelector('select[name="spec_day[]"]').value = "";
         clonedRow.querySelector('select[name="start_time[]"]').value = "";
         clonedRow.querySelector('select[name="end_time[]"]').value = "";
         clonedRow.querySelector('input[name="capacity[]"]').value = "1";
-
-        // إظهار زر الحذف (🗑️) في الصف المنسوخ عشان يقدر يحذفه لو غلط
         clonedRow.querySelector('.remove-row-btn').style.display = 'block';
-
-        // إضافة الصف الجديد للحاوية
         container.appendChild(clonedRow);
     }
 </script>
