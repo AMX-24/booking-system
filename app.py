@@ -6,7 +6,6 @@ app.secret_key = 'cti_booking_secure_super_key'
 ADMIN_USERNAME = "admin_cti"
 ADMIN_PASSWORD = "cti_2026"
 
-# الفترات اللي بتظهر للمتدرب في صفحة الحجز (نص ساعة)
 AVAILABLE_SLOTS = [
     '08:00 AM - 08:30 AM', '08:30 AM - 09:00 AM', '09:00 AM - 09:30 AM',
     '09:30 AM - 10:00 AM', '10:00 AM - 10:30 AM', '10:30 AM - 11:00 AM',
@@ -15,7 +14,6 @@ AVAILABLE_SLOTS = [
     '02:00 PM - 02:30 PM', '02:30 PM - 03:00 PM'
 ]
 
-# الساعات الفردية اللي بتظهر للإدارة عشان تختار البداية والنهاية
 TIME_MARKERS = [
     '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
     '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',
@@ -35,9 +33,10 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
-bookings_db = {}
+bookings_db = {} 
+detailed_bookings_list = [] 
 
-# قاعدة بيانات الدكاترة كاملة
+# قاعدة بيانات الدكاترة كاملة وجاهزة
 schedule_db = {
     'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': [], 'capacity': 5, 'slots': []},
     'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
@@ -70,7 +69,7 @@ schedule_db = {
     'عبدالله غرسان': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'عواض الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
-    'فهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'fهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
@@ -117,7 +116,7 @@ schedule_db = {
     'حامد الشمراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'خالد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'خليل ال صمع': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
-    'سالم الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'sالم الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'سلطان ال مغلف': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'سلمان الشهري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'صالح الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
@@ -190,12 +189,38 @@ def admin_dashboard():
     stats = {
         'total_departments': len(departments),
         'total_staff': len(schedule_db),
-        'total_bookings': sum(bookings_db.values()),
+        'total_bookings': len(detailed_bookings_list),
         'total_entities': len(main_entities)
     }
-    # تم إرسال TIME_MARKERS للواجهة بدلاً من الفترات المزدوجة
-    return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, main_entities=main_entities, time_markers=TIME_MARKERS, stats=stats)
+    return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, main_entities=main_entities, time_markers=TIME_MARKERS, stats=stats, detailed_bookings=detailed_bookings_list)
 
+# ==================== الميزة الجديدة: حذف حجز وإعادة إتاحة المقعد ====================
+@app.route('/admin/delete_booking', methods=['POST'])
+def delete_booking():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    
+    student_id = request.form.get('student_id')
+    target = request.form.get('target')
+    date = request.form.get('date')
+    time = request.form.get('time')
+    
+    global detailed_bookings_list, bookings_db
+    
+    # البحث عن الحجز وحذفه من السجل التفصيلي
+    for b in detailed_bookings_list:
+        if b['student_id'] == student_id and b['target'] == target and b['date'] == date and b['time'] == time:
+            detailed_bookings_list.remove(b)
+            
+            # تفريغ المقعد تلقائياً في قاعدة عدادات السعة
+            if (target, date, time) in bookings_db:
+                bookings_db[(target, date, time)] = max(0, bookings_db[(target, date, time)] - 1)
+                
+            flash(f'تم إلغاء حجز المتدرب ذو الرقم ({student_id}) وإعادة إتاحة المقعد بنجاح!', 'success')
+            break
+            
+    return redirect(url_for('admin_dashboard'))
+
+# ==================== باقي دوال الإدارة والتحكم ====================
 @app.route('/admin/add_entity', methods=['POST'])
 def add_entity():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
@@ -221,7 +246,6 @@ def edit_entity():
     e_title = request.form.get('new_title').strip()
     e_icon = request.form.get('new_icon').strip()
     e_desc = request.form.get('new_desc').strip()
-    
     if e_id in main_entities:
         old_title = main_entities[e_id]['title']
         main_entities[e_id] = {'title': e_title, 'icon': e_icon, 'desc': e_desc}
@@ -304,7 +328,6 @@ def edit_staff():
     new_name = request.form.get('new_staff_name').strip()
     dept_id = request.form.get('dept_id')
     staff_type = request.form.get('staff_type')
-    
     if old_name in schedule_db and new_name and dept_id:
         staff_data = schedule_db.pop(old_name)
         staff_data['dept'] = dept_id
@@ -323,14 +346,11 @@ def delete_staff(staff_name):
         flash('العضو غير موجود!', 'danger')
     return redirect(url_for('admin_dashboard'))
 
-# التعديل الجديد: قراءة الساعات الفردية وتقطيعها إلى فترات للمتدرب
 @app.route('/admin/update_schedule', methods=['POST'])
 def update_schedule():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
-    
     target_name = request.form.get('target_name')
     spec_date = request.form.get('spec_date')
-    spec_day = request.form.get('spec_day')  
     start_time = request.form.get('start_time')
     end_time = request.form.get('end_time')
     capacity = int(request.form.get('capacity', 1))
@@ -338,16 +358,11 @@ def update_schedule():
     if target_name in schedule_db and spec_date and start_time and end_time:
         if 'custom_dates' not in schedule_db[target_name]:
             schedule_db[target_name]['custom_dates'] = {}
-            
         schedule_db[target_name]['custom_dates'][spec_date] = {}
-        
         try:
-            # استخدام الـ Index من قائمة الساعات الفردية لاقتطاع الفترات الصحيحة
             start_idx = TIME_MARKERS.index(start_time)
             end_idx = TIME_MARKERS.index(end_time)
-            
             if start_idx < end_idx:
-                # توليد الفترات الزمنية للمتدرب (من قائمة AVAILABLE_SLOTS) بناءً على الاختيار
                 for slot in AVAILABLE_SLOTS[start_idx:end_idx]:
                     schedule_db[target_name]['custom_dates'][spec_date][slot] = capacity
                 flash(f'تم حفظ المواعيد لـ ({target_name}) بتاريخ {spec_date} من {start_time} إلى {end_time} بنجاح!', 'success')
@@ -355,27 +370,15 @@ def update_schedule():
                 flash('تنبيه: وقت البداية يجب أن يكون قبل وقت النهاية!', 'danger')
         except ValueError:
             pass
-    else:
-        flash('تنبيه: الرجاء تعبئة جميع الحقول بشكل صحيح!', 'danger')
-        
     return redirect(url_for('admin_dashboard'))
-
-@app.route('/select_time/<entity_id>')
-def select_time(entity_id):
-    if entity_id not in main_entities:
-        return redirect(url_for('home'))
-    entity_name = main_entities[entity_id]['title']
-    return render_template('select_time.html', entity_id=entity_id, entity_name=entity_name, departments=departments, schedule_db=schedule_db)
 
 @app.route('/get_slots_ajax', methods=['POST'])
 def get_slots_ajax():
     target = request.form.get('target')
     day_name = request.form.get('day_name')
     date_str = request.form.get('date_str')
-    
     if not target or target not in schedule_db: return ''
     info = schedule_db[target]
-    
     custom_dates = info.get('custom_dates', {})
     if date_str in custom_dates and custom_dates[date_str]:
         slots_data = custom_dates[date_str]
@@ -390,54 +393,4 @@ def get_slots_ajax():
                     html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
         html_output += '</div>'
         return html_output
-        
-    if day_name not in info.get('days', []): 
-        return '<span class="text-danger fw-bold small">عذراً، لم يتم إضافة مواعيد متاحة لهذا اليوم!</span>'
-        
-    capacity_limit = info.get('capacity', 1)
-    html_output = '<div class="row g-2">'
-    for slot in info.get('slots', []):
-        current_bookings = bookings_db.get((target, date_str, slot), 0)
-        if current_bookings < capacity_limit:
-            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
-        else:
-            html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
-    html_output += '</div>'
-    return html_output
-
-@app.route('/book', methods=['POST'])
-def book():
-    student_name = request.form.get('student_name')
-    student_id = request.form.get('student_id')
-    student_email = request.form.get('student_email')
-    target_staff = request.form.get('target')
-    booking_date = request.form.get('booking_date')
-    booking_time = request.form.get('booking_time')
-    
-    if not booking_time:
-        flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
-        return redirect(url_for('home'))
-        
-    info = schedule_db.get(target_staff, {})
-    capacity_limit = info.get('capacity', 1)
-    if 'custom_dates' in info and booking_date in info['custom_dates'] and booking_time in info['custom_dates'][booking_date]:
-        capacity_limit = info['custom_dates'][booking_date][booking_time]
-        
-    current_bookings = bookings_db.get((target_staff, booking_date, booking_time), 0)
-    
-    if current_bookings >= capacity_limit:
-        flash('عذراً، لقد اكتملت السعة الاستيعابية لهذا الموعد قبل قليل! الرجاء اختيار موعد آخر.', 'danger')
-        return redirect(url_for('home'))
-        
-    bookings_db[(target_staff, booking_date, booking_time)] = current_bookings + 1
-    
-    dept_id = schedule_db.get(target_staff, {}).get('dept', '')
-    dept_name = departments.get(dept_id, 'إدارة الكلية')
-    if target_staff == 'شؤون المتدربين' or schedule_db.get(target_staff, {}).get('type') == 'custom_entity':
-        dept_name = 'إدارة الكلية / الجهات الرئيسية'
-        
-    success_data = {'student_name': student_name, 'student_id': student_id, 'department': dept_name, 'target': target_staff, 'date': booking_date, 'time': booking_time}
-    return render_template('success.html', data=success_data)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    return '<span class="text-danger fw-bold small">عذراً، لم يتم إضافة مواعيد متاحة لهذا اليوم!</span>'
