@@ -6,77 +6,52 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f0f4f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .hero-header { background: linear-color-gradient; background-color: #1e3a8a; color: white; padding: 40px 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .hero-header { background-color: #1e3a8a; color: white; padding: 40px 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .selection-card { background: white; border-radius: 15px; border: 2px solid transparent; transition: all 0.3s; cursor: pointer; text-decoration: none; color: #333; display: block; height: 100%; padding: 30px 20px; }
         .selection-card:hover { border-color: #1e3a8a; transform: translateY(-5px); box-shadow: 0 10px 25px rgba(30, 58, 138, 0.1); }
-        .card-icon { font-size: 40px; margin-bottom: 15px; }
+        .card-icon { font-size: 45px; margin-bottom: 15px; }
         .card-title { color: #1e3a8a; font-weight: bold; font-size: 18px; }
         .card-desc { color: #6b7280; font-size: 13px; margin-bottom: 0; }
     </style>
 </head>
 <body>
 
-    <!-- الهيدر العلوي المتوافق مع الكلية -->
     <div class="hero-header text-center">
         <h2>🏫 مرحباً بك في نظام حجز المقابلات والمواعيد</h2>
         <p class="mb-0 text-white-50">الكلية التقنية بجدة - بوابة المتدربين الإلكترونية</p>
     </div>
 
     <div class="container my-5">
-        
-        <!-- رسائل التنبيه والنجاح إن وجدت -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} text-center mb-4" role="alert">
+                    <div class="alert alert-{{ category }} text-center mb-4 fw-bold" role="alert">
                         {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <h5 class="text-center mb-4 text-secondary">الرجاء اختيار الجهة أو المسؤول المراد مقابلته:</h5>
+        <h5 class="text-center mb-4 text-secondary fw-bold">الرجاء اختيار الجهة أو المسؤول المراد مقابلته:</h5>
 
-        <!-- صف البطاقات الثلاثة الرئيسية -->
         <div class="row g-4 justify-content-center">
-            
-            <!-- بطاقة شؤون المتدربين -->
+            {% for e_id, e_info in main_entities.items() %}
             <div class="col-md-4">
-                <a href="/select_time/affairs" class="selection-card text-center">
-                    <div class="card-icon">👤</div>
-                    <div class="card-title mb-2">شؤون المتدربين</div>
-                    <p class="card-desc">حجز موعد لمراجعة خدمات المتدربين والملفات</p>
+                <a href="/select_time/{{ e_id }}" class="selection-card text-center">
+                    <div class="card-icon">{{ e_info.icon }}</div>
+                    <div class="card-title mb-2">{{ e_info.title }}</div>
+                    <p class="card-desc">{{ e_info.desc }}</p>
                 </a>
             </div>
-
-            <!-- بطاقة رئيس القسم -->
-            <div class="col-md-4">
-                <a href="/select_time/head" class="selection-card text-center">
-                    <div class="card-icon">👔</div>
-                    <div class="card-title mb-2">رئيس القسم</div>
-                    <p class="card-desc">حجز موعد لمقابلة رئيس القسم الأكاديمي المختص</p>
-                </a>
-            </div>
-
-            <!-- بطاقة أعضاء هيئة التدريس -->
-            <div class="col-md-4">
-                <a href="/select_time/faculty" class="selection-card text-center">
-                    <div class="card-icon">👨‍🏫</div>
-                    <div class="card-title mb-2">أعضاء هيئة التدريس</div>
-                    <p class="card-desc">حجز موعد مع المهندسين والدكاترة والمحاضرين</p>
-                </a>
-            </div>
-
+            {% endfor %}
         </div>
 
-        <!-- زر الأدمن الذي طلبته يظهر هنا بالأسفل بشكل رسمي ونظيف -->
         <div class="text-center mt-5 pt-4">
             <hr class="w-25 mx-auto mb-4" style="opacity: 0.1;">
             <a href="/login" class="btn btn-sm btn-outline-secondary px-3 py-2" style="border-radius: 8px; font-size: 13px;">
                 🔐 لوحة تحكم النظام (خاص بالإدارة)
             </a>
         </div>
-
     </div>
 
 </body>
