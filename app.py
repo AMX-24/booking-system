@@ -1,20 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-# حساب أدمن موحد وصلاحية واحدة للنظام كامل (تم تحديث الباسورد هنا)
 ADMIN_USERNAME = "admin_cti"
 ADMIN_PASSWORD = "cti_2026"
 
-# الأوقات الجاهزة من 8 ص إلى 3 م بفارق نصف ساعة لـ مربعات الاختيار (Checkboxes)
 AVAILABLE_SLOTS = [
     '08:00 AM', '08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
     '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM',
     '02:00 PM', '02:30 PM', '03:00 PM'
 ]
 
-# الأقسام الرسمية للكلية
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -22,9 +19,7 @@ departments = {
     'general': 'قسم المواد العامة'
 }
 
-# قاعدة بيانات المواعيد للمسؤولين والدكاترة (مربوطة بأقسامها)
 schedule_db = {
-    # --- شؤون المتدربين ورؤساء الأقسام ---
     'شؤون المتدربين': {
         'type': 'affairs',
         'dept': 'general',
@@ -56,7 +51,6 @@ schedule_db = {
         'slots': ['08:30 AM', '10:00 AM', '12:00 PM']
     },
 
-    # --- دكاترة قسم المواد العامة ---
     'م. بندر العمودي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. تركي الغامدي': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. تركي العتيبي': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -78,7 +72,6 @@ schedule_db = {
     'م. منصور الشهراني': {'type': 'faculty', 'dept': 'general', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
 
-    # --- دكاترة ومهندسي قسم الحاسب الآلي ---
     'م. ابراهيم العديني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. أحمد كليبي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. احمد العمري': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -110,7 +103,6 @@ schedule_db = {
     'م. عبدالله ناصر': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
     'م. عبدالهادي المالكي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. عبيد الحربي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
-    'م. فايز شافعي': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'wed'], 'slots': ['10:00 AM', '01:00 PM']},
     'م. fهد السميري': {'type': 'faculty', 'dept': 'computer', 'days': ['tue', 'thu'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. محمد العرياني': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'mon'], 'slots': ['09:30 AM', '11:30 AM']},
     'م. محمد الشريف': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
@@ -119,7 +111,6 @@ schedule_db = {
     'م. وليد الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'م. ياسر الحبشان': {'type': 'faculty', 'dept': 'computer', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
 
-    # --- دكاترة ومهندسي قسم الاتصالات ---
     'م. احمد البار': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. امين مشدق': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['09:00 AM', '11:00 AM']},
     'د. إيمن صائغ': {'type': 'faculty', 'dept': 'communications', 'days': ['sun', 'thu'], 'slots': ['10:00 AM', '12:30 PM']},
@@ -139,7 +130,6 @@ schedule_db = {
     'م. وليد جمعة': {'type': 'faculty', 'dept': 'communications', 'days': ['mon', 'wed'], 'slots': ['08:30 AM', '10:30 AM']},
     'م. ياسر مياجي': {'type': 'faculty', 'dept': 'communications', 'days': ['tue', 'thu'], 'slots': ['10:00 AM', '12:00 PM']},
 
-    # --- دكاترة ومهندسي قسم الإلكترونيات ---
     'م. اسماعيل فاضل': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'م. أنس كرسوم': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['08:30 AM', '10:00 AM']},
     'د. أيمن كيفي': {'type': 'faculty', 'dept': 'electronics', 'days': ['sun', 'tue'], 'slots': ['09:00 AM', '11:00 AM']},
@@ -197,7 +187,13 @@ def logout():
 def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('login'))
-    return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, available_slots=AVAILABLE_SLOTS)
+        
+    stats = {
+        'total_departments': len(departments),
+        'total_staff': len(schedule_db),
+        'total_bookings': 15  # رقم يحاكي الاستجابات
+    }
+    return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, available_slots=AVAILABLE_SLOTS, stats=stats)
 
 @app.route('/admin/add_department', methods=['POST'])
 def add_department():
@@ -237,10 +233,9 @@ def update_schedule():
         flash(f'تم حفظ تعديلات المواعيد والأيام لـ ({target_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
-# المسار المحدث لصفحة اختيار الوقت المناسب
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
-    titles = {'affairs': 'شؤون المتدربين', 'head': 'رئيس القسم', 'faculty': 'أعضاء هيئة التدريس'}
+    titles = {'affairs': 'شؤون المتدربين', 'head': 'رؤساء الأقسام', 'faculty': 'أعضاء هيئة التدريس'}
     return render_template(
         'select_time.html', 
         entity_id=entity_id, 
@@ -249,7 +244,6 @@ def select_time(entity_id):
         schedule_db=schedule_db
     )
 
-# جلب الفترات عبر الأياكس (التوافقية التامة مع الواجهة)
 @app.route('/get_slots_ajax', methods=['POST'])
 def get_slots_ajax():
     target = request.form.get('target')
@@ -262,28 +256,32 @@ def get_slots_ajax():
     if day_name not in info['days']:
         return '<span class="text-danger fw-bold small">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>'
         
-    html_output = '<div class="d-flex flex-wrap justify-content-center gap-2">'
+    html_output = '<div class="row g-2">'
     for slot in info['slots']:
-        # تم الحفاظ على استدعاء الدالة للتصميم التفاعلي
-        html_output += f'<button type="button" class="btn btn-outline-primary slot-btn btn-sm m-1" onclick="selectSlot(\'{slot}\', this)">{slot}</button>'
+        html_output += f'<div class="col-4"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
     html_output += '</div>'
     return html_output
 
-# استقبال وحفظ الحجز النهائي التفاعلي
 @app.route('/book', methods=['POST'])
 def book():
     student_name = request.form.get('student_name')
     student_id = request.form.get('student_id')
-    target_staff = request.form.get('target')  # الطبيب أو المسؤول المختار
-    booking_date = request.form.get('booking_date') # التاريخ المختار
-    booking_time = request.form.get('booking_time') # الوقت المستلم من الأزرار التفاعلية
+    student_email = request.form.get('student_email')
+    target_staff = request.form.get('target')
+    booking_date = request.form.get('booking_date')
+    booking_time = request.form.get('booking_time')
     
-    # التحقق من المدخلات الأساسية قبل تأكيد الحجز
     if not booking_time:
         flash('الرجاء اختيار وقت محدد من الساعات المتاحة لإتمام الحجز!', 'danger')
         return redirect(url_for('home'))
+    
+    # محاكاة إرسال البريد للطالب والدكتور (ملاحظة الدكتور)
+    print(f"--- إرسال بريد إلكتروني تلقائي ---")
+    print(f"إلى: {student_email} | نسخة إلى: {target_staff}@tvtc.edu.sa")
+    print(f"النص: تم تأكيد الموعد للمتدرب {student_name} بتاريخ {booking_date} الساعة {booking_time}.")
+    print(f"--------------------------------")
         
-    flash(f'تم تسجيل حجز الموعد بنجاح للمتدرب {student_name} (الرقم الأكاديمي: {student_id}) مع {target_staff} بتاريخ {booking_date} الساعة {booking_time}!', 'success')
+    flash(f'تم تسجيل الحجز بنجاح! تم إرسال تفاصيل الموعد عبر الإيميل للمتدرب وللدكتور.', 'success')
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
