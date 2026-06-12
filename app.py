@@ -14,6 +14,13 @@ AVAILABLE_SLOTS = [
     '02:00 PM - 02:30 PM', '02:30 PM - 03:00 PM'
 ]
 
+# قاعدة بيانات الجهات الرئيسية في الصفحة الرئيسية
+main_entities = {
+    'affairs': {'title': 'شؤون المتدربين', 'icon': '👤', 'desc': 'حجز موعد لمراجعة خدمات المتدربين والملفات'},
+    'head': {'title': 'رئيس القسم', 'icon': '👔', 'desc': 'حجز موعد لمقابلة رئيس القسم الأكاديمي المختص'},
+    'faculty': {'title': 'أعضاء هيئة التدريس', 'icon': '👨‍🏫', 'desc': 'حجز موعد مع المهندسين والدكاترة والمحاضرين'}
+}
+
 departments = {
     'computer': 'قسم الحاسب الآلي',
     'communications': 'قسم الاتصالات',
@@ -25,7 +32,6 @@ bookings_db = {}
 
 schedule_db = {
     'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': ['sun', 'mon', 'tue', 'wed', 'thu'], 'capacity': 5, 'slots': AVAILABLE_SLOTS[0:6]},
-    
     'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:6]},
     'رئيس قسم الاتصالات': {'type': 'head', 'dept': 'communications', 'days': ['mon', 'wed'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[4:8]},
     'رئيس قسم الإلكترونيات': {'type': 'head', 'dept': 'electronics', 'days': ['sun', 'tue', 'thu'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[2:7]},
@@ -47,7 +53,7 @@ schedule_db = {
 
 @app.route('/')
 def home():
-    return render_template('index.html', departments=departments)
+    return render_template('index.html', main_entities=main_entities)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -73,29 +79,73 @@ def admin_dashboard():
     stats = {
         'total_departments': len(departments),
         'total_staff': len(schedule_db),
-        'total_bookings': sum(bookings_db.values())
+        'total_bookings': sum(bookings_db.values()),
+        'total_entities': len(main_entities)
     }
-    return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, available_slots=AVAILABLE_SLOTS, stats=stats)
+    return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, main_entities=main_entities, available_slots=AVAILABLE_SLOTS, stats=stats)
 
+# ==================== إدارة الجهات الرئيسية (الصفحة الرئيسية) ====================
+@app.route('/admin/add_entity', methods=['POST'])
+def add_entity():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    e_id = request.form.get('e_id').strip().lower()
+    e_title = request.form.get('e_title').strip()
+    e_icon = request.form.get('e_icon').strip()
+    e_desc = request.form.get('e_desc').strip()
+    
+    if e_id and e_title:
+        if e_id not in main_entities:
+            main_entities[e_id] = {'title': e_title, 'icon': e_icon, 'desc': e_desc}
+            if e_title not in schedule_db:
+                schedule_db[e_title] = {'type': 'custom_entity', 'dept': 'general_admin', 'days': [], 'capacity': 1, 'slots': []}
+            flash(f'تم إضافة جهة الحجز ({e_title}) للصفحة الرئيسية بنجاح!', 'success')
+        else:
+            flash('الرمز التعريفي للجهة موجود مسبقاً!', 'danger')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/edit_entity', methods=['POST'])
+def edit_entity():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    e_id = request.form.get('e_id')
+    e_title = request.form.get('new_title').strip()
+    e_icon = request.form.get('new_icon').strip()
+    e_desc = request.form.get('new_desc').strip()
+    
+    if e_id in main_entities:
+        old_title = main_entities[e_id]['title']
+        main_entities[e_id] = {'title': e_title, 'icon': e_icon, 'desc': e_desc}
+        
+        if old_title != e_title and old_title in schedule_db:
+            schedule_db[e_title] = schedule_db.pop(old_title)
+            
+        flash('تم تعديل بيانات الجهة بنجاح!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_entity/<entity_id>', methods=['POST'])
+def delete_entity(entity_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    if entity_id in main_entities:
+        if entity_id in ['affairs', 'head', 'faculty']:
+            flash('لا يمكن حذف الجهات الأساسية المدمجة في هيكل النظام!', 'danger')
+        else:
+            e_title = main_entities[entity_id]['title']
+            del main_entities[entity_id]
+            if e_title in schedule_db:
+                del schedule_db[e_title]
+            flash(f'تم حذف جهة ({e_title}) من الصفحة الرئيسية نهائياً!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+# ==================== إدارة الأقسام الأكاديمية والمدرسين والمواعيد ====================
 @app.route('/admin/add_department', methods=['POST'])
 def add_department():
-    if not session.get('admin_logged_in'): 
-        return redirect(url_for('login'))
-    
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
     dept_id = request.form.get('dept_id').strip().lower()
     dept_name = request.form.get('dept_name').strip()
-    
     if dept_id and dept_name:
         if dept_id not in departments:
             departments[dept_id] = dept_name
             head_title = f"رئيس {dept_name}"
-            schedule_db[head_title] = {
-                'type': 'head',
-                'dept': dept_id,
-                'days': ['sun', 'tue'],
-                'capacity': 1,
-                'slots': AVAILABLE_SLOTS[0:2]
-            }
+            schedule_db[head_title] = {'type': 'head', 'dept': dept_id, 'days': ['sun', 'tue'], 'capacity': 1, 'slots': AVAILABLE_SLOTS[0:2]}
             flash(f'تم إضافة {dept_name} بنجاح!', 'success')
         else:
             flash('رمز القسم موجود مسبقاً!', 'danger')
@@ -103,60 +153,40 @@ def add_department():
 
 @app.route('/admin/edit_department', methods=['POST'])
 def edit_department():
-    if not session.get('admin_logged_in'): 
-        return redirect(url_for('login'))
-    
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
     dept_id = request.form.get('dept_id')
     new_name = request.form.get('new_name').strip()
-    
     if dept_id in departments and new_name:
         departments[dept_id] = new_name
         flash(f'تم تعديل اسم القسم إلى ({new_name}) بنجاح!', 'success')
-        
     return redirect(url_for('admin_dashboard'))
 
-# ---- الميزة الجديدة التي طلبها الدكتور (ربط الكادر بالقسم) ----
 @app.route('/admin/add_staff', methods=['POST'])
 def add_staff():
-    if not session.get('admin_logged_in'): 
-        return redirect(url_for('login'))
-    
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
     staff_name = request.form.get('staff_name').strip()
     dept_id = request.form.get('dept_id')
     staff_type = request.form.get('staff_type')
-    
     if staff_name and dept_id:
         if staff_name in schedule_db:
             flash('هذا الاسم موجود مسبقاً في النظام!', 'danger')
         else:
-            # ربط الدكتور بالقسم المختار وإنشاء ملف فارغ له
-            schedule_db[staff_name] = {
-                'type': staff_type,
-                'dept': dept_id,
-                'days': [],
-                'capacity': 1,
-                'slots': []
-            }
-            flash(f'تم إضافة ({staff_name}) وربطه بالقسم بنجاح! الرجاء الانتقال لتبويب إعداد المواعيد لتحديد أوقاته.', 'success')
-            
+            schedule_db[staff_name] = {'type': staff_type, 'dept': dept_id, 'days': [], 'capacity': 1, 'slots': []}
+            flash(f'تم إضافة ({staff_name}) وربطه بالقسم بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/update_schedule', methods=['POST'])
 def update_schedule():
-    if not session.get('admin_logged_in'): 
-        return redirect(url_for('login'))
-    
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
     target_name = request.form.get('target_name')
     chosen_days = request.form.getlist('days')
     start_time = request.form.get('start_time')
     end_time = request.form.get('end_time')
-    
     capacity = int(request.form.get('capacity', 1))
     
     if target_name in schedule_db:
         schedule_db[target_name]['days'] = chosen_days
         schedule_db[target_name]['capacity'] = capacity
-        
         if start_time and end_time:
             try:
                 start_idx = AVAILABLE_SLOTS.index(start_time)
@@ -168,15 +198,16 @@ def update_schedule():
                     return redirect(url_for('admin_dashboard'))
             except ValueError:
                 pass
-                
-        flash(f'تم حفظ السعة الاستيعابية ({capacity}) وتعديلات المواعيد لـ ({target_name}) بنجاح!', 'success')
-        
+        flash(f'تم حفظ السعة ({capacity}) وتعديلات المواعيد لـ ({target_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
+# ==================== عمليات الحجز ====================
 @app.route('/select_time/<entity_id>')
 def select_time(entity_id):
-    titles = {'affairs': 'شؤون المتدربين', 'head': 'رؤساء الأقسام', 'faculty': 'أعضاء هيئة التدريس'}
-    return render_template('select_time.html', entity_id=entity_id, entity_name=titles.get(entity_id, 'المسؤول'), departments=departments, schedule_db=schedule_db)
+    if entity_id not in main_entities:
+        return redirect(url_for('home'))
+    entity_name = main_entities[entity_id]['title']
+    return render_template('select_time.html', entity_id=entity_id, entity_name=entity_name, departments=departments, schedule_db=schedule_db)
 
 @app.route('/get_slots_ajax', methods=['POST'])
 def get_slots_ajax():
@@ -184,24 +215,18 @@ def get_slots_ajax():
     day_name = request.form.get('day_name')
     date_str = request.form.get('date_str')
     
-    if not target or target not in schedule_db:
-        return ''
-        
+    if not target or target not in schedule_db: return ''
     info = schedule_db[target]
-    if day_name not in info['days']:
-        return '<span class="text-danger fw-bold small">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>'
+    if day_name not in info['days']: return '<span class="text-danger fw-bold small">عذراً، هذا اليوم غير متاح للمقابلة حالياً!</span>'
         
     capacity_limit = info.get('capacity', 1)
-    
     html_output = '<div class="row g-2">'
     for slot in info['slots']:
         current_bookings = bookings_db.get((target, date_str, slot), 0)
-        
         if current_bookings < capacity_limit:
             html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-primary slot-btn w-100 p-2" onclick="selectSlot(\'{slot}\', this)">{slot}</button></div>'
         else:
             html_output += f'<div class="col-md-6 col-12"><button type="button" class="btn btn-outline-danger w-100 p-2" disabled>{slot} <br><small class="fw-bold">(ممتلئ)</small></button></div>'
-            
     html_output += '</div>'
     return html_output
 
@@ -228,22 +253,11 @@ def book():
     bookings_db[(target_staff, booking_date, booking_time)] = current_bookings + 1
     
     dept_id = schedule_db.get(target_staff, {}).get('dept', '')
-    dept_name = departments.get(dept_id, 'غير محدد')
-    if target_staff == 'شؤون المتدربين':
-        dept_name = 'شؤون المتدربين'
+    dept_name = departments.get(dept_id, 'إدارة الكلية')
+    if target_staff == 'شؤون المتدربين' or schedule_db.get(target_staff, {}).get('type') == 'custom_entity':
+        dept_name = 'إدارة الكلية / الجهات الرئيسية'
         
-    success_data = {
-        'student_name': student_name,
-        'student_id': student_id,
-        'department': dept_name,
-        'target': target_staff,
-        'date': booking_date,
-        'time': booking_time
-    }
-    
-    print(f"--- تم تأكيد الموعد وإرسال الإيميل ---")
-    print(f"طالب: {student_name} | دكتور: {target_staff} | وقت: {booking_time}")
-        
+    success_data = {'student_name': student_name, 'student_id': student_id, 'department': dept_name, 'target': target_staff, 'date': booking_date, 'time': booking_time}
     return render_template('success.html', data=success_data)
 
 if __name__ == '__main__':
