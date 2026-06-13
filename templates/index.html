@@ -19,15 +19,15 @@
             position: absolute;
             top: 20px;
             right: 35px; 
-            width: 120px;  /* تم التكبير هنا */
-            height: 120px; /* تم التكبير هنا */
+            width: 120px;  
+            height: 120px; 
             background-color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            padding: 15px; /* زيادة المساحة الداخلية عشان يتنفس الشعار */
+            padding: 15px; 
             z-index: 10;
         }
 
@@ -37,15 +37,8 @@
             object-fit: contain;
         }
 
-        /* تكبير الشعار في شاشات الجوال بشكل متناسق */
         @media (max-width: 576px) {
-            .logo-circle {
-                width: 80px;  /* تم التكبير للجوال */
-                height: 80px; /* تم التكبير للجوال */
-                top: 15px;
-                right: 15px;
-                padding: 10px;
-            }
+            .logo-circle { width: 80px; height: 80px; top: 15px; right: 15px; padding: 10px; }
         }
     </style>
 </head>
@@ -53,16 +46,17 @@
 
 <div class="hero-section text-center mb-5">
     
-    <!-- قسم الشعار في الزاوية -->
     <div class="logo-circle">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="شعار الكلية">
     </div>
     
-    <!-- العنوان واسم الكلية -->
     <h1 class="fw-bold mb-3 mt-4">مرحباً بك في نظام حجز المواعيد 🏫</h1>
     <p class="fs-5 opacity-90">الكلية التقنية للاتصالات والمعلومات بجدة - بوابة المتدربين الإلكترونية</p>
     
-    <a href="/login" class="btn btn-light text-primary fw-bold btn-sm mt-3 px-4 py-2 shadow-sm rounded-pill">⚙️ تسجيل دخول الإدارة</a>
+    <div class="mt-4">
+        <a href="/login" class="btn btn-light text-primary fw-bold btn-sm px-4 py-2 shadow-sm rounded-pill">⚙️ دخول الإدارة</a>
+        <a href="/staff_login" class="btn btn-outline-light fw-bold btn-sm px-4 py-2 shadow-sm rounded-pill ms-2">👨‍🏫 بوابة الدكاترة</a>
+    </div>
 </div>
 
 <div class="container mb-5">
