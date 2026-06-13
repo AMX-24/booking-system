@@ -230,7 +230,7 @@
                 </form>
             </div>
 
-            <!-- القسم 4: الدكاترة / المهندسين -->
+            <!-- القسم 4: الدكاترة / المهندسين (مع إضافة حقل الإيميل) -->
             <div id="staff-sec" class="admin-section">
                 <h5 class="section-header">👨‍🏫 إدارة الدكاترة والمهندسين</h5>
                 <div class="mb-4 card p-3 bg-light border-primary">
@@ -247,7 +247,8 @@
                     <h6 class="fw-bold mb-3 text-secondary">📋 قائمة الكادر المسجل حالياً:</h6>
                     <table class="table table-bordered table-hover align-middle text-center" id="staffMainTable">
                         <thead class="table-light">
-                            <tr><th>الاسم</th><th>القسم التابع له</th><th>المنصب</th><th>إجراءات</th></tr>
+                            <!-- تمت إضافة الإيميل هنا -->
+                            <tr><th>الاسم</th><th>القسم التابع له</th><th>الإيميل</th><th>المنصب</th><th>إجراءات</th></tr>
                         </thead>
                         <tbody>
                             {% for name, info in schedule_db.items() %}
@@ -255,10 +256,12 @@
                                 <tr class="admin-staff-row" data-dept="{{ info.dept }}">
                                     <td class="fw-bold text-dark">{{ name }}</td>
                                     <td class="text-primary fw-bold">{{ departments.get(info.dept, 'غير محدد') }}</td>
+                                    <td dir="ltr">{{ info.email }}</td>
                                     <td>{{ 'رئيس قسم' if info.type == 'head' else 'عضو هيئة تدريس' }}</td>
                                     <td>
                                         <div class="d-flex gap-1 justify-content-center">
-                                            <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editStaff('{{ name }}', '{{ info.dept }}', '{{ info.type }}')">تعديل</button>
+                                            <!-- تعديل الزر لإرسال الإيميل للدالة -->
+                                            <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editStaff('{{ name }}', '{{ info.dept }}', '{{ info.type }}', '{{ info.email }}')">تعديل</button>
                                             <form action="/admin/delete_staff/{{ name }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟');" style="display:inline;">
                                                 <button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button>
                                             </form>
@@ -274,10 +277,12 @@
                 <form action="/admin/add_staff" method="POST" class="card stat-card p-4 border-primary mb-4" id="addStaffForm">
                     <h6 class="fw-bold mb-3 text-primary">➕ إضافة دكتور / مهندس جديد:</h6>
                     <div class="row">
-                        <div class="col-md-4 mb-3"><input type="text" name="staff_name" class="form-control" placeholder="اسم الدكتور ثلاثي" required></div>
-                        <div class="col-md-4 mb-3">
+                        <!-- تم تعديل التقسيمات لتسع خانة الإيميل -->
+                        <div class="col-md-3 mb-3"><input type="text" name="staff_name" class="form-control" placeholder="اسم الدكتور ثلاثي" required></div>
+                        <div class="col-md-3 mb-3"><input type="email" name="staff_email" class="form-control" placeholder="البريد الإلكتروني" dir="ltr" required></div>
+                        <div class="col-md-3 mb-3">
                             <select name="dept_id" class="form-select" required>
-                                <option value="" disabled selected>-- اختر القسم التابع له --</option>
+                                <option value="" disabled selected>-- اختر القسم --</option>
                                 {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
                             </select>
                         </div>
@@ -287,7 +292,7 @@
                                 <option value="head">رئيس قسم</option>
                             </select>
                         </div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
+                        <div class="col-md-1"><button type="submit" class="btn btn-primary w-100 fw-bold">إضافة</button></div>
                     </div>
                 </form>
 
@@ -295,8 +300,9 @@
                     <h6 class="fw-bold mb-3 text-warning">✏️ تعديل بيانات العضو:</h6>
                     <input type="hidden" name="old_staff_name" id="edit_old_staff_name">
                     <div class="row">
-                        <div class="col-md-4 mb-3"><input type="text" name="new_staff_name" id="edit_staff_name" class="form-control" required></div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3"><input type="text" name="new_staff_name" id="edit_staff_name" class="form-control" required></div>
+                        <div class="col-md-3 mb-3"><input type="email" name="staff_email" id="edit_staff_email" class="form-control" dir="ltr" required></div>
+                        <div class="col-md-2 mb-3">
                             <select name="dept_id" id="edit_staff_dept" class="form-select" required>
                                 {% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}
                             </select>
@@ -309,7 +315,7 @@
                         </div>
                         <div class="col-md-2 d-flex gap-2">
                             <button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ</button>
-                            <button type="button" class="btn btn-secondary px-3" onclick="cancelStaffEdit()">إلغاء</button>
+                            <button type="button" class="btn btn-secondary px-2" onclick="cancelStaffEdit()">إلغاء</button>
                         </div>
                     </div>
                 </form>
@@ -436,14 +442,17 @@
         });
     }
 
-    function editStaff(name, dept, type) {
+    /* تعديل دالة الجافاسكربت لتقبل الإيميل وتعرضه في نموذج التعديل */
+    function editStaff(name, dept, type, email) {
         document.getElementById('addStaffForm').style.display = 'none';
         document.getElementById('editStaffForm').style.display = 'block';
         document.getElementById('edit_old_staff_name').value = name;
         document.getElementById('edit_staff_name').value = name;
         document.getElementById('edit_staff_dept').value = dept;
         document.getElementById('edit_staff_type').value = type;
+        document.getElementById('edit_staff_email').value = email;
     }
+    
     function cancelStaffEdit() {
         document.getElementById('editStaffForm').style.display = 'none';
         document.getElementById('addStaffForm').style.display = 'block';
