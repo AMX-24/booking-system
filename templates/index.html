@@ -8,45 +8,43 @@
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* أضفنا position: relative هنا عشان نقدر نتحكم بمكان الشعار داخله */
         .hero-section { position: relative; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 50px 20px; border-radius: 0 0 25px 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
         .entity-card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; background: white; cursor: pointer; }
         .entity-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(37,99,235,0.12); border-right: 5px solid #2563eb; }
         .icon-box { width: 55px; height: 55px; background-color: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #2563eb; }
 
-        /* التنسيق الجديد للدائرة البيضاء اللي بتحتوي الشعار */
+        /* التنسيق الجديد لتكبير الدائرة البيضاء */
         .logo-circle {
             position: absolute;
             top: 20px;
-            right: 35px; /* يحدد المسافة من اليمين بناءً على طلبك */
-            width: 90px;
-            height: 90px;
+            right: 35px; 
+            width: 120px;  /* تم التكبير هنا */
+            height: 120px; /* تم التكبير هنا */
             background-color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            padding: 10px;
+            padding: 15px; /* زيادة المساحة الداخلية عشان يتنفس الشعار */
             z-index: 10;
         }
 
-        /* تنسيق الصورة عشان تتناسب تماماً داخل الدائرة */
         .logo-circle img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
 
-        /* تصغير الشعار شوي في شاشات الجوال عشان ما يخرب التصميم */
+        /* تكبير الشعار في شاشات الجوال بشكل متناسق */
         @media (max-width: 576px) {
             .logo-circle {
-                width: 60px;
-                height: 60px;
+                width: 80px;  /* تم التكبير للجوال */
+                height: 80px; /* تم التكبير للجوال */
                 top: 15px;
                 right: 15px;
-                padding: 8px;
+                padding: 10px;
             }
         }
     </style>
@@ -55,13 +53,13 @@
 
 <div class="hero-section text-center mb-5">
     
-    <!-- قسم الشعار الجديد في الزاوية -->
+    <!-- قسم الشعار في الزاوية -->
     <div class="logo-circle">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="شعار الكلية">
     </div>
     
     <!-- العنوان واسم الكلية -->
-    <h1 class="fw-bold mb-3 mt-3">مرحباً بك في نظام حجز المواعيد 🏫</h1>
+    <h1 class="fw-bold mb-3 mt-4">مرحباً بك في نظام حجز المواعيد 🏫</h1>
     <p class="fs-5 opacity-90">الكلية التقنية للاتصالات والمعلومات بجدة - بوابة المتدربين الإلكترونية</p>
     
     <a href="/login" class="btn btn-light text-primary fw-bold btn-sm mt-3 px-4 py-2 shadow-sm rounded-pill">⚙️ تسجيل دخول الإدارة</a>
