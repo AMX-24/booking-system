@@ -6,7 +6,6 @@
     <title>حجز موعد - {{ entity_name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- استدعاء مكتبة Flatpickr للتقويم المخصص -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/light.css">
     
@@ -118,11 +117,9 @@
                         </select>
                     </div>
 
-                    <!-- التعديل الجديد: حقل التقويم المخصص -->
                     <div class="mb-4">
                         <label class="form-label">تاريخ الحجز:</label>
                         <div class="input-group">
-                            <!-- تم تحويل نوع الحقل إلى text ليتم إدارته بواسطة مكتبة التقويم -->
                             <input type="text" name="booking_date" id="bookingDate" class="form-control border-primary fw-bold text-center text-primary" placeholder="اضغط لاختيار التاريخ من التقويم" readonly required>
                         </div>
                         <small class="text-primary fw-bold mt-2 d-block text-center" id="dayNameDisplay"></small>
@@ -144,24 +141,22 @@
     </div>
 </div>
 
-<!-- استدعاء ملفات الجافاسكربت لمكتبة التقويم واللغة العربية -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
 
 <script>
     // تفعيل وتخصيص التقويم الجديد
     flatpickr("#bookingDate", {
-        locale: "ar", // اللغة العربية
-        minDate: "today", // منع اختيار الأيام الماضية
-        disableMobile: "true", // إجبار الجوال على استخدام هذا التصميم الفخم بدل الافتراضي
+        locale: "ar", 
+        minDate: "today", 
+        disableMobile: "true", 
         disable: [
             function(date) {
-                // الحارس الذكي: قفل أيام الجمعة (5) والسبت (6) تلقائياً (تظهر بلون باهت ولا يمكن ضغطها)
+                // قفل أيام الجمعة (5) والسبت (6) تلقائياً لتظهر بلون باهت ولا يمكن ضغطها
                 return (date.getDay() === 5 || date.getDay() === 6);
             }
         ],
         onChange: function(selectedDates, dateStr, instance) {
-            // يتم استدعاء دالة جلب الأوقات بمجرد أن يختار المستخدم تاريخ صحيح
             fetchSlots(dateStr);
         }
     });
@@ -191,7 +186,6 @@
 
     function fetchSlots(dateStr) {
         let target = document.getElementById('staffSelect').value;
-        // إذا كان الاستدعاء من خارج التقويم، نحاول أخذ القيمة
         if (!dateStr) dateStr = document.getElementById('bookingDate').value;
 
         if (!target || !dateStr) return;
