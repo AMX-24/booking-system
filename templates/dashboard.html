@@ -144,7 +144,6 @@
                 </form>
             </div>
 
-            <!-- تم تعديل قسم الدكاترة لعرض وإضافة وإدارة كلمات المرور -->
             <div id="staff-sec" class="admin-section">
                 <h5 class="section-header">👨‍🏫 إدارة الدكاترة والمهندسين</h5>
                 <div class="mb-4 card p-3 bg-light border-primary"><select id="tableDeptFilter" class="form-select border-primary fw-bold" onchange="filterStaffTableByDept()"><option value="">-- عرض كل الأقسام --</option>{% for d_id, d_name in departments.items() %}<option value="{{ d_id }}">{{ d_name }}</option>{% endfor %}</select></div>
@@ -152,9 +151,15 @@
                     <table class="table table-bordered table-hover align-middle text-center" id="staffMainTable">
                         <thead class="table-light"><tr><th>الاسم</th><th>القسم التابع له</th><th>الإيميل</th><th>كلمة المرور</th><th>المنصب</th><th>إجراءات</th></tr></thead>
                         <tbody>
-                            {% for name, info in schedule_db.items() %} {% if info.type in ['faculty', 'head'] %}
-                                <tr class="admin-staff-row" data-dept="{{ info.dept }}">
-                                    <td class="fw-bold text-dark">{{ name }}</td><td class="text-primary fw-bold">{{ departments.get(info.dept, 'غير محدد') }}</td><td dir="ltr">{{ info.email }}</td><td dir="ltr" class="text-danger fw-bold">{{ info.password }}</td><td>{{ 'رئيس قسم' if info.type == 'head' else 'عضو هيئة تدريس' }}</td>
+                            {% for name, info in schedule_db.items() %} {% if info.type in ['faculty', 'head', 'affairs'] %}
+                                <tr class="admin-staff-row" data-dept="{{ info.dept }}"><td class="fw-bold text-dark">{{ name }}</td>
+                                    <td class="text-primary fw-bold">
+                                        {% if info.type == 'affairs' %} إدارة شؤون المتدربين {% else %} {{ departments.get(info.dept, 'غير محدد') }} {% endif %}
+                                    </td>
+                                    <td dir="ltr">{{ info.email }}</td><td dir="ltr" class="text-danger fw-bold">{{ info.password }}</td>
+                                    <td>
+                                        {% if info.type == 'affairs' %} قسم إداري {% elif info.type == 'head' %} رئيس قسم {% else %} عضو هيئة تدريس {% endif %}
+                                    </td>
                                     <td>
                                         <button class="btn btn-sm btn-warning fw-bold px-3" onclick="editStaff('{{ name }}', '{{ info.dept }}', '{{ info.type }}', '{{ info.email }}', '{{ info.password }}')">تعديل</button>
                                         <form action="/admin/delete_staff/{{ name }}" method="POST" style="display:inline;"><button type="submit" class="btn btn-sm btn-danger fw-bold px-3">حذف</button></form>
@@ -185,7 +190,7 @@
                         <div class="col-md-3 mb-3"><input type="email" name="staff_email" id="edit_staff_email" class="form-control" dir="ltr" required></div>
                         <div class="col-md-2 mb-3"><input type="text" name="staff_password" id="edit_staff_password" class="form-control" dir="ltr" required></div>
                         <div class="col-md-2 mb-3"><select name="dept_id" id="edit_staff_dept" class="form-select" required>{% for d_id, d_name in departments.items() %} <option value="{{ d_id }}">{{ d_name }}</option> {% endfor %}</select></div>
-                        <div class="col-md-2 mb-3"><select name="staff_type" id="edit_staff_type" class="form-select"><option value="faculty">عضو تدريس</option><option value="head">رئيس قسم</option></select></div>
+                        <div class="col-md-2 mb-3"><select name="staff_type" id="edit_staff_type" class="form-select"><option value="faculty">عضو تدريس</option><option value="head">رئيس قسم</option><option value="affairs">شؤون المتدربين (إداري)</option></select></div>
                         <div class="col-md-12 mt-2 d-flex gap-2"><button type="submit" class="btn btn-warning flex-grow-1 fw-bold">حفظ التعديلات</button><button type="button" class="btn btn-secondary px-5" onclick="cancelStaffEdit()">إلغاء</button></div>
                     </div>
                 </form>
@@ -237,7 +242,6 @@
         rows.forEach(row => { let rowDept = row.getAttribute('data-dept'); if (selectedDept === "" || rowDept === selectedDept) row.style.display = ""; else row.style.display = "none"; });
     }
     
-    // تم تعديل الدالة لاستقبال كلمة المرور
     function editStaff(name, dept, type, email, password) {
         document.getElementById('addStaffForm').style.display = 'none'; document.getElementById('editStaffForm').style.display = 'block';
         document.getElementById('edit_old_staff_name').value = name; document.getElementById('edit_staff_name').value = name;
