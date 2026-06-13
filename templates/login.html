@@ -2,39 +2,92 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تسجيل دخول الإدارة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام حجز المواعيد - الكلية التقنية للاتصالات والمعلومات بجدة</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 400px; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .hero-section { position: relative; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 50px 20px; border-radius: 0 0 25px 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .entity-card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; background: white; cursor: pointer; }
+        .entity-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(37,99,235,0.12); border-right: 5px solid #2563eb; }
+        .icon-box { width: 55px; height: 55px; background-color: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #2563eb; }
+
+        /* التنسيق الجديد لتكبير الدائرة البيضاء */
+        .logo-circle {
+            position: absolute;
+            top: 20px;
+            right: 35px; 
+            width: 120px;  /* تم التكبير هنا */
+            height: 120px; /* تم التكبير هنا */
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 15px; /* زيادة المساحة الداخلية عشان يتنفس الشعار */
+            z-index: 10;
+        }
+
+        .logo-circle img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* تكبير الشعار في شاشات الجوال بشكل متناسق */
+        @media (max-width: 576px) {
+            .logo-circle {
+                width: 80px;  /* تم التكبير للجوال */
+                height: 80px; /* تم التكبير للجوال */
+                top: 15px;
+                right: 15px;
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <h4 class="text-center fw-bold text-dark mb-4">🔐 تسجيل دخول الأدمن</h4>
+<div class="hero-section text-center mb-5">
     
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="alert alert-danger text-center small fw-bold mb-3">{{ messages[0] }}</div>
-        {% endif %}
-    {% endwith %}
-
-    <form action="{{ url_for('login') }}" method="POST">
-        <div class="mb-3">
-            <label class="form-label small fw-bold">اسم المستخدم:</label>
-            <input type="text" name="username" class="form-control" placeholder="admin_cti" required>
-        </div>
-        <div class="mb-4">
-            <label class="form-label small fw-bold">كلمة المرور:</label>
-            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="btn btn-primary w-100 fw-bold mb-3">دخول لوحة التحكم</button>
-        <div class="text-center">
-            <a href="{{ url_for('home') }}" class="text-muted small text-decoration-none">← العودة للموقع الرئيسي</a>
-        </div>
-    </form>
+    <div class="logo-circle">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="شعار الكلية">
+    </div>
+    
+    <h1 class="fw-bold mb-3 mt-4">مرحباً بك في نظام حجز المواعيد 🏫</h1>
+    <p class="fs-5 opacity-90">الكلية التقنية للاتصالات والمعلومات بجدة - بوابة المتدربين الإلكترونية</p>
+    
+    <div class="mt-4">
+        <a href="/login" class="btn btn-light text-primary fw-bold btn-sm px-4 py-2 shadow-sm rounded-pill">⚙️ دخول الإدارة</a>
+        <a href="/staff_login" class="btn btn-outline-light fw-bold btn-sm px-4 py-2 shadow-sm rounded-pill ms-2">👨‍🏫 بوابة الدكاترة</a>
+    </div>
 </div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <h4 class="fw-bold text-secondary mb-4 text-center">🎯 الرجاء تحديد جهة الحجز المطلوبة لمتابعة طلبك:</h4>
+            <div class="row g-3">
+                {% for key, entity in main_entities.items() %}
+                <div class="col-md-4 col-12" onclick="location.href='/select_time/{{ key }}'">
+                    <div class="card entity-card p-4 h-100">
+                        <div class="icon-box mb-3">{{ entity.icon }}</div>
+                        <h5 class="fw-bold text-dark mb-2">{{ entity.title }}</h5>
+                        <p class="text-muted small mb-0">{{ entity.desc }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="text-center text-muted py-4 border-top bg-white mt-5">
+    <small>© 2026 جميع الحقوق محفوظة - الكلية التقنية للاتصالات والمعلومات بجدة</small>
+</footer>
 
 </body>
 </html>
