@@ -60,7 +60,7 @@ schedule_db = {
     'سعود المطيري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'سعود الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'سعود خوتنلي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
-    'سعيد ابو عسيس': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'sعيد ابو عسيس': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'سلطان العتيبي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'صالح الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'طارق الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
@@ -118,7 +118,7 @@ schedule_db = {
     'خليل ال صمع': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'سالم الزهراني': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'سلطان ال مغلف': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
-    'سلمان الشهري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
+    'sلمان الشهري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'صالح الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'عادل الغامدي': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'عبدالرحمن المنتشري': {'type': 'faculty', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
@@ -161,16 +161,18 @@ schedule_db = {
     'هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []}
 }
 
-# إضافة إيميل افتراضي لأي دكتور ما عنده إيميل مسجل مسبقاً
+# وضع إيميل وباسوورد افتراضي لكل دكتور ليعمل النظام مباشرة
 for name, info in schedule_db.items():
     if 'email' not in info:
         info['email'] = 'doctor@tvtc.edu.sa'
+    if 'password' not in info:
+        info['password'] = '123456'  # الباسوورد الافتراضي للجميع
 
 @app.route('/')
 def home():
     return render_template('index.html', main_entities=main_entities)
 
-# ==================== دخول وإدارة لوحة التحكم المركزية ====================
+# ==================== الدخول وإدارة الإدارة المركزية ====================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -198,16 +200,18 @@ def admin_dashboard():
     }
     return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, main_entities=main_entities, time_markers=TIME_MARKERS, stats=stats, detailed_bookings=detailed_bookings_list)
 
-# ==================== نظام دخول أعضاء هيئة التدريس ====================
+# ==================== بوابة دخول أعضاء هيئة التدريس ====================
 @app.route('/staff_login', methods=['GET', 'POST'])
 def staff_login():
     if request.method == 'POST':
         email = request.form.get('email').strip().lower()
+        password = request.form.get('password').strip() # التحقق من كلمة المرور
+        
         for name, info in schedule_db.items():
-            if info.get('type') in ['faculty', 'head'] and info.get('email', '').lower() == email:
+            if info.get('type') in ['faculty', 'head'] and info.get('email', '').lower() == email and info.get('password') == password:
                 session['staff_logged_in'] = name 
                 return redirect(url_for('staff_dashboard'))
-        flash('البريد الإلكتروني غير صحيح أو غير مسجل في النظام!', 'danger')
+        flash('البريد الإلكتروني أو كلمة المرور غير صحيحة!', 'danger')
     return render_template('staff_portal.html', view='login')
 
 @app.route('/staff_dashboard')
@@ -222,7 +226,7 @@ def staff_logout():
     session.pop('staff_logged_in', None)
     return redirect(url_for('home'))
 
-# ==================== الإجراءات الإدارية (حذف وإضافة وتعديل) ====================
+# ==================== إجراءات لوحة التحكم (حذف وإضافة وتعديل) ====================
 @app.route('/admin/delete_booking', methods=['POST'])
 def delete_booking():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
@@ -251,7 +255,7 @@ def add_entity():
         if e_id not in main_entities:
             main_entities[e_id] = {'title': e_title, 'icon': e_icon, 'desc': e_desc}
             if e_title not in schedule_db:
-                schedule_db[e_title] = {'type': 'custom_entity', 'dept': 'general_admin', 'email': 'admin@tvtc.edu.sa', 'days': [], 'capacity': 1, 'slots': []}
+                schedule_db[e_title] = {'type': 'custom_entity', 'dept': 'general_admin', 'email': 'admin@tvtc.edu.sa', 'password': 'admin', 'days': [], 'capacity': 1, 'slots': []}
             flash(f'تم إضافة جهة الحجز ({e_title}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -289,7 +293,7 @@ def add_department():
         if dept_id not in departments:
             departments[dept_id] = dept_name
             head_title = f"رئيس {dept_name}"
-            schedule_db[head_title] = {'type': 'head', 'dept': dept_id, 'email': f'head_{dept_id}@tvtc.edu.sa', 'days': [], 'capacity': 1, 'slots': []}
+            schedule_db[head_title] = {'type': 'head', 'dept': dept_id, 'email': f'head_{dept_id}@tvtc.edu.sa', 'password': '123', 'days': [], 'capacity': 1, 'slots': []}
             flash(f'تم إضافة {dept_name} بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -320,12 +324,13 @@ def add_staff():
     staff_name = request.form.get('staff_name').strip()
     dept_id = request.form.get('dept_id')
     staff_type = request.form.get('staff_type')
-    staff_email = request.form.get('staff_email').strip() # استقبال الإيميل
+    staff_email = request.form.get('staff_email').strip()
+    staff_password = request.form.get('staff_password').strip() # استقبال الباسوورد
     
     if staff_name and dept_id:
         if staff_name not in schedule_db:
-            schedule_db[staff_name] = {'type': staff_type, 'dept': dept_id, 'email': staff_email, 'days': [], 'capacity': 1, 'slots': []}
-            flash(f'تم إضافة ({staff_name}) وربطه بالقسم بنجاح!', 'success')
+            schedule_db[staff_name] = {'type': staff_type, 'dept': dept_id, 'email': staff_email, 'password': staff_password, 'days': [], 'capacity': 1, 'slots': []}
+            flash(f'تم إضافة ({staff_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/edit_staff', methods=['POST'])
@@ -335,13 +340,15 @@ def edit_staff():
     new_name = request.form.get('new_staff_name').strip()
     dept_id = request.form.get('dept_id')
     staff_type = request.form.get('staff_type')
-    staff_email = request.form.get('staff_email').strip() # استقبال الإيميل المعدل
+    staff_email = request.form.get('staff_email').strip()
+    staff_password = request.form.get('staff_password').strip() # استقبال الباسوورد
     
     if old_name in schedule_db and new_name and dept_id:
         staff_data = schedule_db.pop(old_name)
         staff_data['dept'] = dept_id
         staff_data['type'] = staff_type
         staff_data['email'] = staff_email
+        staff_data['password'] = staff_password
         schedule_db[new_name] = staff_data
         flash(f'تم تعديل بيانات ({new_name}) بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
@@ -380,8 +387,7 @@ def update_schedule():
                 if start_idx < end_idx:
                     for slot in AVAILABLE_SLOTS[start_idx:end_idx]:
                         schedule_db[target_name]['weekly_schedule'][day][slot] = cap
-            except ValueError:
-                continue
+            except ValueError: continue
         flash(f'تم تحديث الجدول الأسبوعي بنجاح للمسؤول ({target_name})!', 'success')
     return redirect(url_for('admin_dashboard'))
 
