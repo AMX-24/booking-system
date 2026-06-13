@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حجز موعد - {{ entity_name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- مكتبة التنبيهات المنبثقة -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .booking-card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: white; padding: 30px; }
@@ -42,7 +44,6 @@
                     <div class="mb-4">
                         <label class="form-label">البريد الإلكتروني:</label>
                         <input type="email" name="student_email" class="form-control border-primary text-start" dir="ltr" placeholder="******@tvtc.edu.sa" required>
-                        <!-- هذا هو التنبيه الثابت الجديد تحت الخانة -->
                         <small class="text-secondary fw-bold mt-1 d-block">
                             💡 ملاحظة: يرجى استخدام البريد الإلكتروني الرسمي للمؤسسة <span dir="ltr" class="text-danger d-inline-block">@tvtc.edu.sa</span>
                         </small>
@@ -94,6 +95,7 @@
 </div>
 
 <script>
+    // منع المتدرب من اختيار تاريخ ماضي
     let today = new Date().toISOString().split('T')[0];
     document.getElementById("bookingDate").setAttribute('min', today);
 
@@ -116,7 +118,6 @@
     function resetSlots() {
         document.getElementById('booking_time').value = "";
         document.getElementById('timeSlots').innerHTML = '<span class="text-muted fw-bold">الرجاء اختيار التاريخ لعرض المواعيد المتاحة</span>';
-        document.getElementById('bookingDate').value = "";
         document.getElementById('dayNameDisplay').innerText = "";
     }
 
@@ -127,11 +128,29 @@
         if (!target || !dateStr) return;
 
         let dateObj = new Date(dateStr);
+        let dayOfWeek = dateObj.getDay();
+
+        // ======= الحارس الذكي: منع أيام الجمعة والسبت =======
+        // 5 تعني الجمعة، 6 تعني السبت
+        if (dayOfWeek === 5 || dayOfWeek === 6) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'يوم إجازة أسبوعية',
+                text: 'عذراً، أيام العمل الرسمية هي من الأحد إلى الخميس فقط. الرجاء اختيار يوم آخر.',
+                confirmButtonText: 'حسناً',
+                confirmButtonColor: '#1e3a8a'
+            });
+            document.getElementById('bookingDate').value = ""; // مسح التاريخ المرفوض
+            resetSlots(); // إخفاء الأوقات
+            return; // إيقاف تنفيذ باقي الكود
+        }
+        // ===================================================
+
         let daysMap = {6: 'sun', 0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat'};
         let daysArabic = {6: 'الأحد', 0: 'الإثنين', 1: 'الثلاثاء', 2: 'الأربعاء', 3: 'الخميس', 4: 'الجمعة', 5: 'السبت'};
         
-        let dayName = daysMap[dateObj.getDay()];
-        let dayNameAr = daysArabic[dateObj.getDay()];
+        let dayName = daysMap[dayOfWeek];
+        let dayNameAr = daysArabic[dayOfWeek];
         
         document.getElementById('dayNameHidden').value = dayName;
         document.getElementById('dayNameDisplay').innerText = "يوم الموعد: " + dayNameAr;
