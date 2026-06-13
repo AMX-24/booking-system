@@ -19,7 +19,7 @@
         .header-banner { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 40px 20px; border-radius: 0 0 25px 24px; margin-bottom: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
         /* =========================================================
-           تخصيص التقويم الجديد بشكل كامل (إصلاح اللون الأزرق)
+           تخصيص التقويم الجديد بشكل كامل (إصلاح الهيدر الأزرق)
            ========================================================= */
         .flatpickr-calendar {
             border: none !important;
@@ -27,42 +27,45 @@
             border-radius: 12px !important;
             font-family: inherit;
         }
-        /* خلفية القسم العلوي (الشهر والأسهم) */
-        .flatpickr-months {
-            background-color: #1877f2 !important;
-            border-radius: 12px 12px 0 0 !important;
-            padding-top: 10px !important;
-        }
-        .flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg {
-            fill: white !important;
-        }
-        .flatpickr-current-month .flatpickr-monthDropdown-months, .flatpickr-current-month input.cur-year {
-            color: white !important;
-            background: transparent !important;
-        }
-        /* لتوضيح القائمة المنسدلة للشهور */
-        .flatpickr-current-month .flatpickr-monthDropdown-months option {
-            color: black !important; 
-        }
-        /* خلفية شريط الأيام (السبت، الأحد..) */
+        
+        /* إجبار الخلفية الزرقاء على كامل الجزء العلوي (الشهور والأيام) */
+        .flatpickr-months,
+        .flatpickr-months .flatpickr-month,
         .flatpickr-weekdays {
+            background: #1877f2 !important;
             background-color: #1877f2 !important;
-            padding-bottom: 10px !important;
         }
+        
+        /* تلوين النصوص والأسهم باللون الأبيض */
+        .flatpickr-current-month .flatpickr-monthDropdown-months, 
+        .flatpickr-current-month input.cur-year,
         span.flatpickr-weekday {
             color: white !important;
-            font-weight: bold;
+            fill: white !important;
             background: transparent !important;
         }
-        /* تحديد اليوم من التقويم */
+        
+        /* توضيح القائمة المنسدلة للشهور حتى لا تكون خلفيتها زرقاء */
+        .flatpickr-current-month .flatpickr-monthDropdown-months option {
+            color: black !important;
+            background: white !important;
+        }
+        
+        .flatpickr-next-month svg, .flatpickr-prev-month svg {
+            fill: white !important;
+        }
+        
+        /* تحديد اليوم */
         .flatpickr-day.selected {
             background-color: #1877f2 !important;
             border-color: #1877f2 !important;
+            color: white !important;
         }
         .flatpickr-day.today {
             border-color: #1877f2 !important;
         }
         
+        /* شكل حقل إدخال التاريخ */
         #bookingDate {
             cursor: pointer;
             background-color: #fff;
@@ -203,10 +206,9 @@
 
         let dateObj = new Date(dateStr);
         
-        // ========= الإصلاح: هنا تم ترتيب الأيام بشكل صحيح لتتطابق مع جافاسكربت =========
+        // الأيام تم ترتيبها بشكل صحيح مسبقاً
         let daysMap = {0: 'sun', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat'};
         let daysArabic = {0: 'الأحد', 1: 'الإثنين', 2: 'الثلاثاء', 3: 'الأربعاء', 4: 'الخميس', 5: 'الجمعة', 6: 'السبت'};
-        // =================================================================================
         
         let dayOfWeek = dateObj.getDay();
         let dayName = daysMap[dayOfWeek];
