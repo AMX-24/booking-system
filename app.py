@@ -38,7 +38,8 @@ bookings_db = {}
 detailed_bookings_list = [] 
 
 schedule_db = {
-    'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'days': [], 'capacity': 5, 'slots': []},
+    # تم تعيين الإيميل والباسوورد الرسمي لشؤون المتدربين مباشرة هنا
+    'شؤون المتدربين': {'type': 'affairs', 'dept': 'affairs_admin', 'email': 'affairs@tvtc.edu.sa', 'password': '123456', 'days': [], 'capacity': 5, 'slots': []},
     'رئيس قسم الحاسب الآلي': {'type': 'head', 'dept': 'computer', 'days': [], 'capacity': 1, 'slots': []},
     'رئيس قسم الاتصالات': {'type': 'head', 'dept': 'communications', 'days': [], 'capacity': 1, 'slots': []},
     'رئيس قسم الإلكترونيات': {'type': 'head', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
@@ -58,7 +59,7 @@ schedule_db = {
     'خالد حجازي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'رمزي مهدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'سعود المطيري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
-    'سعود الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'sعود الغامدي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'سعود خوتنلي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'سعيد ابو عسيس': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'سلطان العتيبي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
@@ -71,7 +72,7 @@ schedule_db = {
     'فايز الشهري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'فهد العامودي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'فوزي جلالة': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
-    'محمد صباغ': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
+    'محمد صباغ': {'type': 'faculty', 'dept': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'محمد الرفاعي': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'محمد عشري': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
     'هيثم نايته': {'type': 'faculty', 'dept': 'electronics', 'days': [], 'capacity': 1, 'slots': []},
@@ -161,12 +162,12 @@ schedule_db = {
     'هشام ابو الجدايل': {'type': 'faculty', 'dept': 'general', 'days': [], 'capacity': 1, 'slots': []}
 }
 
-# وضع إيميل وباسوورد افتراضي لكل دكتور ليعمل النظام مباشرة
+# وضع إيميل وباسوورد افتراضي لأي دكتور ما عنده إيميل مسجل مسبقاً
 for name, info in schedule_db.items():
     if 'email' not in info:
         info['email'] = 'doctor@tvtc.edu.sa'
     if 'password' not in info:
-        info['password'] = '123456'  # الباسوورد الافتراضي للجميع
+        info['password'] = '123456'
 
 @app.route('/')
 def home():
@@ -200,15 +201,16 @@ def admin_dashboard():
     }
     return render_template('dashboard.html', departments=departments, schedule_db=schedule_db, main_entities=main_entities, time_markers=TIME_MARKERS, stats=stats, detailed_bookings=detailed_bookings_list)
 
-# ==================== بوابة دخول أعضاء هيئة التدريس ====================
+# ==================== بوابة دخول أعضاء هيئة التدريس وشؤون المتدربين ====================
 @app.route('/staff_login', methods=['GET', 'POST'])
 def staff_login():
     if request.method == 'POST':
         email = request.form.get('email').strip().lower()
-        password = request.form.get('password').strip() # التحقق من كلمة المرور
+        password = request.form.get('password').strip()
         
         for name, info in schedule_db.items():
-            if info.get('type') in ['faculty', 'head'] and info.get('email', '').lower() == email and info.get('password') == password:
+            # تم إضافة 'affairs' هنا للسماح لشؤون المتدربين بالدخول
+            if info.get('type') in ['faculty', 'head', 'affairs'] and info.get('email', '').lower() == email and info.get('password') == password:
                 session['staff_logged_in'] = name 
                 return redirect(url_for('staff_dashboard'))
         flash('البريد الإلكتروني أو كلمة المرور غير صحيحة!', 'danger')
@@ -325,12 +327,12 @@ def add_staff():
     dept_id = request.form.get('dept_id')
     staff_type = request.form.get('staff_type')
     staff_email = request.form.get('staff_email').strip()
-    staff_password = request.form.get('staff_password').strip() # استقبال الباسوورد
+    staff_password = request.form.get('staff_password').strip()
     
     if staff_name and dept_id:
         if staff_name not in schedule_db:
             schedule_db[staff_name] = {'type': staff_type, 'dept': dept_id, 'email': staff_email, 'password': staff_password, 'days': [], 'capacity': 1, 'slots': []}
-            flash(f'تم إضافة ({staff_name}) بنجاح!', 'success')
+            flash(f'تم إضافة ({staff_name}) وربطه بالقسم بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/edit_staff', methods=['POST'])
@@ -341,7 +343,7 @@ def edit_staff():
     dept_id = request.form.get('dept_id')
     staff_type = request.form.get('staff_type')
     staff_email = request.form.get('staff_email').strip()
-    staff_password = request.form.get('staff_password').strip() # استقبال الباسوورد
+    staff_password = request.form.get('staff_password').strip()
     
     if old_name in schedule_db and new_name and dept_id:
         staff_data = schedule_db.pop(old_name)
