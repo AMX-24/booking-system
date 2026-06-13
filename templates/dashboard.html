@@ -16,14 +16,41 @@
         .admin-section { display: none; animation: fadeIn 0.4s; }
         .admin-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* التنسيق الجديد لدائرة الشعار في القائمة الجانبية */
+        .sidebar-logo-circle {
+            width: 85px;
+            height: 85px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            padding: 10px;
+            margin: 0 auto 15px auto; /* لتوسيط الدائرة وإبعادها عن النص */
+        }
+        .sidebar-logo-circle img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
 
 <div class="container-fluid p-0">
     <div class="row m-0">
+        <!-- القائمة الجانبية (Sidebar) -->
         <div class="col-md-2 sidebar p-0">
-            <h5 class="text-center mb-4 fw-bold text-white py-2">⚙️ لوحة التحكم</h5>
+            
+            <!-- إضافة الشعار داخل الدائرة البيضاء هنا -->
+            <div class="sidebar-logo-circle">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="شعار الكلية">
+            </div>
+            
+            <h5 class="text-center mb-4 fw-bold text-white">⚙️ لوحة التحكم</h5>
+            
             <a onclick="showSection('stats-sec', this)" class="menu-link active">📊 الإحصائيات</a>
             <a onclick="showSection('entities-sec', this)" class="menu-link text-warning fw-bold">🏢 إدارة واجهة الموقع</a>
             <a onclick="showSection('dept-sec', this)" class="menu-link">🏛️ الأقسام الأكاديمية</a>
@@ -101,7 +128,7 @@
                 </div>
             </div>
 
-            <!-- القسم 2: إدارة جهات الحجز (استرجاع النماذج وأزرار التعديل بالكامل) -->
+            <!-- القسم 2: إدارة واجهة الموقع -->
             <div id="entities-sec" class="admin-section">
                 <h5 class="section-header">🏢 إدارة جهات الحجز (كروت الصفحة الرئيسية)</h5>
                 <div class="card stat-card p-4 mb-4">
@@ -156,7 +183,7 @@
                 </form>
             </div>
 
-            <!-- القسم 3: إدارة الأقسام (استرجاع النماذج وأزرار التعديل بالكامل) -->
+            <!-- القسم 3: الأقسام الأكاديمية -->
             <div id="dept-sec" class="admin-section">
                 <h5 class="section-header">🏛️ إدارة الأقسام الأكاديمية</h5>
                 <div class="card stat-card p-4 mb-4">
@@ -203,10 +230,9 @@
                 </form>
             </div>
 
-            <!-- القسم 4: إدارة الدكاترة والمهندسين (استرجاع النماذج وأزرار التعديل بالكامل) -->
+            <!-- القسم 4: الدكاترة / المهندسين -->
             <div id="staff-sec" class="admin-section">
                 <h5 class="section-header">👨‍🏫 إدارة الدكاترة والمهندسين</h5>
-                
                 <div class="mb-4 card p-3 bg-light border-primary">
                     <label class="form-label fw-bold text-primary">🔍 اختر القسم لتصفية وعرض أعضاء الكادر المسجلين فقط:</label>
                     <select id="tableDeptFilter" class="form-select border-primary fw-bold" onchange="filterStaffTableByDept()">
@@ -289,11 +315,10 @@
                 </form>
             </div>
 
-            <!-- القسم 5: إعداد الجداول (التحديث الأخير مع الإضافة المتعددة) -->
+            <!-- القسم 5: إعداد الجداول -->
             <div id="schedule-sec" class="admin-section">
                 <h5 class="section-header">⏱️ إعداد جداول المواعيد والسعة</h5>
                 <form action="/admin/update_schedule" method="POST" class="card stat-card p-4 border-success">
-                    
                     <div class="mb-3 bg-light p-3 rounded border">
                         <label class="form-label fw-bold text-primary">1. اختر الجهة المراد إعداد جدولها:</label>
                         <select id="entityTypeFilter" class="form-select border-primary fw-bold" onchange="handleAdminScheduleFlow()">
@@ -321,9 +346,7 @@
                             <option value="شؤون المتدربين" data-type="affairs" data-dept="affairs_admin" style="display:none;">شؤون المتدربين</option>
                             {% for name, info in schedule_db.items() %} 
                                 {% if info.type in ['faculty', 'head'] %}
-                                    <option value="{{ name }}" data-type="{{ info.type }}" data-dept="{{ info.dept }}" style="display:none;">
-                                        {{ name }}
-                                    </option> 
+                                    <option value="{{ name }}" data-type="{{ info.type }}" data-dept="{{ info.dept }}" style="display:none;">{{ name }}</option> 
                                 {% endif %}
                             {% endfor %}
                         </select>
@@ -331,37 +354,27 @@
 
                     <hr class="mb-4">
                     <h6 class="fw-bold text-dark mb-3">📍 إعداد الفترات للجدول الأسبوعي المعتمد:</h6>
-                    <p class="text-muted small">قم بتحديد اليوم وفترة البداية والنهاية. يمكنك الضغط على (إضافة فترة أخرى) لإعداد دوام كامل في خطوة واحدة.</p>
-
                     <div id="scheduleRowsContainer">
                         <div class="schedule-row row bg-light p-3 rounded border mx-0 mb-3 g-2 align-items-end position-relative">
                             <div class="col-md-3">
                                 <label class="form-label text-muted fw-bold">اليوم:</label>
                                 <select name="spec_day[]" class="form-select border-primary" required>
                                     <option value="" disabled selected>-- اختر اليوم --</option>
-                                    <option value="sun">الأحد</option>
-                                    <option value="mon">الإثنين</option>
-                                    <option value="tue">الثلاثاء</option>
-                                    <option value="wed">الأربعاء</option>
-                                    <option value="thu">الخميس</option>
+                                    <option value="sun">الأحد</option><option value="mon">الإثنين</option><option value="tue">الثلاثاء</option><option value="wed">الأربعاء</option><option value="thu">الخميس</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label text-muted fw-bold">من الساعة:</label>
                                 <select name="start_time[]" class="form-select border-primary" required>
                                     <option value="" disabled selected>-- البداية --</option>
-                                    {% for time in time_markers %}
-                                        <option value="{{ time }}">{{ time }}</option>
-                                    {% endfor %}
+                                    {% for time in time_markers %} <option value="{{ time }}">{{ time }}</option> {% endfor %}
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label text-muted fw-bold">إلى الساعة:</label>
                                 <select name="end_time[]" class="form-select border-primary" required>
                                     <option value="" disabled selected>-- النهاية --</option>
-                                    {% for time in time_markers %}
-                                        <option value="{{ time }}">{{ time }}</option>
-                                    {% endfor %}
+                                    {% for time in time_markers %} <option value="{{ time }}">{{ time }}</option> {% endfor %}
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -373,12 +386,10 @@
                             </div>
                         </div>
                     </div>
-
                     <button type="button" class="btn btn-outline-primary mb-4 fw-bold" onclick="addScheduleRow()">➕ إضافة فترة أخرى لنفس الدكتور</button>
                     <button type="submit" class="btn btn-success w-100 fw-bold py-2 fs-5">حفظ وإعتماد الجدول الأسبوعي</button>
                 </form>
             </div>
-
         </div>
     </div>
 </div>
@@ -391,7 +402,6 @@
         if(element) element.classList.add('active');
     }
 
-    // دوال إدارة الجهات
     function editEntity(id, title, icon, desc) {
         document.getElementById('addEntityForm').style.display = 'none';
         document.getElementById('editEntityForm').style.display = 'block';
@@ -399,27 +409,23 @@
         document.getElementById('edit_e_title').value = title;
         document.getElementById('edit_e_icon').value = icon;
         document.getElementById('edit_e_desc').value = desc;
-        document.getElementById('editEntityForm').scrollIntoView({ behavior: 'smooth' });
     }
     function cancelEntityEdit() {
         document.getElementById('editEntityForm').style.display = 'none';
         document.getElementById('addEntityForm').style.display = 'block';
     }
 
-    // دوال إدارة الأقسام
     function editDepartment(id, name) {
         document.getElementById('addDeptForm').style.display = 'none';
         document.getElementById('editDeptForm').style.display = 'block';
         document.getElementById('edit_id').value = id;
         document.getElementById('edit_name').value = name;
-        document.getElementById('editDeptForm').scrollIntoView({ behavior: 'smooth' });
     }
     function cancelEdit() {
         document.getElementById('editDeptForm').style.display = 'none';
         document.getElementById('addDeptForm').style.display = 'block';
     }
 
-    // دوال إدارة الدكاترة
     function filterStaffTableByDept() {
         let selectedDept = document.getElementById('tableDeptFilter').value;
         let rows = document.querySelectorAll('.admin-staff-row');
@@ -437,26 +443,22 @@
         document.getElementById('edit_staff_name').value = name;
         document.getElementById('edit_staff_dept').value = dept;
         document.getElementById('edit_staff_type').value = type;
-        document.getElementById('editStaffForm').scrollIntoView({ behavior: 'smooth' });
     }
     function cancelStaffEdit() {
         document.getElementById('editStaffForm').style.display = 'none';
         document.getElementById('addStaffForm').style.display = 'block';
     }
 
-    // دوال قسم إعداد المواعيد
     function handleAdminScheduleFlow() {
         let entityType = document.getElementById('entityTypeFilter').value;
         let deptDiv = document.getElementById('departmentFilterDiv');
         let deptSelect = document.getElementById('scheduleDeptFilter');
         let targetSelect = document.getElementById('scheduleTargetStaff');
-
         targetSelect.value = "";
         targetSelect.options[0].text = "-- اختر من القائمة --";
 
         if (entityType === 'affairs') {
-            deptDiv.style.display = 'none'; 
-            deptSelect.value = ""; 
+            deptDiv.style.display = 'none'; deptSelect.value = ""; 
             for (let i = 1; i < targetSelect.options.length; i++) {
                 let opt = targetSelect.options[i];
                 if (opt.getAttribute('data-type') === 'affairs') {
