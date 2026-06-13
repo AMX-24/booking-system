@@ -2,200 +2,170 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بوابة المواعيد - الكلية التقنية</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حجز موعد - {{ entity_name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body { background: #f0f4f8; padding: 40px 10px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .booking-card { max-width: 650px; margin: auto; background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 35px rgba(30, 58, 138, 0.1); }
-        .main-title { color: #1e3a8a; font-weight: bold; margin-bottom: 5px; }
-        .sub-title { color: #6b7280; font-size: 14px; margin-bottom: 30px; }
-        .section-title { font-size: 15px; font-weight: 600; color: #1e3a8a; margin-top: 20px; margin-bottom: 15px; }
-        .slot-btn { border-radius: 10px; transition: all 0.2s; font-weight: 500; font-size: 14px; }
-        .slot-btn.active { background-color: #1e3a8a !important; color: white !important; border-color: #1e3a8a !important; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .booking-card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: white; padding: 30px; }
+        .form-label { font-weight: bold; color: #1e3a8a; }
+        .slot-btn { margin-bottom: 10px; font-weight: bold; transition: 0.2s; }
+        .slot-btn.selected { background-color: #1e3a8a !important; color: white !important; border-color: #1e3a8a !important; transform: scale(1.02); }
+        .header-banner { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 40px 20px; border-radius: 0 0 25px 24px; margin-bottom: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <div class="booking-card">
-        <h2 class="text-center main-title">بوابة المواعيد لـ: {{ entity_name }}</h2>
-        <p class="text-center sub-title">يرجى إدخال بياناتك واختيار الموعد المناسب لإتمام الطلب</p>
-        
-        <form action="/book" method="POST" id="bookingForm">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">اسم المتدرب ثلاثي:</label>
-                    <input type="text" name="student_name" class="form-control" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">الرقم التدريبي:</label>
-                    <input type="text" name="student_id" class="form-control" required>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label class="form-label fw-bold">البريد الإلكتروني:</label>
-                    <input type="email" name="student_email" class="form-control" required>
-                </div>
+<div class="header-banner text-center">
+    <h2 class="fw-bold mb-2">بوابة المواعيد لـ: {{ entity_name }}</h2>
+    <p class="mb-0 opacity-75 fs-5">يرجى إدخال بياناتك واختيار الموعد المناسب لإتمام الطلب</p>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="booking-card">
+                <form action="/book" method="POST" id="bookingForm">
+                    <input type="hidden" name="booking_time" id="booking_time" required>
+
+                    <div class="row mb-3 g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">اسم المتدرب ثلاثي:</label>
+                            <input type="text" name="student_name" class="form-control border-primary" placeholder="اكتب اسمك هنا" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الرقم التدريبي:</label>
+                            <input type="text" name="student_id" class="form-control border-primary" placeholder="مثال: 443000000" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">البريد الإلكتروني:</label>
+                        <input type="email" name="student_email" class="form-control border-primary text-start" dir="ltr" placeholder="******@tvtc.edu.sa" required>
+                        <!-- هذا هو التنبيه الثابت الجديد تحت الخانة -->
+                        <small class="text-secondary fw-bold mt-1 d-block">
+                            💡 ملاحظة: يرجى استخدام البريد الإلكتروني الرسمي للمؤسسة <span dir="ltr" class="text-danger d-inline-block">@tvtc.edu.sa</span>
+                        </small>
+                    </div>
+
+                    {% if entity_id in ['head', 'faculty'] %}
+                    <div class="mb-3">
+                        <label class="form-label">القسم التدريبي / المختص:</label>
+                        <select id="deptSelect" class="form-select border-primary fw-bold" onchange="fetchStaff()" required>
+                            <option value="" disabled selected>-- اختر القسم الأكاديمي أولاً --</option>
+                            {% for d_id, d_name in departments.items() %}
+                            <option value="{{ d_id }}">{{ d_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">اختر الدكتور / المهندس:</label>
+                        <select name="target" id="staffSelect" class="form-select border-primary fw-bold" onchange="resetSlots()" required>
+                            {% if entity_id == 'affairs' %}
+                                <option value="شؤون المتدربين" selected>شؤون المتدربين</option>
+                            {% else %}
+                                <option value="" disabled selected>-- يرجى اختيار القسم أولاً --</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">تاريخ الموعد المراد حجزه:</label>
+                        <input type="date" name="booking_date" id="bookingDate" class="form-control border-primary" onchange="fetchSlots()" required>
+                        <small class="text-primary fw-bold mt-1 d-block" id="dayNameDisplay"></small>
+                        <input type="hidden" id="dayNameHidden" name="day_name">
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="form-label">الأوقات المتاحة:</label>
+                        <div id="timeSlots" class="p-4 bg-light border border-primary rounded text-center">
+                            <span class="text-muted fw-bold">الرجاء اختيار المسؤول وتاريخ الموعد لعرض الساعات المتاحة</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-3 fs-5 shadow-sm rounded-pill">✅ تأكيد حجز الموعد</button>
+                    <a href="/" class="btn btn-outline-secondary w-100 fw-bold py-2 mt-2 rounded-pill">العودة للرئيسية</a>
+                </form>
             </div>
-
-            {% if entity_id in ['head', 'faculty'] %}
-            <div class="mb-3">
-                <label class="form-label fw-bold">القسم التدريبي / المختص:</label>
-                <select id="departmentSelect" class="form-select" required onchange="handleDepartmentChange()">
-                    <option value="" disabled selected>-- اختر القسم الأكاديمي أولاً --</option>
-                    {% for dept_id, dept_name in departments.items() %}
-                        <option value="{{ dept_id }}">{{ dept_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-
-            <div class="mb-3 {% if entity_id != 'faculty' %}d-none{% endif %}">
-                <label class="form-label fw-bold">اختر الدكتور / المهندس:</label>
-                <select name="target" id="targetStaff" class="form-select" {% if entity_id == 'faculty' %}required{% endif %} onchange="handleStaffChange()">
-                    <option value="" disabled selected>-- الرجاء اختيار القسم أولاً --</option>
-                    {% for name, info in schedule_db.items() %}
-                        <option value="{{ name }}" data-dept="{{ info.dept if info.dept else '' }}" data-type="{{ info.type if info.type else '' }}" class="staff-option">
-                            {{ name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            {% if entity_id not in ['head', 'faculty'] %}
-                <input type="hidden" name="target" id="targetStaffHidden" value="{{ entity_name }}">
-            {% elif entity_id == 'head' %}
-                <input type="hidden" name="target" id="targetStaffHidden">
-            {% endif %}
-
-            <div class="mb-4">
-                <label class="form-label fw-bold">تاريخ الحجز:</label>
-                <input type="text" id="liveDatePicker" name="booking_date" class="form-control bg-white" placeholder="اضغط هنا لاختيار التاريخ" required readonly>
-            </div>
-
-            <div class="section-title">⏱️ الساعات المتوفرة (من - إلى):</div>
-            
-            <div id="statusPlaceholder" class="alert alert-light text-center border p-3 text-muted">
-                الرجاء إكمال الاختيارات والتاريخ لعرض الساعات المتاحة.
-            </div>
-
-            <div id="slotsContainer" class="d-none mb-4"></div>
-            <input type="hidden" id="selectedTimeInput" name="booking_time" required>
-
-            <div class="d-flex gap-2 mt-4">
-                <button type="submit" class="btn btn-primary flex-grow-1 py-2" style="background-color: #1e3a8a;">تأكيد موعد الحجز النهائي</button>
-                <a href="/" class="btn btn-secondary px-4 py-2">رجوع</a>
-            </div>
-        </form>
+        </div>
     </div>
+</div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
-    <script>
-        const pageId = "{{ entity_id }}";
+<script>
+    let today = new Date().toISOString().split('T')[0];
+    document.getElementById("bookingDate").setAttribute('min', today);
 
-        function handleDepartmentChange() {
-            if (pageId === 'faculty') filterStaffByDept();
-            else if (pageId === 'head') selectHeadAutomatically();
-        }
+    function fetchStaff() {
+        let deptId = document.getElementById('deptSelect').value;
+        let formData = new FormData();
+        formData.append('dept_id', deptId);
 
-        function handleStaffChange() { resetDateTime(); }
-
-        function filterStaffByDept() {
-            const selectedDept = document.getElementById('departmentSelect').value;
-            const staffSelect = document.getElementById('targetStaff');
-            staffSelect.value = ""; resetDateTime();
-            
-            let visibleCount = 0;
-            const options = staffSelect.options;
-            for (let i = 1; i < options.length; i++) {
-                const option = options[i];
-                const staffName = option.value;
-                const optDept = option.getAttribute('data-dept').toLowerCase();
-                const optType = option.getAttribute('data-type').toLowerCase();
-                
-                if (staffName.includes("رئيس") || staffName.includes("شؤون") || optType === 'head' || optType === 'affairs' || optType === 'custom_entity') {
-                    option.style.display = 'none'; continue;
-                }
-                
-                if (optDept === selectedDept || selectedDept.includes(optDept) || optDept.includes(selectedDept)) {
-                    option.style.display = 'block'; visibleCount++;
-                } else { option.style.display = 'none'; }
-            }
-            options[0].text = visibleCount > 0 ? "-- اختر من قائمة الكادر للقسم --" : "-- لا يوجد أعضاء متاحين --";
-        }
-
-        function selectHeadAutomatically() {
-            const selectedDept = document.getElementById('departmentSelect').value;
-            const hiddenInput = document.getElementById('targetStaffHidden');
-            resetDateTime();
-            const headsMapping = { 'computer': 'رئيس قسم الحاسب الآلي', 'communications': 'رئيس قسم الاتصالات', 'electronics': 'رئيس قسم الإلكترونيات', 'general': 'رئيس قسم المواد العامة' };
-            hiddenInput.value = headsMapping[selectedDept] || "";
-        }
-
-        function resetDateTime() {
-            if (document.getElementById('liveDatePicker')._flatpickr) document.getElementById('liveDatePicker')._flatpickr.clear();
-            document.getElementById('statusPlaceholder').style.display = 'block';
-            document.getElementById('slotsContainer').classList.add('d-none');
-            document.getElementById('selectedTimeInput').value = '';
-        }
-
-        flatpickr("#liveDatePicker", {
-            locale: "ar", dateFormat: "Y-m-d", minDate: "today",
-            onOpen: function(selectedDates, dateStr, instance) {
-                if (['head', 'faculty'].includes(pageId) && !document.getElementById('departmentSelect').value) {
-                    Swal.fire({icon: 'warning', title: 'تنبيه', text: 'الرجاء تحديد القسم أولاً!', confirmButtonColor: '#1e3a8a'});
-                    instance.close(); return;
-                }
-                if (pageId === 'faculty' && !document.getElementById('targetStaff').value) {
-                    Swal.fire({icon: 'warning', title: 'تنبيه', text: 'الرجاء تحديد الدكتور أو المهندس!', confirmButtonColor: '#1e3a8a'});
-                    instance.close(); return;
-                }
-            },
-            onChange: function(selectedDates, dateStr, instance) {
-                let target = "";
-                if (pageId === 'head') target = document.getElementById('targetStaffHidden').value;
-                else if (pageId === 'faculty') target = document.getElementById('targetStaff').value;
-                else target = "{{ entity_name }}"; // للجهات الجديدة الديناميكية
-
-                if (dateStr && target) fetchAvailableSlots(target, dateStr);
-            }
+        fetch('/get_staff_by_dept', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('staffSelect').innerHTML = html;
+            resetSlots();
         });
+    }
 
-        function fetchAvailableSlots(target, dateStr) {
-            const dateObj = new Date(dateStr);
-            const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-            const dayName = days[dateObj.getDay()];
+    function resetSlots() {
+        document.getElementById('booking_time').value = "";
+        document.getElementById('timeSlots').innerHTML = '<span class="text-muted fw-bold">الرجاء اختيار التاريخ لعرض المواعيد المتاحة</span>';
+        document.getElementById('bookingDate').value = "";
+        document.getElementById('dayNameDisplay').innerText = "";
+    }
 
-            document.getElementById('statusPlaceholder').style.display = 'block';
-            document.getElementById('statusPlaceholder').innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> جاري جلب الساعات...';
-            document.getElementById('slotsContainer').classList.add('d-none');
+    function fetchSlots() {
+        let target = document.getElementById('staffSelect').value;
+        let dateStr = document.getElementById('bookingDate').value;
 
-            $.ajax({
-                url: '/get_slots_ajax',
-                method: 'POST',
-                data: { target: target, day_name: dayName, date_str: dateStr },
-                success: function(htmlResponse) {
-                    if (htmlResponse && !htmlResponse.includes('غير متاح')) {
-                        document.getElementById('statusPlaceholder').style.display = 'none';
-                        const container = document.getElementById('slotsContainer');
-                        container.classList.remove('d-none');
-                        container.innerHTML = htmlResponse;
-                    } else {
-                        document.getElementById('statusPlaceholder').style.display = 'block';
-                        document.getElementById('statusPlaceholder').innerHTML = '<span class="text-danger small fw-bold">عذراً، هذا اليوم غير متاح للمقابلة!</span>';
-                        document.getElementById('slotsContainer').classList.add('d-none');
-                    }
-                }
-            });
-        }
+        if (!target || !dateStr) return;
 
-        function selectSlot(timeString, buttonElement) {
-            document.querySelectorAll('#slotsContainer .slot-btn').forEach(btn => btn.classList.remove('active'));
-            if(buttonElement) buttonElement.classList.add('active');
-            document.getElementById('selectedTimeInput').value = timeString;
-        }
-    </script>
+        let dateObj = new Date(dateStr);
+        let daysMap = {6: 'sun', 0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat'};
+        let daysArabic = {6: 'الأحد', 0: 'الإثنين', 1: 'الثلاثاء', 2: 'الأربعاء', 3: 'الخميس', 4: 'الجمعة', 5: 'السبت'};
+        
+        let dayName = daysMap[dateObj.getDay()];
+        let dayNameAr = daysArabic[dateObj.getDay()];
+        
+        document.getElementById('dayNameHidden').value = dayName;
+        document.getElementById('dayNameDisplay').innerText = "يوم الموعد: " + dayNameAr;
+
+        document.getElementById('timeSlots').innerHTML = '<div class="spinner-border text-primary" role="status"></div><br><span class="text-muted mt-2 d-inline-block">جاري البحث عن مواعيد متاحة...</span>';
+
+        let formData = new FormData();
+        formData.append('target', target);
+        formData.append('day_name', dayName);
+        formData.append('date_str', dateStr);
+
+        fetch('/get_slots_ajax', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('timeSlots').innerHTML = html;
+            document.getElementById('booking_time').value = ""; 
+        });
+    }
+
+    function selectSlot(timeStr, btnElement) {
+        document.getElementById('booking_time').value = timeStr;
+        
+        let allBtns = document.querySelectorAll('.slot-btn');
+        allBtns.forEach(btn => {
+            btn.classList.remove('selected', 'btn-primary');
+            btn.classList.add('btn-outline-primary');
+        });
+        
+        btnElement.classList.remove('btn-outline-primary');
+        btnElement.classList.add('btn-primary', 'selected');
+    }
+</script>
 </body>
 </html>
