@@ -4,8 +4,8 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = 'cti_booking_secure_super_key'
 
-ADMIN_USERNAME = "admin_cti"
-ADMIN_PASSWORD = "cti_2026"
+ADMIN_USERNAME = "admin_cte"
+ADMIN_PASSWORD = "cte_2026"
 
 AVAILABLE_SLOTS = [
     '08:00 AM - 08:30 AM', '08:30 AM - 09:00 AM', '09:00 AM - 09:30 AM',
